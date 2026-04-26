@@ -526,6 +526,18 @@
         <button class="btn btn-primary btn-sm">
           Télécharger PDF
         </button>
+        <div class="modal-header bg-white text-dark d-flex justify-content-between align-items-center">
+
+        <h5 class="modal-title">Détails Formation</h5>
+        <a id="btnAddChapitre" href="ajoutertest.php?formation_id=<?= $formation['id_f'] ?>" class="btn btn-success">
+          <i class="bx bx-plus"></i> Ajouter Test
+        </a>
+        <!-- 🔥 BOUTON AJOUTER CHAPITRE -->
+        <a id="btnAddChapitre" href="ajouterchapitre.php?formation_id=<?= $formation['id_f'] ?>" class="btn btn-success">
+          <i class="bx bx-plus"></i> Ajouter Chapitre
+        </a>
+
+      </div>
       </div>
 
     </div>

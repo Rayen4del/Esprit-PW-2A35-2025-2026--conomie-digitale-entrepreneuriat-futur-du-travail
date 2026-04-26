@@ -13,11 +13,11 @@ class ChapContenu {
 
     // Constructor
     public function __construct(
-        ?int $id,
-        ?int $chapitreId,
-        ?string $type,
-        ?string $contenu,
-        ?int $ordre
+        ?int $id = null,
+        ?int $chapitreId = null,
+        ?string $type = null,
+        ?string $contenu = null,
+        ?int $ordre = null
     ) {
         $this->id = $id;
         $this->chapitreId = $chapitreId;
@@ -56,10 +56,11 @@ class ChapContenu {
         $this->chapitreId = $chapitreId;
     }
 
-    public function setType(?string $type): void {
-        $typesValides = [self::TYPE_TEXT, self::TYPE_VIDEO, self::TYPE_PDF];
+    public function setType($type)
+    {
+        $allowed = ["text", "image", "video", "pdf", "youtube"];
 
-        if (!in_array($type, $typesValides)) {
+        if (!in_array($type, $allowed)) {
             throw new Exception("Type invalide");
         }
 
@@ -71,7 +72,7 @@ class ChapContenu {
     }
 
     public function setOrdre(?int $ordre): void {
-        if ($ordre < 0) {
+        if ($ordre !== null && $ordre < 0) {
             throw new Exception("Ordre invalide");
         }
         $this->ordre = $ordre;

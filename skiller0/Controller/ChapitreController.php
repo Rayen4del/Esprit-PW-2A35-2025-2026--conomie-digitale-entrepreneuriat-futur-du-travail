@@ -17,18 +17,20 @@ class ChapitreController {
         $req->bindValue(':id', $id);
         $req->execute();
     }
-
     public function addChapitre(Chapitre $chapitre) {
-        $sql = "INSERT INTO chapitre VALUES (NULL, :id_f, :titre_c, :ordre)";
-        $db = config::getConnexion();
+    $db = config::getConnexion();
 
-        $query = $db->prepare($sql);
-        $query->execute([
-            'id_f' => $chapitre->getFormationId(),
-            'titre_c' => $chapitre->getTitre(),
-            'ordre' => $chapitre->getOrdre()
-        ]);
-    }
+    $sql = "INSERT INTO chapitre (id_f, titre_c, ordre)
+            VALUES (:id_f, :titre_c, :ordre)";
+
+    $stmt = $db->prepare($sql);
+
+    return $stmt->execute([
+        'id_f' => $chapitre->getFormationId(),
+        'titre_c' => $chapitre->getTitre(),
+        'ordre' => $chapitre->getOrdre()
+    ]);
+}
 
     public function updateChapitre(Chapitre $chapitre, $id) {
         $db = config::getConnexion();

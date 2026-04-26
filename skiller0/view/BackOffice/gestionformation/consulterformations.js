@@ -22,13 +22,13 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // ================= VIEW =================
-    window.openView = function (id) {
+    window.openView = function(id) {
         const frame = document.getElementById("viewFrame");
-        if (frame) {
-            frame.src = "viewformation.php?id=" + id;
-        }
-    };
+        frame.src = "viewformation.php?id=" + id;
 
+        const btn = document.getElementById("btnAddChapitre");
+        btn.href = "ajouterchapitre.php?formation_id=" + id;
+    };
     // ================= EDIT =================
     window.openEdit = function (f) {
 

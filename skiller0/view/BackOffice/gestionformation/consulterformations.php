@@ -387,9 +387,25 @@ $nextSort = ($sort === 'ASC') ? 'DESC' : 'ASC';
                 </iframe>
 
               </div>
+              <div class="modal-footer d-flex justify-content-between">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                  Fermer
+                </button>
+                <!-- 🔥 BOUTON AJOUTER CHAPITRE -->
+                <a id="btnAddChapitre" href="ajoutertest.php?formation_id=" class="btn btn-success">
+                  <i class="bx bx-plus"></i> Ajouter test
+                </a>
+                <!-- 🔥 BOUTON AJOUTER CHAPITRE -->
+                <a id="btnAddChapitre" href="ajouterchapitre.php?formation_id=" class="btn btn-success">
+                  <i class="bx bx-plus"></i> Ajouter Chapitre
+                </a>
+
+              </div>
+            </div>
 
             </div>
           </div>
+          
         </div>
 <!-- Modal Modifier Formation -->
 <!-- Modal Modifier Formation -->

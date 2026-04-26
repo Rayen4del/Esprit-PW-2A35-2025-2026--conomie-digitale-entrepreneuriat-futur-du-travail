@@ -1,3 +1,53 @@
+<?php
+include_once(__DIR__ . '/../../../Controller/FormationController.php');
+include_once(__DIR__ . '/../../../Controller/ChapitreController.php');
+include_once(__DIR__ . '/../../../Model/chapitre.php');
+
+$formationC = new FormationController();
+$formations = $formationC->listFormations();
+
+$chapitreC = new ChapitreController();
+
+$message = "";
+$error = "";
+
+// ===================== AJOUT CHAPITRE =====================
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    // debug (tu peux supprimer après)
+    // var_dump($_POST);
+
+    if (
+        !empty($_POST["titre_c"]) &&
+        !empty($_POST["formation_id"]) &&
+        isset($_POST["ordre"])
+    ) {
+
+        try {
+            $chapitre = new Chapitre(
+                null,
+                (int) $_POST["formation_id"], // ✅ CORRECT
+                trim($_POST["titre_c"]),
+                (int) $_POST["ordre"]
+            );
+
+            $result = $chapitreC->addChapitre($chapitre);
+
+            if ($result) {
+                $message = "✔ Chapitre ajouté avec succès !";
+            } else {
+                $error = "❌ Erreur lors de l'ajout du chapitre.";
+            }
+
+        } catch (Exception $e) {
+            $error = "❌ Exception : " . $e->getMessage();
+        }
+
+    } else {
+        $error = "❌ Veuillez remplir tous les champs.";
+    }
+}
+?>
 <!DOCTYPE html>
 
 <!-- =========================================================
@@ -191,7 +241,7 @@
                 </li>
                 <li class="menu-item active">
                   <a href="ajouterchapitre.php" class="menu-link">
-                    <div data-i18n="Without navbar">ajouter chapitre</div>
+                    <div data-i18n="Without navbar">ajouter chapitre et son contenu</div>
                   </a>
                 </li>
                 <li class="menu-item">
@@ -307,102 +357,127 @@
                       </div>
 
                       <div class="card-body">
-                        <form>
+
+                        <form  method="POST">
 
                           <div class="mb-3">
                             <label class="form-label">Titre</label>
-                            <input type="text" class="form-control" placeholder="Titre du chapitre">
+                            <input type="text" name="titre_c" class="form-control" placeholder="Titre du chapitre">
                           </div>
 
                           <div class="mb-3">
                             <label class="form-label">Formation</label>
-                            <select class="form-select">
-                              <option selected>Choisir une formation</option>
+                            <select class="form-select" name="id_f">
+                              <option selected disabled>Choisir une formation</option>
+                              <?php foreach ($formations as $formation) { ?>
+                                <option value="<?= $formation['id_f']; ?>">
+                                  <?= $formation['id_f'] . ' | ' . $formation['titre']; ?>
+                                </option>
+                              <?php } ?>
                             </select>
                           </div>
 
                           <div class="mb-3">
                             <label class="form-label">Ordre</label>
-                            <input type="number" class="form-control" placeholder="1">
+                            <input type="number" name="ordre" class="form-control" placeholder="1">
+                          </div>
+
+                          <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                              Ajouter Chapitre
+                            </button>
                           </div>
 
                         </form>
+
                       </div>
                     </div>
                   </div>
+                  <!____________________________________________________>
+                    <div class="col-12">
+                      <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
 
-                  <!-- CONTENU (EN DESSOUS) -->
-                  <div class="col-12">
-                    <div class="card mb-4">
-                      <div class="card-header">
-                        <h5 class="mb-0">Contenu</h5>
-                      </div>
+                          <form id="formContenu">
 
-                      <div class="card-body">
+                            <!-- ================= CONTENU TEXT ================= -->
+                            <div class="mb-4">
+                              <label class="form-label fw-bold">Contenu texte</label>
 
-                        <!-- Toolbar custom Quill -->
-                        <div id="toolbar">
-                          <button class="ql-bold"></button>
-                          <button class="ql-italic"></button>
-                          <button class="ql-underline"></button>
+                              <div id="toolbar">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <select class="ql-color"></select>
+                                <select class="ql-background"></select>
+                                <select class="ql-header">
+                                  <option selected></option>
+                                  <option value="1"></option>
+                                  <option value="2"></option>
+                                </select>
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                                <button class="ql-link"></button>
+                              </div>
 
-                          <!-- Couleur texte -->
-                          <select class="ql-color"></select>
+                              <div id="editor" style="height: 250px;" class="border rounded"></div>
 
-                          <!-- Couleur fond -->
-                          <select class="ql-background"></select>
+                              <div class="d-flex justify-content-end mt-2">
+                                <button type="button" id="addText" class="btn btn-success px-4">
+                                  Ajouter texte
+                                </button>
+                              </div>
+                            </div>
 
-                          <select class="ql-header">
-                            <option selected></option>
-                            <option value="1"></option>
-                            <option value="2"></option>
-                          </select>
+                            <hr>
 
-                          <button class="ql-list" value="ordered"></button>
-                          <button class="ql-list" value="bullet"></button>
+                            <!-- ================= CHAPITRE SELECT ================= -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
 
-                          <button class="ql-link"></button>
+                              <div>
+                                <h5 class="mb-0">Création du contenu</h5>
+                                <small class="text-muted">Choisissez un chapitre et ajoutez du contenu</small>
+                              </div>
+
+                              <select name="chapitre_id" class="form-select form-select-sm w-25">
+                                <option value="">Sélectionner</option>
+                                <?php foreach ($chapitres as $c) { ?>
+                                  <option value="<?= $c['id_c'] ?>">
+                                    #<?= $c['id_c'] ?> - <?= $c['titre_c'] ?>
+                                  </option>
+                                <?php } ?>
+                              </select>
+
+                            </div>
+
+                            <!-- ================= UPLOAD ================= -->
+                            <div class="text-center mb-4">
+                              <div id="drop-zone" class="border p-4 rounded bg-light">
+                                Glissez vos fichiers ici
+                              </div>
+
+                              <input type="file" id="fileInput" multiple hidden>
+
+                              <div id="preview" class="mt-3 d-flex flex-wrap gap-2 justify-content-center"></div>
+                            </div>
+
+                            <!-- ================= BUTTON ================= -->
+                            <div class="text-end">
+                              <button type="submit" class="btn btn-primary btn-lg px-4">
+                                Valider le contenu
+                              </button>
+                            </div>
+
+                          </form>
+
                         </div>
-
-                        <!-- Editor -->
-                        <div id="editor" style="height: 250px;"></div>
-
-                        <!-- Hidden input pour envoyer en PHP -->
-                        <input type="hidden" name="contenu" id="contenu">
-
                       </div>
                     </div>
-                  </div>
-
-                  <!-- UPLOAD (EN DERNIER) -->
-                  <div class="col-12">
-                    <div class="card">
-                      <div class="card-body text-center py-4">
-
-                        <i class="bx bx-upload display-6 text-primary mb-2"></i>
-
-                        <p>Déposer vos fichiers (Images / PDF / Vidéos)</p>
-
-                        <!-- DROP ZONE -->
-                        <div id="drop-zone" class="border border-dashed p-4 rounded">
-                          Glissez vos fichiers ici
-                          
-                        </div>
-                        <input type="file" id="fileInput" multiple hidden>
-                        <!-- PREVIEW -->
-                        <div id="preview" class="mt-3 d-flex flex-wrap gap-2"></div>
-
-                      </div>
-                    </div>
-
-                  </div>
-
-                  </div>
-
+                  <!____________________________________________________>
+                  
                 </div>
-
+                </div>
               </div>
-           
           </div>
           <!-- / Content wrapper -->
         </div>
@@ -455,267 +530,7 @@
     </div>
   </div>
 </div>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  /* =========================
-     QUILL EDITOR
-  ========================= */
-  const quill = new Quill('#editor', {
-    theme: 'snow',
-    modules: { toolbar: '#toolbar' }
-  });
-
-  /* =========================
-     VARIABLES
-  ========================= */
-  let images = [];
-  let videos = [];
-  let pdfs = [];
-  let youtube = [];
-
-  const dropZone = document.getElementById("drop-zone");
-  const preview = document.getElementById("preview");
-  const fileInput = document.getElementById("fileInput");
-  const form = document.querySelector("form");
-
-  /* =========================
-     OPEN FILE DIALOG (click + dblclick)
-  ========================= */
-  dropZone.addEventListener("click", () => fileInput.click());
-  dropZone.addEventListener("dblclick", () => fileInput.click());
-
-  fileInput.addEventListener("change", (e) => {
-    handleFiles(e.target.files);
-    fileInput.value = "";
-  });
-
-  /* =========================
-     DRAG & DROP
-  ========================= */
-  dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("bg-light");
-  });
-
-  dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("bg-light");
-  });
-
-  dropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropZone.classList.remove("bg-light");
-    handleFiles(e.dataTransfer.files);
-  });
-
-  /* =========================
-     PASTE YOUTUBE
-  ========================= */
-  document.addEventListener("paste", function (e) {
-    let text = (e.clipboardData || window.clipboardData).getData("text");
-    if (isYouTubeLink(text)) {
-      addYouTube(text);
-      youtube.push(text);
-    }
-  });
-
-  function isYouTubeLink(text) {
-    return /youtu\.be|youtube\.com/.test(text);
-  }
-
-  function getYouTubeId(url) {
-    let match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-    return match ? match[1] : null;
-  }
-
-  /* =========================
-     FILE HANDLER
-  ========================= */
-  function handleFiles(files) {
-    for (let file of files) {
-
-      if (file.type.startsWith("image/")) {
-        images.push(file);
-        addFile(file, "image");
-      }
-
-      else if (file.type.startsWith("video/")) {
-        videos.push(file);
-        addFile(file, "video");
-      }
-
-      else if (file.type === "application/pdf") {
-        pdfs.push(file);
-        addFile(file, "pdf");
-      }
-
-      else {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          let content = e.target.result;
-          if (isYouTubeLink(content)) addYouTube(content);
-        };
-        reader.readAsText(file);
-      }
-    }
-  }
-
-  /* =========================
-     ADD FILE PREVIEW
-  ========================= */
-  function addFile(file, type) {
-
-    const div = document.createElement("div");
-    div.className = "border p-2 rounded item position-relative";
-    div.dataset.type = type;
-    div.dataset.name = file.name;
-
-    const url = URL.createObjectURL(file);
-
-    /* DELETE BUTTON */
-    const del = document.createElement("button");
-    del.innerHTML = "✖";
-    del.className = "btn btn-sm btn-danger";
-    del.style.position = "absolute";
-    del.style.top = "5px";
-    del.style.right = "5px";
-
-    del.onclick = (e) => {
-      e.stopPropagation();
-      div.remove();
-      updateOrder();
-    };
-
-    div.appendChild(del);
-
-    /* CONTENT */
-    if (type === "image") {
-      const img = document.createElement("img");
-      img.src = url;
-      div.appendChild(img);
-    }
-
-    else if (type === "video") {
-      const video = document.createElement("video");
-      video.src = url;
-      video.controls = true;
-      video.muted = true;
-      div.appendChild(video);
-    }
-
-    else if (type === "pdf") {
-      div.innerHTML += "📄 " + file.name;
-    }
-
-    /* MODAL PREVIEW */
-    div.addEventListener("click", () => {
-      const viewer = document.getElementById("fileViewer");
-      viewer.innerHTML = "";
-
-      if (type === "image") {
-        viewer.innerHTML = `<img src="${url}" style="max-width:100%">`;
-      }
-
-      else if (type === "video") {
-        viewer.innerHTML = `<video controls style="max-width:100%">
-                              <source src="${url}">
-                            </video>`;
-      }
-
-      else if (type === "pdf") {
-        viewer.innerHTML = `<iframe src="${url}" style="width:100%;height:500px;"></iframe>`;
-      }
-
-      new bootstrap.Modal(document.getElementById('fileModal')).show();
-    });
-
-    preview.appendChild(div);
-  }
-
-  /* =========================
-     YOUTUBE PREVIEW
-  ========================= */
-  function addYouTube(url) {
-
-    const videoId = getYouTubeId(url);
-    if (!videoId) return;
-
-    const div = document.createElement("div");
-    div.className = "border rounded item position-relative";
-    div.style.width = "200px";
-    div.style.height = "120px";
-    div.dataset.type = "youtube";
-    div.dataset.url = url;
-
-    const del = document.createElement("button");
-    del.innerHTML = "✖";
-    del.className = "btn btn-sm btn-danger";
-    del.style.position = "absolute";
-    del.style.top = "5px";
-    del.style.right = "5px";
-
-    del.onclick = (e) => {
-      e.stopPropagation();
-      div.remove();
-      updateOrder();
-    };
-
-    div.appendChild(del);
-
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube.com/embed/${videoId}`;
-    iframe.width = "100%";
-    iframe.height = "100%";
-    iframe.frameBorder = "0";
-
-    div.appendChild(iframe);
-    preview.appendChild(div);
-  }
-
-  /* =========================
-     SORTABLE
-  ========================= */
-  new Sortable(preview, {
-    animation: 150,
-    ghostClass: "sortable-ghost",
-    onEnd: updateOrder
-  });
-
-  function updateOrder() {
-    images = [];
-    videos = [];
-    pdfs = [];
-    youtube = [];
-
-    document.querySelectorAll("#preview .item").forEach(el => {
-      let type = el.dataset.type;
-
-      if (type === "image") images.push(el.dataset.name);
-      if (type === "video") videos.push(el.dataset.name);
-      if (type === "pdf") pdfs.push(el.dataset.name);
-      if (type === "youtube") youtube.push(el.dataset.url);
-    });
-  }
-
-  /* =========================
-     SUBMIT
-  ========================= */
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const data = {
-      text: quill.root.innerHTML,
-      images,
-      videos,
-      pdfs,
-      youtube
-    };
-
-    console.log(data);
-  });
-
-});
-</script>
+<script src="ajouterchapitre.js"></script>
 </body>
 </html>
 
