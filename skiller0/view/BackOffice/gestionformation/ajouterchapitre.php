@@ -1,50 +1,36 @@
-<?php
-include_once(__DIR__ . '/../../../Controller/FormationController.php');
-include_once(__DIR__ . '/../../../Controller/ChapitreController.php');
-include_once(__DIR__ . '/../../../Model/chapitre.php');
 
+<?php
+include __DIR__ . '/../../../Controller/FormationController.php';
+include __DIR__ . '/../../../Controller/ChapitreController.php';
 $formationC = new FormationController();
 $formations = $formationC->listFormations();
 
-$chapitreC = new ChapitreController();
-
-$message = "";
 $error = "";
-
-// ===================== AJOUT CHAPITRE =====================
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    // debug (tu peux supprimer après)
-    // var_dump($_POST);
-
+$chapitreC = new ChapitreController();
+$chapitres = $chapitreC->listChapitres();
+if (
+    isset($_POST["id_f"]) &&
+    isset($_POST["titre_c"]) &&
+    isset($_POST["ordre"])
+) {
     if (
+        !empty($_POST["id_f"]) &&
         !empty($_POST["titre_c"]) &&
-        !empty($_POST["formation_id"]) &&
-        isset($_POST["ordre"])
+        !empty($_POST["ordre"])
     ) {
+        $chapitre = new Chapitre(
+            null, // id_c
+            (int)$_POST['id_f'],
+            $_POST['titre_c'],
+            (int)$_POST['ordre']
+        );
 
-        try {
-            $chapitre = new Chapitre(
-                null,
-                (int) $_POST["formation_id"], // ✅ CORRECT
-                trim($_POST["titre_c"]),
-                (int) $_POST["ordre"]
-            );
+        $chapitreC->addChapitre($chapitre);
 
-            $result = $chapitreC->addChapitre($chapitre);
-
-            if ($result) {
-                $message = "✔ Chapitre ajouté avec succès !";
-            } else {
-                $error = "❌ Erreur lors de l'ajout du chapitre.";
-            }
-
-        } catch (Exception $e) {
-            $error = "❌ Exception : " . $e->getMessage();
-        }
-
+        header('Location: ajouterchapitre.php');
+        exit;
     } else {
-        $error = "❌ Veuillez remplir tous les champs.";
+        $error = "Missing information";
     }
 }
 ?>
@@ -264,39 +250,47 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <div class="layout-page">
           <!-- Navbar -->
 <!-- Navbar -->
-  <div class="d-flex align-items-center ms-auto">
+      <nav
+        class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+        id="layout-navbar"
+      >
+        <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+          <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+            <i class="bx bx-menu bx-sm"></i>
+          </a>
+        </div>
 
-    <!-- User dropdown trigger -->
-    <div class="dropdown">
+        <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+        
 
-        <button
-            class="btn p-0 border-0 bg-transparent d-flex align-items-center me-3 pe-2 gap-2"
-            type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#offcanvasEnd"
-            aria-controls="offcanvasEnd"
-        >
-
-            <!-- Avatar -->
-            <div class="position-relative">
-                <img
+          <ul class="navbar-nav flex-row align-items-center ms-auto">
+            
+            <!-- User -->
+            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+              <button
+                class="border-0 bg-transparent p-0"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasEnd"
+                aria-controls="offcanvasEnd"
+                style="transition:0.3s;"
+                onmouseover="this.style.transform='scale(1.08)'"
+                onmouseout="this.style.transform='scale(1)'"
+              >
+                <div class="avatar avatar-online">
+                  <img
                     src="../../assets/img/avatars/1.png"
-                    class="rounded-circle border shadow-sm"
-                    width="42"
-                    height="42"
-                    style="object-fit: cover;"
-                >
+                    alt="Profile"
+                    class="w-px-40 h-auto rounded-circle"
+                  />
+                </div>
+              </button>
+            </li>
+            <!--/ User -->
 
-                <!-- green online dot -->
-                <span class="position-absolute bottom-0 end-0 translate-middle p-1 bg-success border border-light rounded-circle"></span>
-            </div>
-
-        </button>
-
-    </div>
-
-</div>
-
+          </ul>
+        </div>
+      </nav>
 <!-- Offcanvas End -->
       <div
         class="offcanvas offcanvas-end"
@@ -358,28 +352,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                       <div class="card-body">
 
-                        <form  method="POST">
+                       <form method="POST">
 
                           <div class="mb-3">
                             <label class="form-label">Titre</label>
-                            <input type="text" name="titre_c" class="form-control" placeholder="Titre du chapitre">
+                            <input type="text" name="titre_c" class="form-control" placeholder="Titre du chapitre" required>
                           </div>
 
                           <div class="mb-3">
                             <label class="form-label">Formation</label>
-                            <select class="form-select" name="id_f">
-                              <option selected disabled>Choisir une formation</option>
+                            <select class="form-select" name="id_f" required>
+                              <option value="" disabled selected>Choisir une formation</option>
+
                               <?php foreach ($formations as $formation) { ?>
                                 <option value="<?= $formation['id_f']; ?>">
                                   <?= $formation['id_f'] . ' | ' . $formation['titre']; ?>
                                 </option>
                               <?php } ?>
+
                             </select>
                           </div>
 
                           <div class="mb-3">
                             <label class="form-label">Ordre</label>
-                            <input type="number" name="ordre" class="form-control" placeholder="1">
+                            <input type="number" name="ordre" class="form-control" placeholder="1" min="1" required>
                           </div>
 
                           <div class="text-end">
@@ -394,7 +390,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </div>
                   </div>
                   <!____________________________________________________>
-                    <div class="col-12">
+                  <div class="col-12">
                       <div class="card mb-4 shadow-sm">
                         <div class="card-body">
 
@@ -473,6 +469,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         </div>
                       </div>
                     </div>
+
                   <!____________________________________________________>
                   
                 </div>

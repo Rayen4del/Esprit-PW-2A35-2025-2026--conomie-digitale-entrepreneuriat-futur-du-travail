@@ -1,3 +1,7 @@
+<?php
+$sort = $_GET['sort'] ?? 'ASC';
+$nextSort = ($sort === 'ASC') ? 'DESC' : 'ASC';
+?>
 <!DOCTYPE html>
 
 <!-- =========================================================
@@ -65,7 +69,7 @@
     <script src="../../assets/js/config.js"></script>
   </head>
 
-  <body>
+  <body data-sort="<?= $sort ?>">
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
@@ -149,12 +153,12 @@
                     <div data-i18n="Without menu">dashbord</div>
                   </a>
                 </li>
-                <li class="menu-item">
+                <li class="menu-item active">
                   <a href="consulterformations.php" class="menu-link">
                     <div data-i18n="Without navbar">consulter formations</div>
                   </a>
                 </li>
-                <li class="menu-item active">
+                <li class="menu-item ">
                   <a href="ajouterformation.php" class="menu-link">
                     <div data-i18n="Without navbar">ajouter formations</div>
                   </a>
@@ -205,12 +209,12 @@
     <div class="navbar-nav align-items-center">
       <div class="nav-item d-flex align-items-center">
         <i class="bx bx-search fs-4 lh-0"></i>
-        <input
+          <input
           type="text"
+          id="searchInput"
           class="form-control border-0 shadow-none"
           placeholder="Search..."
-          aria-label="Search..."
-        />
+        >
       </div>
     </div>
     <!-- /Search -->
@@ -295,148 +299,41 @@
           <!-- Content wrapper -->
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
-              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Tables /</span> Basic Tables</h4>
-
+              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Gestion Formations /</span> Consulter Formations</h4>
               <!-- Striped Rows -->
               <div class="card p-4">
-                   <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Formations</h5>
+                  <div class="card p-3">
+ <!-- HEADER -->
+                    <div class="d-flex justify-content-between mb-3">
 
-                        <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
-                            <i class="bx bx-plus"></i>
-                            Ajouter formation
-                        </button>
+                      <h5>Chapitres</h5>
+
+                      <div>
+                        <a href="?sort=<?= $nextSort ?>" class="btn btn-outline-primary">
+                          Trier <?= $sort ?>
+                        </a>
+
+                        <a href="ajouterchapitre.php" class="btn btn-primary">
+                          Ajouter
+                        </a>
+                      </div>
+
                     </div>
-                <div class="table-responsive text-nowrap">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Project</th>
-                        <th>Client</th>
-                        <th>Users</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody class="table-border-bottom-0">
-                      <tr>
-                        <td>
-                          <i class="fab fa-bootstrap fa-lg text-primary me-3"></i> <strong>Bootstrap Project</strong>
-                        </td>
-                        <td>Jerry Milton</td>
-                        <td>
-                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Lilian Fuller"
-                            >
-                              <img src="../../assets/img/avatars/5.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Sophia Wilkerson"
-                            >
-                              <img src="../../assets/img/avatars/6.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Christina Parker"
-                            >
-                              <img src="../../assets/img/avatars/7.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                          </ul>
-                        </td>
-                        <td><span class="badge bg-label-warning me-1">Pending</span></td>
-                        <td>
-                            <div class="dropdown">
-                            <button type="button"
-                                    class="btn btn-sm btn-icon btn-outline-secondary dropdown-toggle hide-arrow"
-                                    data-bs-toggle="dropdown">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
 
-                            <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                    <!-- TABLE -->
+                    <div id="tableBody" class="table-responsive text-nowrap">
+                      <!-- AJAX LOAD -->
+                    </div>
 
-                                <a class="dropdown-item d-flex align-items-center gap-2"
-                                    href="#"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalViewFormation">
-                                    <i class="bx bx-show text-primary fs-5"></i>
-                                    <span>Visualiser</span>
-                                </a>
+                  </div>
 
-                                <a class="dropdown-item d-flex align-items-center gap-2"
-                                    href="#"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalEditFormation">
-
-                                    <i class="bx bx-edit-alt text-warning fs-5"></i>
-                                    <span>Modifier</span>
-                                </a>
-
-                                <div class="dropdown-divider"></div>
-
-                                <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#">
-                                <i class="bx bx-trash fs-5"></i>
-                                <span>Supprimer</span>
-                                </a>
-
-                            </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
-              </div>   
-                 <! fin de table ___________________________________________________________________________________>
-                <!pagination>
-                    <br>
-                    <nav aria-label="Page navigation">
-                          <ul class="pagination justify-content-center">
-                            <li class="page-item prev">
-                              <a class="page-link" href="javascript:void(0);"
-                                ><i class="tf-icon bx bx-chevrons-left"></i
-                              ></a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">1</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">2</a>
-                            </li>
-                            <li class="page-item active">
-                              <a class="page-link" href="javascript:void(0);">3</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">4</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">5</a>
-                            </li>
-                            <li class="page-item next">
-                              <a class="page-link" href="javascript:void(0);"
-                                ><i class="tf-icon bx bx-chevrons-right"></i
-                              ></a>
-                            </li>
-                          </ul>
-                        </nav>
-                <!-- Fin pagination -->
+
                 </div>
-    
+                </div>
+              </div> 
+                 
           </div>
-          <!-- / Content wrapper -->
-        </div>
         <!-- / Layout container ------------------------------------------------------------------------------------------------->
       </div>
       <!-- / Layout wrapper -->
@@ -461,144 +358,92 @@
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
-    <!-- Modal View Formation -->
-      <div class="modal fade" id="modalViewFormation" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
-    <div class="modal-content shadow-lg">
-
-      <!-- HEADER -->
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">Détails de la formation</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- BODY -->
-      <div class="modal-body">
-
-        <h5 class="fw-bold">Angular Basics</h5>
-        <p class="text-muted mb-3">
-          Formation complète pour apprendre Angular depuis zéro jusqu’à niveau avancé.
-        </p>
-
-        <hr>
-
-        <div class="mb-2">
-          <strong>Client :</strong> Albert Cook
-        </div>
-
-        <div class="mb-2">
-          <strong>Durée :</strong> 30 heures
-        </div>
-
-        <div class="mb-2">
-          <strong>Status :</strong>
-          <span class="badge bg-label-success">Active</span>
-        </div>
-
-        <div class="mb-3">
-          <strong>Progression :</strong>
-          <div class="progress mt-1" style="height:8px;">
-            <div class="progress-bar bg-success" style="width: 70%"></div>
-          </div>
-        </div>
-
-        <hr>
-
-        <h6>Description</h6>
-        <p class="small text-muted">
-          Cette formation couvre les bases de Angular, les composants, les services,
-          et la création d’applications web modernes.
-        </p>
-
-        <!-- FAKE IMAGE -->
-        <img src="../../assets/img/elements/11.jpg"
-             class="img-fluid rounded"
-             alt="formation">
-
-      </div>
-
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
-          Fermer
-        </button>
-
-        <button class="btn btn-primary btn-sm">
-          Télécharger PDF
-        </button>
-        <div class="modal-header bg-white text-dark d-flex justify-content-between align-items-center">
-
-        <h5 class="modal-title">Détails Formation</h5>
-        <a id="btnAddChapitre" href="ajoutertest.php?formation_id=<?= $formation['id_f'] ?>" class="btn btn-success">
-          <i class="bx bx-plus"></i> Ajouter Test
-        </a>
-        <!-- 🔥 BOUTON AJOUTER CHAPITRE -->
-        <a id="btnAddChapitre" href="ajouterchapitre.php?formation_id=<?= $formation['id_f'] ?>" class="btn btn-success">
-          <i class="bx bx-plus"></i> Ajouter Chapitre
-        </a>
-
-      </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-<!-- Modal Modifier Formation -->
-<div class="modal fade" id="modalEditFormation" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+        <!-- ================= VIEW MODAL ================= -->
+<div class="modal fade" id="modalViewChapitre">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
 
-      <!-- HEADER -->
       <div class="modal-header">
-        <h5 class="modal-title">Modifier Formation</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5>Détails Chapitre</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
-      <!-- BODY -->
       <div class="modal-body">
-
-        <div class="mb-3">
-          <label class="form-label">Nom de la formation</label>
-          <input type="text" class="form-control" value="Angular Basics">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Client</label>
-          <input type="text" class="form-control" value="Albert Cook">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Durée</label>
-          <input type="text" class="form-control" value="30 heures">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select">
-            <option selected>Active</option>
-            <option>Completed</option>
-            <option>Pending</option>
-          </select>
-        </div>
-
-      </div>
-
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          Annuler
-        </button>
-        <button type="button" class="btn btn-primary">
-          Enregistrer
-        </button>
+        <p id="viewContent"></p>
       </div>
 
     </div>
   </div>
 </div>
+
+<!-- ================= EDIT MODAL ================= -->
+<div class="modal fade" id="modalEditChapitre">
+
+  <div class="modal-dialog modal-dialog-centered">
+
+    <div class="modal-content">
+
+      <div class="modal-header bg-warning">
+        <h5>Modifier Chapitre</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="updatechapitre.php">
+
+        <input type="hidden" name="id_c" id="edit_id">
+
+        <div class="modal-body">
+
+          <label>Titre</label>
+          <input type="text" class="form-control mb-2" name="titre_c" id="edit_titre">
+
+          <label>Ordre</label>
+          <input type="number" class="form-control mb-2" name="ordre" id="edit_ordre">
+
+          <label>ID Formation</label>
+          <input type="number" class="form-control mb-2" name="id_f" id="edit_idf">
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Annuler
+          </button>
+
+          <button class="btn btn-primary">
+            Enregistrer
+          </button>
+        </div>
+
+      </form>
+
+    </div>
   </div>
 </div>
+<!-- Toast Danger Center -->
+<div class="toast-container position-fixed top-50 start-50 translate-middle">
+  
+  <div id="dangerToast"
+       class="toast align-items-center text-bg-danger border-0 bg-danger"
+       role="alert"
+       aria-live="assertive"
+       aria-atomic="true">
+
+    <div class="d-flex">
+      <div class="toast-body">
+        ❌ Action supprimée avec succès !
+      </div>
+
+      <button type="button"
+              class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"></button>
+    </div>
+
+  </div>
+
 </div>
+
+<script src="consulterchapitres.js"></script>
 </body>
 </html>
 

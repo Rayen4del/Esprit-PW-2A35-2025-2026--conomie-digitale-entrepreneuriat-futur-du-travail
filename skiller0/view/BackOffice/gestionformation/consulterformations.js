@@ -22,13 +22,23 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // ================= VIEW =================
-    window.openView = function(id) {
-        const frame = document.getElementById("viewFrame");
-        frame.src = "viewformation.php?id=" + id;
+    window.openView = function (id) {
 
-        const btn = document.getElementById("btnAddChapitre");
-        btn.href = "ajouterchapitre.php?formation_id=" + id;
-    };
+    const modal = document.getElementById("modalViewChapitre");
+    const content = document.getElementById("viewContent");
+
+    fetch("viewchapitre.php?id=" + id)
+        .then(res => res.text())
+        .then(data => {
+
+            if (content) content.innerHTML = data;
+
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show(); // ✅ CORRECT
+
+        })
+        .catch(err => console.error("❌ VIEW ERROR:", err));
+};
     // ================= EDIT =================
     window.openEdit = function (f) {
 

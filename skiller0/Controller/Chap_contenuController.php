@@ -86,5 +86,19 @@ class ChapContenuController {
             'ordre_cc' => $ordre
         ]);
     }
+    public function listContenusByChapitre($id_c)
+    {
+        $db = config::getConnexion();
+
+        $sql = "SELECT * FROM chap_contenu 
+                WHERE id_c = :id_c 
+                ORDER BY ordre_cc ASC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id_c' => $id_c]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
+
 ?>

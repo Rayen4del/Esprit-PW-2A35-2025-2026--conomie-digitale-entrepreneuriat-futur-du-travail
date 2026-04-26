@@ -13,12 +13,38 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("fileInput");
   const preview = document.getElementById("preview");
 
-  /* ================= DATA STRUCTURE ================= */
+  /* ================= DATA ================= */
   let blocks = [];
 
   function uid() {
     return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2);
   }
+
+  /* ================= YOUTUBE ================= */
+  function getYoutubeEmbed(url) {
+    const regExp = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/;
+    const match = url.match(regExp);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  }
+
+  /* ================= PASTE ================= */
+  document.addEventListener("paste", function (e) {
+    const text = e.clipboardData.getData("text");
+
+    if (!text) return;
+
+    const yt = getYoutubeEmbed(text);
+
+    if (yt) {
+      blocks.push({
+        id: uid(),
+        type: "youtube",
+        content: yt
+      });
+
+      render();
+    }
+  });
 
   /* ================= ADD TEXT ================= */
   addTextBtn.addEventListener("click", function (e) {
@@ -38,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
     render();
   });
 
-  /* ================= FILE UPLOAD (local preview) ================= */
+  /* ================= FILE UPLOAD ================= */
   dropZone.addEventListener("click", () => fileInput.click());
 
   fileInput.addEventListener("change", (e) => {
@@ -50,6 +76,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
   dropZone.addEventListener("drop", e => {
     e.preventDefault();
+
+    const text =
+      e.dataTransfer.getData("text/uri-list") ||
+      e.dataTransfer.getData("text/plain");
+
+    if (text) {
+      const yt = getYoutubeEmbed(text);
+
+      if (yt) {
+        blocks.push({
+          id: uid(),
+          type: "youtube",
+          content: yt
+        });
+
+        render();
+        return;
+      }
+    }
+
     handleFiles(e.dataTransfer.files);
   });
 
@@ -65,9 +111,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       blocks.push({
         id: uid(),
-        type: type,
-        file: file,
-        content: URL.createObjectURL(file) // preview local
+        type,
+        file,
+        content: URL.createObjectURL(file)
       });
     }
 
@@ -134,6 +180,19 @@ document.addEventListener("DOMContentLoaded", function () {
         div.appendChild(btn);
       }
 
+      /* YOUTUBE */
+      else if (b.type === "youtube") {
+        const iframe = document.createElement("iframe");
+        iframe.src = b.content;
+        iframe.width = "100%";
+        iframe.height = "315";
+        iframe.allowFullscreen = true;
+        iframe.allow =
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+
+        div.appendChild(iframe);
+      }
+
       preview.appendChild(div);
     });
   }
@@ -154,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  /* ================= UPLOAD FUNCTION (IMPORTANT) ================= */
+  /* ================= UPLOAD FILE ================= */
   async function uploadFile(file) {
     const fd = new FormData();
     fd.append("file", file);
@@ -164,9 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
       body: fd
     });
 
-    const path = await res.text();
-
-    return path; // ex: uploads/abc123.jpg
+    return await res.text();
   }
 
   /* ================= SUBMIT ================= */
@@ -175,15 +232,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const chapitre_id = document.querySelector('select[name="chapitre_id"]').value;
 
-    if (!chapitre_id) {
-      alert("Choisis un chapitre !");
-      return;
-    }
-
-    if (blocks.length === 0) {
-      alert("Ajoute du contenu !");
-      return;
-    }
+    if (!chapitre_id) return alert("Choisis un chapitre !");
+    if (blocks.length === 0) return alert("Ajoute du contenu !");
 
     const fd = new FormData();
     fd.append("chapitre_id", chapitre_id);
@@ -195,15 +245,17 @@ document.addEventListener("DOMContentLoaded", function () {
       fd.append(`blocks[${i}][type]`, b.type);
       fd.append(`blocks[${i}][ordre]`, i + 1);
 
-      /* TEXT */
       if (b.type === "text") {
         fd.append(`blocks[${i}][contenu]`, b.content);
       }
 
-      /* FILE → upload JS */
+      if (b.type === "youtube") {
+        fd.append(`blocks[${i}][contenu]`, b.content);
+      }
+
       if (b.file) {
         const url = await uploadFile(b.file);
-        fd.append(`blocks[${i}][contenu]`, url); // uploads/file.jpg
+        fd.append(`blocks[${i}][contenu]`, url);
       }
     }
 
@@ -221,7 +273,7 @@ document.addEventListener("DOMContentLoaded", function () {
       render();
       quill.setText("");
     })
-    .catch(err => console.error(err));
+    .catch(console.error);
   });
 
 });

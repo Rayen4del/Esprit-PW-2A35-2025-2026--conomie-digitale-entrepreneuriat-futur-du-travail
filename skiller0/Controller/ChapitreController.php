@@ -4,67 +4,152 @@ include_once(__DIR__ . '/../Model/chapitre.php');
 
 class ChapitreController {
 
+    // =========================
+    // LIST ALL
+    // =========================
     public function listChapitres() {
         $sql = "SELECT * FROM chapitre";
         $db = config::getConnexion();
-        return $db->query($sql);
+
+        try {
+            return $db->query($sql);
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
     }
 
-    public function deleteChapitre($id) {
-        $sql = "DELETE FROM chapitre WHERE id_c = :id";
+    // =========================
+    // GET BY ID
+    // =========================
+    public function getChapitreById($id)
+    {
         $db = config::getConnexion();
+
+        $stmt = $db->prepare("SELECT * FROM chapitre WHERE id_c = ?");
+        $stmt->execute([$id]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    public function deleteChapitre($id)
+    {
+        $db = config::getConnexion();
+
+        $sql = "DELETE FROM chapitre WHERE id_c = :id";
         $req = $db->prepare($sql);
+
         $req->bindValue(':id', $id);
         $req->execute();
     }
-    public function addChapitre(Chapitre $chapitre) {
-    $db = config::getConnexion();
 
-    $sql = "INSERT INTO chapitre (id_f, titre_c, ordre)
-            VALUES (:id_f, :titre_c, :ordre)";
+    // =========================
+    // ADD CHAPITRE
+    // =========================
+    public function addChapitre(Chapitre $chapitre)
+    {
+        $sql = "INSERT INTO chapitre (id_f, titre_c, ordre)
+                VALUES (:id_f, :titre_c, :ordre)";
 
-    $stmt = $db->prepare($sql);
-
-    return $stmt->execute([
-        'id_f' => $chapitre->getFormationId(),
-        'titre_c' => $chapitre->getTitre(),
-        'ordre' => $chapitre->getOrdre()
-    ]);
-}
-
-    public function updateChapitre(Chapitre $chapitre, $id) {
         $db = config::getConnexion();
 
-        $query = $db->prepare(
-            "UPDATE chapitre SET 
+        try {
+            $query = $db->prepare($sql);
+            $query->execute([
+                'id_f' => $chapitre->getIdFormation(),
+                'titre_c' => $chapitre->getTitre(),
+                'ordre' => $chapitre->getOrdre()
+            ]);
+        } catch (Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+    }
+
+    // =========================
+    // UPDATE CHAPITRE
+    // =========================
+    public function updateChapitre(Chapitre $chapitre)
+    {
+        $sql = "UPDATE chapitre SET 
                 id_f = :id_f,
                 titre_c = :titre_c,
                 ordre = :ordre
-            WHERE id_c = :id"
-        );
+                WHERE id_c = :id";
+
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
 
         $query->execute([
-            'id' => $id,
+            'id' => $chapitre->getId(),
             'id_f' => $chapitre->getFormationId(),
             'titre_c' => $chapitre->getTitre(),
             'ordre' => $chapitre->getOrdre()
         ]);
     }
 
-    public function showChapitre($id) {
+    // =========================
+    // SEARCH + PAGINATION
+    // =========================
+    public function searchPaginated($search = "", $page = 1, $limit = 10, $sort = "ASC")
+    {
         $db = config::getConnexion();
-        $query = $db->prepare("SELECT * FROM chapitre WHERE id_c = $id");
-        $query->execute();
-        return $query->fetch();
+
+        $offset = ($page - 1) * $limit;
+        $sort = strtoupper($sort);
+
+        // COUNT
+        $sqlCount = "SELECT COUNT(*) FROM chapitre
+                     WHERE titre_c LIKE :search";
+
+        $stmtCount = $db->prepare($sqlCount);
+        $stmtCount->execute([
+            'search' => "%" . $search . "%"
+        ]);
+
+        $total = $stmtCount->fetchColumn();
+        $totalPages = ceil($total / $limit);
+
+        // DATA
+        $sql = "SELECT * FROM chapitre
+                WHERE titre_c LIKE :search
+                ORDER BY titre_c $sort
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $db->prepare($sql);
+
+        $stmt->bindValue(':search', "%" . $search . "%");
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => $data,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
+        ];
     }
+
+    // =========================
+    // LIST BY FORMATION (IMPORTANT)
+    // =========================
     public function listChapitresByFormation($id_f)
-{
-    $db = config::getConnexion();
+    {
+        $db = config::getConnexion();
 
-    $stmt = $db->prepare("SELECT * FROM chapitre WHERE id_f = ?");
-    $stmt->execute([$id_f]);
+        $stmt = $db->prepare("
+            SELECT * FROM chapitre 
+            WHERE id_f = ? 
+            ORDER BY ordre ASC
+        ");
 
-    return $stmt->fetchAll();
-}
+        $stmt->execute([$id_f]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
