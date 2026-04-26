@@ -1,18 +1,38 @@
 <?php
-// Informations de connexion
-$host = "localhost";
-$user = "root";
-$password = ""; // vide par défaut dans XAMPP
-$dbname = "skiller_db"; 
-
-// Connexion avec MySQL
-$conn = new mysqli($host, $user, $password, $dbname);
-
-// Vérification de la connexion
-if ($conn->connect_error) {
-    die("❌ Connexion échouée : " . $conn->connect_error);
+class config
+{   private static $pdo = null;
+    public static function getConnexion()
+    {
+        if (!isset(self::$pdo)) {
+            $servername="localhost";
+            $username="root";
+            $password ="";
+            $dbname="skiller";
+            try {
+                self::$pdo = new PDO("mysql:host=$servername;dbname=$dbname",
+                        $username,
+                        $password
+                   
+                );
+                self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+               
+               
+            } catch (Exception $e) {
+                die('Erreur: ' . $e->getMessage());
+            }
+        }
+        return self::$pdo;
+    }
 }
-
-// Message optionnel
-// echo "✅ Connexion réussie !";
+config::getConnexion();
 ?>
+
+
+
+
+
+
+
+
+
