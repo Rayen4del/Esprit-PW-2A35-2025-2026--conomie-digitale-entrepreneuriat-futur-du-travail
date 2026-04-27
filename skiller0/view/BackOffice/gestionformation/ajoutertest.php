@@ -1,3 +1,92 @@
+
+<?php
+include_once __DIR__ . '/../../../Controller/TestController.php';
+include_once __DIR__ . '/../../../Controller/QuestionController.php';
+include __DIR__ . '/../../../Controller/FormationController.php';
+include __DIR__ . '/../../../Controller/ChapitreController.php';
+$formationC = new FormationController();
+$formations = $formationC->listFormations();
+
+$error = "";
+$chapitreC = new ChapitreController();
+$chapitres = $chapitreC->listChapitres();
+
+$testC = new TestController();
+$questionC = new QuestionController();
+
+$tests = $testC->listTests();
+
+$error = "";
+$success = "";
+
+/* =========================
+   ENREGISTRER QUESTIONS
+========================= */
+if(isset($_POST['add_test'])) {
+
+    $type = $_POST['type_test'];
+    $id_f = isset($_POST['id_f']) ? (int) $_POST['id_f'] : null;
+    $id_c = isset($_POST['id_c']) ? (int) $_POST['id_c'] : null;
+    $score_min = isset($_POST['score_min']) ? (int) $_POST['score_min'] : null;
+    $date_creation = $_POST['date_creation'];
+
+    if (!$type || (!$id_f && !$id_c) || !$score_min || !$date_creation) {
+        die("Tous les champs sont requis");
+    }
+    if (empty($type) || empty($score_min) || empty($date_creation)) {
+    die("Champs obligatoires manquants");
+}
+
+if ($type == "niveau" && !$id_f) {
+    die("Formation requise");
+}
+
+if ($type == "quiz" && !$id_c) {
+    die("Chapitre requis");
+}
+$test = new Test(
+    null,
+    $id_c,   // chapitreId
+    $id_f,   // formationId
+    $score_min,
+    new DateTime($date_creation)
+);
+    
+    $testC->addTest($test);
+}
+if (isset($_POST['save_questions'])) {
+
+    $id_test = isset($_POST['id_test']) ? (int) $_POST['id_test'] : null;
+
+    if (!$id_test) {
+        die("Test non sélectionné");
+    }
+
+          if (!empty($_POST['questions'])) {
+
+            foreach ($_POST['questions'] as $q) {
+
+          if (!isset($q['question'], $q['reponse'], $q['type'])) {
+              continue;
+          }
+
+          $question = new Question(
+              null,
+              $id_test,
+              $q['type'],
+              $q['question'],
+              $q['reponse']
+          );
+
+          $questionC->addQuestion($question);
+      }
+
+        $success = "Questions ajoutées avec succès";
+    } else {
+        $error = "Aucune question ajoutée";
+    }
+}
+?>
 <!DOCTYPE html>
 
 <!-- =========================================================
@@ -21,6 +110,31 @@
   data-template="vertical-menu-template-free"
 >
   <head>
+    <style>
+#preview .item {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+#preview .item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#preview .item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+</style>
     <meta charset="utf-8" />
     <meta
       name="viewport"
@@ -33,7 +147,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
-
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -154,7 +268,7 @@
                     <div data-i18n="Without navbar">consulter formations</div>
                   </a>
                 </li>
-                <li class="menu-item active">
+                <li class="menu-item">
                   <a href="ajouterformation.php" class="menu-link">
                     <div data-i18n="Without navbar">ajouter formations</div>
                   </a>
@@ -166,7 +280,7 @@
                 </li>
                 <li class="menu-item">
                   <a href="ajouterchapitre.php" class="menu-link">
-                    <div data-i18n="Without navbar">ajouter chapitre</div>
+                    <div data-i18n="Without navbar">ajouter chapitre et son contenu</div>
                   </a>
                 </li>
                 <li class="menu-item">
@@ -174,7 +288,7 @@
                     <div data-i18n="Container">consulter tests</div>
                   </a>
                 </li>
-                <li class="menu-item">
+                <li class="menu-item active">
                   <a href="ajoutertest.php" class="menu-link">
                     <div data-i18n="Without navbar">ajouter test</div>
                   </a>
@@ -189,251 +303,236 @@
         <div class="layout-page">
           <!-- Navbar -->
 <!-- Navbar -->
-<nav
-  class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
-  id="layout-navbar"
->
-  <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-    <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
-      <i class="bx bx-menu bx-sm"></i>
-    </a>
-  </div>
+      <nav
+        class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+        id="layout-navbar"
+      >
+        <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+          <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+            <i class="bx bx-menu bx-sm"></i>
+          </a>
+        </div>
 
-  <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-    
-    <!-- Search -->
-    <div class="navbar-nav align-items-center">
-      <div class="nav-item d-flex align-items-center">
-        <i class="bx bx-search fs-4 lh-0"></i>
-        <input
-          type="text"
-          class="form-control border-0 shadow-none"
-          placeholder="Search..."
-          aria-label="Search..."
-        />
-      </div>
-    </div>
-    <!-- /Search -->
+        <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+        
 
-    <ul class="navbar-nav flex-row align-items-center ms-auto">
-      
-      <!-- User -->
-      <li class="nav-item navbar-dropdown dropdown-user dropdown">
-        <button
-          class="border-0 bg-transparent p-0"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#offcanvasEnd"
-          aria-controls="offcanvasEnd"
-          style="transition:0.3s;"
-          onmouseover="this.style.transform='scale(1.08)'"
-          onmouseout="this.style.transform='scale(1)'"
-        >
-          <div class="avatar avatar-online">
+          <ul class="navbar-nav flex-row align-items-center ms-auto">
+            
+            <!-- User -->
+            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+              <button
+                class="border-0 bg-transparent p-0"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasEnd"
+                aria-controls="offcanvasEnd"
+                style="transition:0.3s;"
+                onmouseover="this.style.transform='scale(1.08)'"
+                onmouseout="this.style.transform='scale(1)'"
+              >
+                <div class="avatar avatar-online">
+                  <img
+                    src="../../assets/img/avatars/1.png"
+                    alt="Profile"
+                    class="w-px-40 h-auto rounded-circle"
+                  />
+                </div>
+              </button>
+            </li>
+            <!--/ User -->
+
+          </ul>
+        </div>
+      </nav>
+<!-- Offcanvas End -->
+      <div
+        class="offcanvas offcanvas-end"
+        tabindex="-1"
+        id="offcanvasEnd"
+        aria-labelledby="offcanvasEndLabel"
+      >
+        <div class="offcanvas-header">
+          <h5 id="offcanvasEndLabel" class="offcanvas-title">Mon Profil</h5>
+          <button
+            type="button"
+            class="btn-close text-reset"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <div class="offcanvas-body">
+          <div class="text-center mb-4">
             <img
               src="../../assets/img/avatars/1.png"
               alt="Profile"
-              class="w-px-40 h-auto rounded-circle"
+              class="rounded-circle mb-3"
+              width="80"
             />
+            <h6 class="mb-1">Amen Allah</h6>
+            <small class="text-muted">Utilisateur</small>
           </div>
-        </button>
-      </li>
-      <!--/ User -->
 
-    </ul>
-  </div>
-</nav>
-<!-- / Navbar -->
+          <div class="list-group">
+            <a href="profile.php" class="list-group-item list-group-item-action">
+              <i class="bx bx-user me-2"></i> Mon Profil
+            </a>
 
-<!-- Offcanvas End -->
-<div
-  class="offcanvas offcanvas-end"
-  tabindex="-1"
-  id="offcanvasEnd"
-  aria-labelledby="offcanvasEndLabel"
->
-  <div class="offcanvas-header">
-    <h5 id="offcanvasEndLabel" class="offcanvas-title">Mon Profil</h5>
-    <button
-      type="button"
-      class="btn-close text-reset"
-      data-bs-dismiss="offcanvas"
-      aria-label="Close"
-    ></button>
-  </div>
+            <a href="settings.php" class="list-group-item list-group-item-action">
+              <i class="bx bx-cog me-2"></i> Paramètres
+            </a>
 
-  <div class="offcanvas-body">
-    <div class="text-center mb-4">
-      <img
-        src="../../assets/img/avatars/1.png"
-        alt="Profile"
-        class="rounded-circle mb-3"
-        width="80"
-      />
-      <h6 class="mb-1">Amen Allah</h6>
-      <small class="text-muted">Utilisateur</small>
-    </div>
-
-    <div class="list-group">
-      <a href="profile.php" class="list-group-item list-group-item-action">
-        <i class="bx bx-user me-2"></i> Mon Profil
-      </a>
-
-      <a href="settings.php" class="list-group-item list-group-item-action">
-        <i class="bx bx-cog me-2"></i> Paramètres
-      </a>
-
-      <a href="logout.php" class="list-group-item list-group-item-action text-danger">
-        <i class="bx bx-log-out me-2"></i> Déconnexion
-      </a>
-    </div>
-  </div>
-</div>
+            <a href="logout.php" class="list-group-item list-group-item-action text-danger">
+              <i class="bx bx-log-out me-2"></i> Déconnexion
+            </a>
+          </div>
+        </div>
+      </div>
 
           <!-- / Navbar -->
 
           <!-- Content wrapper -->
           <div class="content-wrapper">
-            <div class="container-xxl flex-grow-1 container-p-y">
-              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Tables /</span> Basic Tables</h4>
+              <div class="container-xxl flex-grow-1 container-p-y">
+                <div class="row">
 
-              <!-- Striped Rows -->
-              <div class="card p-4">
-                   <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Formations</h5>
+                  <!-- FORMULAIRE -->
+                  <div class="col-12">
+                    <div class="card mb-4">
+                      <div class="card-header">
+                        <h5 class="mb-0">test Chapitre</h5>
+                      </div>
 
-                        <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
-                            <i class="bx bx-plus"></i>
-                            Ajouter formation
-                        </button>
-                    </div>
-                <div class="table-responsive text-nowrap">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Project</th>
-                        <th>Client</th>
-                        <th>Users</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody class="table-border-bottom-0">
-                      <tr>
-                        <td>
-                          <i class="fab fa-bootstrap fa-lg text-primary me-3"></i> <strong>Bootstrap Project</strong>
-                        </td>
-                        <td>Jerry Milton</td>
-                        <td>
-                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Lilian Fuller"
-                            >
-                              <img src="../../assets/img/avatars/5.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Sophia Wilkerson"
-                            >
-                              <img src="../../assets/img/avatars/6.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                            <li
-                              data-bs-toggle="tooltip"
-                              data-popup="tooltip-custom"
-                              data-bs-placement="top"
-                              class="avatar avatar-xs pull-up"
-                              title="Christina Parker"
-                            >
-                              <img src="../../assets/img/avatars/7.png" alt="Avatar" class="rounded-circle" />
-                            </li>
-                          </ul>
-                        </td>
-                        <td><span class="badge bg-label-warning me-1">Pending</span></td>
-                        <td>
-                            <div class="dropdown">
-                            <button type="button"
-                                    class="btn btn-sm btn-icon btn-outline-secondary dropdown-toggle hide-arrow"
-                                    data-bs-toggle="dropdown">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
+                      <div class="card-body">
 
-                            <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                       <form method="POST">
+                        <div class="mb-4">
+                          <label class="form-label fw-bold">Type de test</label>
 
-                                <a class="dropdown-item d-flex align-items-center gap-2"
-                                    href="#"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalViewFormation">
-                                    <i class="bx bx-show text-primary fs-5"></i>
-                                    <span>Visualiser</span>
-                                </a>
+                          <div class="d-flex gap-4">
 
-                                <a class="dropdown-item d-flex align-items-center gap-2"
-                                    href="#"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalEditFormation">
-
-                                    <i class="bx bx-edit-alt text-warning fs-5"></i>
-                                    <span>Modifier</span>
-                                </a>
-
-                                <div class="dropdown-divider"></div>
-
-                                <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#">
-                                <i class="bx bx-trash fs-5"></i>
-                                <span>Supprimer</span>
-                                </a>
-
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="type_test" value="niveau" id="niveau" checked>
+                              <label class="form-check-label" for="niveau">
+                                Test / Niveau
+                              </label>
                             </div>
+
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="type_test" value="quiz" id="quiz">
+                              <label class="form-check-label" for="quiz">
+                                Quiz / Compréhension
+                              </label>
                             </div>
+
                           </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                        </div>
+                         <div class="row g-3">
+
+                          <!-- Formation -->
+                          <div class="col-md-6">
+                            <label class="form-label">Formation</label>
+                            <select class="form-select" name="id_f" required id="formationSelect">
+                              <option value="" disabled selected>Choisir une formation</option>
+
+                              <?php foreach ($formations as $formation) { ?>
+                                <option value="<?= $formation['id_f']; ?>">
+                                  <?= $formation['id_f'] . ' | ' . $formation['titre']; ?>
+                                </option>
+                              <?php } ?>
+
+                            </select>
+                          </div>
+
+                          <!-- Chapitre -->
+                          <div class="col-md-6">
+                            <label class="form-label">Chapitre</label>
+                            <select class="form-select" name="id_c" required id="chapitreSelect">
+                              <option value="" disabled selected>Choisir un chapitre</option>
+
+                              <?php foreach ($chapitres as $c) { ?>
+                                <option value="<?= $c['id_c'] ?>">
+                                  #<?= $c['id_c'] ?> - <?= $c['titre_c'] ?>
+                                </option>
+                              <?php } ?>
+
+                            </select>
+                          </div>
+
+                          <!-- Score -->
+                          <div class="col-md-6">
+                            <label class="form-label">Score minimum</label>
+                            <input type="number" name="score_min" class="form-control" placeholder="Ex: 10" min="0" required>
+                          </div>
+
+                          <!-- Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Date de création</label>
+                            <input type="date" name="date_creation" class="form-control" 
+       value="<?= date('Y-m-d') ?>" readonly>
+                          </div>
+
+                          <!-- Button -->
+                          <div class="col-12 text-end mt-2">
+                            <button type="submit" name="add_test" class="btn btn-primary px-4">
+                              Ajouter Test
+                            </button>
+                          </div>
+
+                        </div>
+
+                      </form>
+
+                      <div class="card">
+  <div class="card-header">
+    <h5>Ajouter des questions à un test existant</h5>
+  </div>
+
+  <div class="card-body">
+
+    <!-- CHOIX TEST -->
+    <label class="form-label">Choisir un test</label>
+    <select id="testSelect" class="form-select mb-3">
+        <option disabled selected>Choisir un test</option>
+        <?php foreach ($tests as $t) { ?>
+            <option value="<?= $t['id_t'] ?>">
+                Test #<?= $t['id_t'] ?> | Formation <?= $t['id_f'] ?> | Chapitre <?= $t['id_c'] ?>
+            </option>
+        <?php } ?>
+    </select>
+
+    <!-- NOMBRE QUESTIONS -->
+    <label class="form-label">Nombre de questions</label>
+    <input type="number" id="count" class="form-control mb-3" min="1">
+
+    <button type="button" class="btn btn-primary mb-3" onclick="generate()">
+        Générer
+    </button>
+
+    <!-- FORM QUESTIONS -->
+    <form method="POST">
+
+        <input type="hidden" name="id_test" id="id_test_hidden">
+
+        <div id="container"></div>
+
+        <button type="submit" name="save_questions" class="btn btn-success mt-3">
+            Enregistrer
+        </button>
+
+    </form>
+
+  </div>
+</div>
+                  </div>
+                  <!____________________________________________________>
+                
+
+                  <!____________________________________________________>
+                  
                 </div>
-              </div>   
-                 <! fin de table ___________________________________________________________________________________>
-                <!pagination>
-                    <br>
-                    <nav aria-label="Page navigation">
-                          <ul class="pagination justify-content-center">
-                            <li class="page-item prev">
-                              <a class="page-link" href="javascript:void(0);"
-                                ><i class="tf-icon bx bx-chevrons-left"></i
-                              ></a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">1</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">2</a>
-                            </li>
-                            <li class="page-item active">
-                              <a class="page-link" href="javascript:void(0);">3</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">4</a>
-                            </li>
-                            <li class="page-item">
-                              <a class="page-link" href="javascript:void(0);">5</a>
-                            </li>
-                            <li class="page-item next">
-                              <a class="page-link" href="javascript:void(0);"
-                                ><i class="tf-icon bx bx-chevrons-right"></i
-                              ></a>
-                            </li>
-                          </ul>
-                        </nav>
-                <!-- Fin pagination -->
                 </div>
-    
+              </div>
           </div>
           <!-- / Content wrapper -->
         </div>
@@ -461,132 +560,103 @@
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
-    <!-- Modal View Formation -->
-      <div class="modal fade" id="modalViewFormation" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
-    <div class="modal-content shadow-lg">
-
-      <!-- HEADER -->
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">Détails de la formation</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- BODY -->
-      <div class="modal-body">
-
-        <h5 class="fw-bold">Angular Basics</h5>
-        <p class="text-muted mb-3">
-          Formation complète pour apprendre Angular depuis zéro jusqu’à niveau avancé.
-        </p>
-
-        <hr>
-
-        <div class="mb-2">
-          <strong>Client :</strong> Albert Cook
-        </div>
-
-        <div class="mb-2">
-          <strong>Durée :</strong> 30 heures
-        </div>
-
-        <div class="mb-2">
-          <strong>Status :</strong>
-          <span class="badge bg-label-success">Active</span>
-        </div>
-
-        <div class="mb-3">
-          <strong>Progression :</strong>
-          <div class="progress mt-1" style="height:8px;">
-            <div class="progress-bar bg-success" style="width: 70%"></div>
-          </div>
-        </div>
-
-        <hr>
-
-        <h6>Description</h6>
-        <p class="small text-muted">
-          Cette formation couvre les bases de Angular, les composants, les services,
-          et la création d’applications web modernes.
-        </p>
-
-        <!-- FAKE IMAGE -->
-        <img src="../../assets/img/elements/11.jpg"
-             class="img-fluid rounded"
-             alt="formation">
-
-      </div>
-
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
-          Fermer
-        </button>
-
-        <button class="btn btn-primary btn-sm">
-          Télécharger PDF
-        </button>
-      </div>
-
-    </div>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   </div>
 </div>
-<!-- Modal Modifier Formation -->
-<div class="modal fade" id="modalEditFormation" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+
+  </div>
+</div>
+  </div>
+</div>
+</div>
+<div class="modal fade" id="fileModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
 
-      <!-- HEADER -->
       <div class="modal-header">
-        <h5 class="modal-title">Modifier Formation</h5>
+        <h5 class="modal-title">Aperçu fichier</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
-      <!-- BODY -->
-      <div class="modal-body">
-
-        <div class="mb-3">
-          <label class="form-label">Nom de la formation</label>
-          <input type="text" class="form-control" value="Angular Basics">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Client</label>
-          <input type="text" class="form-control" value="Albert Cook">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Durée</label>
-          <input type="text" class="form-control" value="30 heures">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select">
-            <option selected>Active</option>
-            <option>Completed</option>
-            <option>Pending</option>
-          </select>
-        </div>
-
-      </div>
-
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          Annuler
-        </button>
-        <button type="button" class="btn btn-primary">
-          Enregistrer
-        </button>
+      <div class="modal-body text-center" id="fileViewer">
       </div>
 
     </div>
   </div>
 </div>
-  </div>
-</div>
-</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const radioNiveau = document.getElementById("niveau");
+    const radioQuiz = document.getElementById("quiz");
+
+    const formation = document.getElementById("formationSelect");
+    const chapitre = document.getElementById("chapitreSelect");
+
+    function updateFields() {
+        if (radioNiveau.checked) {
+            formation.disabled = false;
+            formation.required = true;
+
+            chapitre.disabled = true;
+            chapitre.required = false;
+            chapitre.value = "";
+        } else if (radioQuiz.checked) {
+            chapitre.disabled = false;
+            chapitre.required = true;
+
+            formation.disabled = true;
+            formation.required = false;
+            formation.value = "";
+        }
+    }
+
+    // Initial state
+    updateFields();
+
+    // Events
+    radioNiveau.addEventListener("change", updateFields);
+    radioQuiz.addEventListener("change", updateFields);
+});
+</script>
+<script>
+function generate() {
+
+    const count = document.getElementById("count").value;
+    const container = document.getElementById("container");
+
+    const testId = document.getElementById("testSelect").value;
+    document.getElementById("id_test_hidden").value = testId;
+
+    container.innerHTML = "";
+
+    for (let i = 0; i < count; i++) {
+
+        container.innerHTML += `
+            <div class="border p-3 mb-3">
+
+                <h6>Question ${i + 1}</h6>
+
+                <input type="text"
+                       name="questions[${i}][question]"
+                       class="form-control mb-2"
+                       placeholder="Question">
+
+                <input type="text"
+                       name="questions[${i}][reponse]"
+                       class="form-control mb-2"
+                       placeholder="Réponse">
+
+                <select name="questions[${i}][type]" class="form-select">
+                    <option value="text">Text</option>
+                    <option value="qcm">QCM</option>
+                </select>
+
+            </div>
+        `;
+    }
+}
+</script>
 </body>
 </html>
 

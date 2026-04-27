@@ -153,7 +153,7 @@ $nextSort = ($sort === 'ASC') ? 'DESC' : 'ASC';
                     <div data-i18n="Without menu">dashbord</div>
                   </a>
                 </li>
-                <li class="menu-item active">
+                <li class="menu-item ">
                   <a href="consulterformations.php" class="menu-link">
                     <div data-i18n="Without navbar">consulter formations</div>
                   </a>
@@ -163,7 +163,7 @@ $nextSort = ($sort === 'ASC') ? 'DESC' : 'ASC';
                     <div data-i18n="Without navbar">ajouter formations</div>
                   </a>
                 </li>
-                <li class="menu-item">
+                <li class="menu-item active">
                   <a href="consulterchapitres.php" class="menu-link">
                     <div data-i18n="Container">consulter chapitres</div>
                   </a>
@@ -299,7 +299,7 @@ $nextSort = ($sort === 'ASC') ? 'DESC' : 'ASC';
           <!-- Content wrapper -->
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
-              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Gestion Formations /</span> Consulter Formations</h4>
+              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Gestion Formations /</span> Consulter chapitres</h4>
               <!-- Striped Rows -->
               <div class="card p-4">
                   <div class="card p-3">

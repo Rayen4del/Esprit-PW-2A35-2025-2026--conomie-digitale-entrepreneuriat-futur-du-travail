@@ -1,6 +1,6 @@
 <?php
-include(__DIR__ . '/../config.php');
-include(__DIR__ . '/../Model/test.php');
+include_once(__DIR__ . '/../config.php');
+include_once(__DIR__ . '/../Model/test.php');
 
 class TestController {
 
@@ -27,6 +27,7 @@ class TestController {
             'score_min' => $t->getScoreMin(),
             'date_creation' => $t->getDateCreation() ? $t->getDateCreation()->format('Y-m-d') : null
         ]);
+        return $db->lastInsertId();
     }
 
     public function updateTest(Test $t, $id) {
