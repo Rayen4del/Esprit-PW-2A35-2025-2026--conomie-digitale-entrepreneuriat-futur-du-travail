@@ -43,6 +43,217 @@ class UserController {
             die('Error:' . $e->getMessage());
         }
     }
+
+    // Compter les utilisateurs filtrés
+    public function countFilteredUsers($type = null, $statut = null, $search = null) {
+        $sql = "SELECT COUNT(*) 
+                FROM utilisateur u 
+                LEFT JOIN profil p ON u.ID = p.IDUtilisateur 
+                WHERE 1=1";
+
+        $params = [];
+
+        if ($type && $type !== 'all') {
+            $sql .= " AND u.Type = :type";
+            $params['type'] = $type;
+        }
+
+        if ($statut && $statut !== 'all') {
+            $sql .= " AND u.Statut = :statut";
+            $params['statut'] = $statut;
+        }
+
+        if ($search && trim($search) !== '') {
+            $sql .= " AND (u.Nom LIKE :search OR u.Email LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare($sql);
+            $query->execute($params);
+            return (int) $query->fetchColumn();
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    // Filtrer les utilisateurs avec pagination
+    public function filterUsersPaginated($type = null, $statut = null, $limit = 10, $offset = 0, $search = null, $sortDate = 'desc', $sortName = 'none') {
+        $sql = "SELECT u.*, p.Bio, p.Photo 
+                FROM utilisateur u 
+                LEFT JOIN profil p ON u.ID = p.IDUtilisateur 
+                WHERE 1=1";
+
+        $params = [];
+
+        if ($type && $type !== 'all') {
+            $sql .= " AND u.Type = :type";
+            $params['type'] = $type;
+        }
+
+        if ($statut && $statut !== 'all') {
+            $sql .= " AND u.Statut = :statut";
+            $params['statut'] = $statut;
+        }
+
+        if ($search && trim($search) !== '') {
+            $sql .= " AND (u.Nom LIKE :search OR u.Email LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $orderParts = [];
+
+        if ($sortName === 'asc') {
+            $orderParts[] = 'u.Nom ASC';
+        } elseif ($sortName === 'desc') {
+            $orderParts[] = 'u.Nom DESC';
+        }
+
+        if ($sortDate === 'asc') {
+            $orderParts[] = 'u.created_at ASC';
+        } else {
+            $orderParts[] = 'u.created_at DESC';
+        }
+
+        if (empty($orderParts)) {
+            $orderParts[] = 'u.ID DESC';
+        }
+
+        $sql .= " ORDER BY " . implode(', ', $orderParts) . " LIMIT :limit OFFSET :offset";
+
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare($sql);
+
+            foreach ($params as $key => $value) {
+                $query->bindValue(':' . $key, $value);
+            }
+
+            $query->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $query->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            $query->execute();
+            return $query;
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    // Récupérer toutes les données utilisateurs + profil pour export (CSV/PDF)
+    public function getUsersForExport($type = null, $statut = null, $search = null, $sortDate = 'desc', $sortName = 'none') {
+        $db = config::getConnexion();
+
+        $uCols = $this->getTableColumns('utilisateur');
+        $pCols = $this->getTableColumns('profil');
+
+        $selectParts = [];
+        foreach ($uCols as $col) {
+            $selectParts[] = "u.`$col` AS `u_$col`";
+        }
+        foreach ($pCols as $col) {
+            $selectParts[] = "p.`$col` AS `p_$col`";
+        }
+
+        $sql = "SELECT " . implode(', ', $selectParts) . "
+                FROM utilisateur u
+                LEFT JOIN profil p ON u.ID = p.IDUtilisateur
+                WHERE 1=1";
+
+        $params = [];
+
+        if ($type && $type !== 'all') {
+            $sql .= " AND u.Type = :type";
+            $params['type'] = $type;
+        }
+
+        if ($statut && $statut !== 'all') {
+            $sql .= " AND u.Statut = :statut";
+            $params['statut'] = $statut;
+        }
+
+        if ($search && trim($search) !== '') {
+            $sql .= " AND (u.Nom LIKE :search OR u.Email LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $orderParts = [];
+
+        if ($sortName === 'asc') {
+            $orderParts[] = 'u.Nom ASC';
+        } elseif ($sortName === 'desc') {
+            $orderParts[] = 'u.Nom DESC';
+        }
+
+        if ($sortDate === 'asc') {
+            $orderParts[] = 'u.created_at ASC';
+        } else {
+            $orderParts[] = 'u.created_at DESC';
+        }
+
+        if (empty($orderParts)) {
+            $orderParts[] = 'u.ID DESC';
+        }
+
+        $sql .= " ORDER BY " . implode(', ', $orderParts);
+
+        try {
+            $query = $db->prepare($sql);
+            $query->execute($params);
+            return $query->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    // Récupérer un utilisateur par ID pour export (toutes les colonnes)
+    public function getUserForExportById($id) {
+        $db = config::getConnexion();
+
+        $uCols = $this->getTableColumns('utilisateur');
+        $pCols = $this->getTableColumns('profil');
+
+        $selectParts = [];
+        foreach ($uCols as $col) {
+            $selectParts[] = "u.`$col` AS `u_$col`";
+        }
+        foreach ($pCols as $col) {
+            $selectParts[] = "p.`$col` AS `p_$col`";
+        }
+
+        $sql = "SELECT " . implode(', ', $selectParts) . "
+                FROM utilisateur u
+                LEFT JOIN profil p ON u.ID = p.IDUtilisateur
+                WHERE u.ID = :id
+                LIMIT 1";
+
+        try {
+            $query = $db->prepare($sql);
+            $query->bindValue(':id', (int) $id, PDO::PARAM_INT);
+            $query->execute();
+            $row = $query->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    private function getTableColumns($tableName) {
+        $db = config::getConnexion();
+        $columns = [];
+
+        try {
+            $query = $db->query("SHOW COLUMNS FROM `$tableName`");
+            while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+                if (!empty($row['Field'])) {
+                    $columns[] = $row['Field'];
+                }
+            }
+        } catch (Exception $e) {
+            return [];
+        }
+
+        return $columns;
+    }
     
     // Supprimer un utilisateur
     public function deleteUser($id) {

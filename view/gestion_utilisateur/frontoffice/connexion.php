@@ -66,12 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../../assets/css/style.css">
-    <style>
-        .auth-bg {
-            background: linear-gradient(135deg, #696cff 0%, #80c9f9 100%);
-            min-height: 100vh;
-        }
-    </style>
 </head>
 <body class="auth-bg">
     <div class="auth-wrapper">

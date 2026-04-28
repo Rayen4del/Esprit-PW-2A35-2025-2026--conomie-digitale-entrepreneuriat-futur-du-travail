@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="photo" class="form-label">Photo de profil</label>
                                 <?php if (!empty($profil['Photo'])): ?>
                                     <div class="mb-2">
-                                        <img src="../../uploads/<?php echo $profil['Photo']; ?>" 
+                                        <img src="../../../uploads/<?php echo $profil['Photo']; ?>" 
                                              style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
                                     </div>
                                 <?php endif; ?>

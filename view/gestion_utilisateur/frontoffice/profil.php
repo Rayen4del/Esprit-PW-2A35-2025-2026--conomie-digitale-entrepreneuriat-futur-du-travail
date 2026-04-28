@@ -81,7 +81,7 @@ $success = $_GET['success'] ?? '';
                 <div class="col-lg-4">
                     <div class="card profile-card">
                         <?php if (!empty($profil['Photo'])): ?>
-                            <img src="../../uploads/<?php echo $profil['Photo']; ?>" 
+                            <img src="../../../uploads/<?php echo $profil['Photo']; ?>" 
                                  class="profile-avatar" alt="Photo de profil">
                         <?php else: ?>
                             <div class="profile-avatar placeholder">
