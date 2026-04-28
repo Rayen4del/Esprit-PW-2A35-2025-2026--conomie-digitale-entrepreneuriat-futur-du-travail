@@ -114,10 +114,17 @@ unset($post);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Feed - Skiller</title>
 
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/fonts/boxicons.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/css/core.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/css/theme-default.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/css/demo.css" />
+    <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/theme-default.css" />
+    <link rel="stylesheet" href="../../assets/css/demo.css" />
+
+    <!-- Quill Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        .ql-container { font-size: 14px; }
+        .ql-editor { min-height: 200px; }
+    </style>
 
     <style>
         .post-card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 28px; }
@@ -141,6 +148,27 @@ unset($post);
         }
     </style>
 </head>
+<script>
+(function() {
+    const input    = document.getElementById('searchInput');
+    const feed     = document.querySelector('.container-xxl .flex-grow-1'); // posts container
+    // We need a dedicated wrapper — add id="posts-feed" to your posts loop wrapper div
+    let debounce;
+
+    input.addEventListener('input', function() {
+        clearTimeout(debounce);
+        const q = this.value.trim();
+        debounce = setTimeout(function() {
+            fetch('search.php?q=' + encodeURIComponent(q))
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('posts-feed').innerHTML = html;
+                })
+                .catch(() => {});
+        }, 350);
+    });
+})();
+</script>
 <body>
 
 <div class="layout-wrapper layout-content-navbar">
@@ -238,7 +266,7 @@ unset($post);
 
                                 <!-- Post content -->
                                 <h5 class="fw-bold post-title"><?= htmlspecialchars($post['Titre'] ?? '') ?></h5>
-                                <p class="mb-3 post-content"><?= nl2br(htmlspecialchars($post['Contenu'] ?? '')) ?></p>
+                                <div class="post-content"><?= $post['Contenu'] ?? '' ?></div>
 
                                 <!-- Media -->
                                 <?php if (!empty($postMedia)): ?>
@@ -308,7 +336,8 @@ unset($post);
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Content</label>
-                        <textarea id="createPostContenu" name="contenu" class="form-control" rows="4" placeholder="Share what you learned..."></textarea>
+                        <div id="createPostEditor" style="background:white;"></div>
+                        <input type="hidden" id="createPostContenu" name="contenu">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
@@ -350,7 +379,8 @@ unset($post);
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Content</label>
-                        <textarea id="editPostContenu" name="contenu" class="form-control" rows="4" placeholder="Update your post..."></textarea>
+                        <div id="editPostEditor" style="background:white;"></div>
+                        <input type="hidden" id="editPostContenu" name="contenu">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
@@ -373,8 +403,66 @@ unset($post);
     </div>
 </div>
 
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Initialize Quill editors
+    let quillCreateEditor = new Quill('#createPostEditor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+
+    let quillEditEditor = new Quill('#editPostEditor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+
+    // Handle create post form
+    document.getElementById('createPostForm').addEventListener('submit', function(e) {
+        const content = quillCreateEditor.root.innerHTML;
+        document.getElementById('createPostContenu').value = content;
+    });
+
+    // Handle edit post form
+    document.getElementById('editPostForm').addEventListener('submit', function(e) {
+        const content = quillEditEditor.root.innerHTML;
+        document.getElementById('editPostContenu').value = content;
+    });
+
+    // When edit modal is shown, populate the editor
+    document.getElementById('editPostModal').addEventListener('show.bs.modal', function(e) {
+        const editPostContenuValue = document.getElementById('editPostContenu').value;
+        if (editPostContenuValue) {
+            quillEditEditor.root.innerHTML = editPostContenuValue;
+        }
+    });
+
+    // Reset create editor when modal is hidden
+    document.getElementById('createPostModal').addEventListener('hide.bs.modal', function() {
+        quillCreateEditor.setContents([]);
+    });
+    
+    // Global variables for comments and uploads
     const COMMENT_CONTROLLER = '../comments/index.php';
     const UPLOADS_URL        = '../../uploads/posts/';
 </script>

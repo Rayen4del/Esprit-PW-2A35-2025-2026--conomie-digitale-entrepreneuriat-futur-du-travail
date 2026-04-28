@@ -1,6 +1,9 @@
 <?php
-define('BASE_URL', '/projet2_Copie/Esprit-PW-2A35-2025-2026--conomie-digitale-entrepreneuriat-futur-du-travail/skiller/');
-define('CONTROLLER_URL', BASE_URL . 'controller/Commentcontroller.php');
+// Dynamic BASE_URL for portability
+$scriptName = $_SERVER['SCRIPT_NAME'];
+$basePath = dirname(dirname($scriptName)); // Go up 2 levels from any script
+define('BASE_URL', rtrim($basePath, '/') . '/');
+define('CONTROLLER_URL', BASE_URL . 'controller/CommentController.php');
 class Config
 {
     private static $pdo = null;

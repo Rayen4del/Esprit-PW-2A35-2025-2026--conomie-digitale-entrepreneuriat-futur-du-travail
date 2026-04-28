@@ -24,11 +24,11 @@ foreach ($comments as $c) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>Comments Management — Admin | Skiller</title>
 
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/fonts/boxicons.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/css/core.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/css/theme-default.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/css/demo.css" />
-    <link rel="stylesheet" href="<?= BASE_URL ?>view/gestion_blog/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/theme-default.css" />
+    <link rel="stylesheet" href="../../assets/css/demo.css" />
+    <link rel="stylesheet" href="../../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
 
     <style>
         .stats-strip .card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
@@ -69,7 +69,7 @@ foreach ($comments as $c) {
             <!-- Sidebar -->
             <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
                 <div class="app-brand demo">
-                    <a href="/skiller" class="app-brand-link">
+                    <a href="../../index.php" class="app-brand-link">
                         <span class="app-brand-logo demo">
                             <i class='bx bx-code-alt' style="font-size:2rem;color:#696cff"></i>
                         </span>
@@ -91,13 +91,20 @@ foreach ($comments as $c) {
                             <div>Comments</div>
                         </a>
                     </li>
+                    <li class="menu-item">
+    <a href="../stats/index.php" class="menu-link">
+        <i class="menu-icon bx bx-bar-chart-alt-2"></i>
+        <div>Engagement Stats</div>
+    </a>
+</li>
                     <li class="menu-header small text-uppercase mt-2"><span class="menu-header-text">Navigation</span></li>
                     <li class="menu-item">
-                        <a href="/skiller" class="menu-link">
+                        <a href="../../index.php" class="menu-link">
                             <i class="menu-icon bx bx-home-circle"></i>
                             <div>Dashboard</div>
                         </a>
                     </li>
+                    
                 </ul>
             </aside>
 
@@ -271,10 +278,10 @@ foreach ($comments as $c) {
     <div id="toast-container"></div>
 
     <!-- JS Files -->
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/vendor/libs/jquery/jquery.js"></script>
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/vendor/libs/popper/popper.js"></script>
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/vendor/js/bootstrap.js"></script>
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="../../assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="../../assets/vendor/libs/popper/popper.js"></script>
+    <script src="../../assets/vendor/js/bootstrap.js"></script>
+    <script src="../../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
     
     <!-- Complete override to prevent menu.js errors -->
     <script>
@@ -319,15 +326,15 @@ foreach ($comments as $c) {
     };
     </script>
     
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/vendor/js/menu.js"></script>
-    <script src="<?= BASE_URL ?>view/gestion_blog/assets/js/main.js"></script>
+    <script src="../../assets/vendor/js/menu.js"></script>
+    <script src="../../assets/js/main.js"></script>
     
     <!-- Comments Management - All in one script -->
     <script>
     // Single script with no external dependencies
     (function() {
-        // Controller URL
-        const CONTROLLER_URL = "<?= BASE_URL ?>controller/Commentcontroller.php";
+        // Controller URL - using relative path
+        const CONTROLLER_URL = "../../../controller/CommentController.php";
         
         // Create a namespace for our functions
         window.commentsManager = {

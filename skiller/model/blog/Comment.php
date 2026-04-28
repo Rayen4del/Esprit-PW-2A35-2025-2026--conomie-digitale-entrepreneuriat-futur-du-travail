@@ -171,6 +171,24 @@ class Comment
             ':content' => $content
         ]);
     }
+    // ─── STATS: likes + comments per post ─────────────────────────
+public function getPostEngagementStats()
+{
+    $sql = "
+        SELECT 
+            p.ID, p.Titre,
+            COUNT(DISTINCT c.ID)          AS comment_count,
+            COUNT(DISTINCT cl.comment_id) AS total_likes
+        FROM post p
+        LEFT JOIN commentaire c   ON c.IDPost = p.ID
+        LEFT JOIN comment_likes cl ON cl.comment_id = c.ID
+        GROUP BY p.ID, p.Titre
+        ORDER BY total_likes DESC
+    ";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     // ─── COMMENT LIKES METHODS ───────────────────────────────────
 

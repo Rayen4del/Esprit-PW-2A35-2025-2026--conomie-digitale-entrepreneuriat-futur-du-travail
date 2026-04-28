@@ -32,8 +32,9 @@ function getCommentCountForPost($commentModel, $postId) {
     }
 }
 
-// Define base URL
-$baseUrl = '/projet2_Copie/Esprit-PW-2A35-2025-2026--conomie-digitale-entrepreneuriat-futur-du-travail/skiller';
+// Define base URL dynamically
+$scriptName = $_SERVER['SCRIPT_NAME'];
+$baseUrl = rtrim(dirname(dirname(dirname($scriptName))), '/'); // Go up 3 levels from view/gestion_blog/index.php
 ?>
 <!DOCTYPE html>
 <html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default">
@@ -58,7 +59,79 @@ $baseUrl = '/projet2_Copie/Esprit-PW-2A35-2025-2026--conomie-digitale-entreprene
     .stats-strip .card { border-radius: 12px; border: none; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
   </style>
 </head>
+<!-- PDF Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+function exportPostsPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape' });
 
+    // Header bar
+    doc.setFillColor(105, 108, 255);
+    doc.rect(0, 0, 297, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Skiller — Blog Posts Export', 14, 14);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generated: ' + new Date().toLocaleString(), 220, 14);
+
+    // Collect rows from the table already rendered on the page
+    const rows = [];
+    document.querySelectorAll('table tbody tr').forEach(function(tr) {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 7) return; // skip empty/colspanned rows
+
+        const status  = tds[4].querySelector('select')
+                        ? tds[4].querySelector('select option:checked').text.replace(/^.{1,3}\s/, '').trim()
+                        : tds[4].textContent.trim();
+        const comments = tds[5].textContent.trim();
+
+        rows.push([
+            tds[0].textContent.trim(),                          // #
+            tds[1].querySelector('.fw-semibold')
+                  ?.textContent.trim() || tds[1].textContent.trim().slice(0,40), // title
+            tds[2].textContent.trim(),                          // author
+            tds[3].textContent.trim(),                          // category
+            status,                                             // status
+            comments,                                           // comments
+            tds[6].textContent.trim()                           // date
+        ]);
+    });
+
+    doc.autoTable({
+        startY: 28,
+        head: [['#', 'Title', 'Author', 'Category', 'Status', 'Comments', 'Date']],
+        body: rows,
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [105, 108, 255], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 255] },
+        columnStyles: {
+            0: { cellWidth: 10 },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 30 },
+            4: { cellWidth: 28 },
+            5: { cellWidth: 25, halign: 'center' },
+            6: { cellWidth: 28 }
+        },
+        didDrawPage: function(data) {
+            // Footer on each page
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(
+                'Page ' + doc.internal.getCurrentPageInfo().pageNumber,
+                data.settings.margin.left,
+                doc.internal.pageSize.height - 6
+            );
+        }
+    });
+
+    doc.save('skiller-posts-' + new Date().toISOString().slice(0,10) + '.pdf');
+}
+</script>
 <body>
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
@@ -75,6 +148,12 @@ $baseUrl = '/projet2_Copie/Esprit-PW-2A35-2025-2026--conomie-digitale-entreprene
           <li class="menu-header small text-uppercase"><span class="menu-header-text">Blog</span></li>
           <li class="menu-item active"><a href="index.php" class="menu-link"><i class="menu-icon bx bx-news"></i><div>Posts</div></a></li>
           <li class="menu-item"><a href="backoffice/comments/index.php" class="menu-link"><i class="menu-icon bx bx-comment-dots"></i><div>Comments</div></a></li>
+          <li class="menu-item">
+    <a href="backoffice/stats/index.php" class="menu-link">
+        <i class="menu-icon bx bx-bar-chart-alt-2"></i>
+        <div>Engagement Stats</div>
+    </a>
+</li>
           <li class="menu-header small text-uppercase mt-2"><span class="menu-header-text">Navigation</span></li>
           <li class="menu-item"><a href="<?= $baseUrl ?>" class="menu-link"><i class="menu-icon bx bx-home-circle"></i><div>Dashboard</div></a></li>
         </ul>
@@ -121,8 +200,15 @@ $baseUrl = '/projet2_Copie/Esprit-PW-2A35-2025-2026--conomie-digitale-entreprene
             </div>
 
             <div class="card">
-              <div class="card-header d-flex align-items-center justify-content-between py-3"><h6 class="mb-0">All Posts</h6><small class="text-muted"><?= count($posts) ?> result(s)</small></div>
-              <div class="table-responsive">
+<div class="card-header d-flex align-items-center justify-content-between py-3">
+    <h6 class="mb-0">All Posts</h6>
+    <div class="d-flex align-items-center gap-2">
+        <small class="text-muted"><?= count($posts) ?> result(s)</small>
+        <button onclick="exportPostsPDF()" class="btn btn-sm btn-outline-danger">
+            <i class='bx bxs-file-pdf me-1'></i> Export PDF
+        </button>
+    </div>
+</div>              <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                   <thead class="table-light"><tr><th>#</th><th>Post</th><th>Author</th><th>Category</th><th>Status</th><th>Comments</th><th>Date</th><th class="text-center">Actions</th></tr></thead>
                   <tbody>

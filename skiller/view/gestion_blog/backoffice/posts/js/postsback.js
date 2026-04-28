@@ -9,8 +9,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Posts JS loaded - Initializing...');
     
-    // Controller URL
-    window.POSTS_CONTROLLER = '/skiller/controller/PostController.php';
+    // Controller URL - relative path from backoffice/posts/js to root controller
+    window.POSTS_CONTROLLER = '../../../controller/PostController.php';
     
     // Initialize all functionality
     initDeleteHandler();
