@@ -148,27 +148,6 @@ unset($post);
         }
     </style>
 </head>
-<script>
-(function() {
-    const input    = document.getElementById('searchInput');
-    const feed     = document.querySelector('.container-xxl .flex-grow-1'); // posts container
-    // We need a dedicated wrapper — add id="posts-feed" to your posts loop wrapper div
-    let debounce;
-
-    input.addEventListener('input', function() {
-        clearTimeout(debounce);
-        const q = this.value.trim();
-        debounce = setTimeout(function() {
-            fetch('search.php?q=' + encodeURIComponent(q))
-                .then(r => r.text())
-                .then(html => {
-                    document.getElementById('posts-feed').innerHTML = html;
-                })
-                .catch(() => {});
-        }, 350);
-    });
-})();
-</script>
 <body>
 
 <div class="layout-wrapper layout-content-navbar">
@@ -225,6 +204,7 @@ unset($post);
                     </div>
 
                     <!-- POSTS FEED -->
+                    <div id="posts-feed">
                     <?php if (empty($posts)): ?>
                         <div class="text-center py-5">
                             <i class="bx bx-news bx-lg text-muted mb-3"></i>
@@ -309,6 +289,7 @@ unset($post);
                         </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
+                    </div>
 
                 </div>
             </div>
@@ -468,5 +449,36 @@ unset($post);
 </script>
 <script src="js/feed.js"></script>
 <script src="../comments/js/comments.js"></script>
+
+<!-- AJAX Search -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('searchInput');
+    const feed  = document.getElementById('posts-feed');
+    if (!input || !feed) return;
+    
+    let debounce;
+
+    input.addEventListener('input', function() {
+        clearTimeout(debounce);
+        const q = this.value.trim();
+        
+        // Show loading state
+        feed.style.opacity = '0.6';
+        
+        debounce = setTimeout(function() {
+            fetch('search.php?q=' + encodeURIComponent(q))
+                .then(r => r.text())
+                .then(html => {
+                    feed.innerHTML = html;
+                    feed.style.opacity = '1';
+                })
+                .catch(() => {
+                    feed.style.opacity = '1';
+                });
+        }, 350);
+    });
+});
+</script>
 </body>
 </html>

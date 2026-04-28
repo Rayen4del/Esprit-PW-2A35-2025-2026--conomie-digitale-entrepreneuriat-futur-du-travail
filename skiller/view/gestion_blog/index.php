@@ -211,7 +211,7 @@ function exportPostsPDF() {
 </div>              <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                   <thead class="table-light"><tr><th>#</th><th>Post</th><th>Author</th><th>Category</th><th>Status</th><th>Comments</th><th>Date</th><th class="text-center">Actions</th></tr></thead>
-                  <tbody>
+                  <tbody id="posts-tbody">
                     <?php if (empty($posts)): ?>
                       <tr><td colspan="8" class="text-center py-5 text-muted">No posts found.</td></tr>
                     <?php else: ?>
@@ -306,6 +306,56 @@ function exportPostsPDF() {
       document.getElementById('deletePostId').value = btn.getAttribute('data-id');
       document.getElementById('deletePostTitle').textContent = '"' + btn.getAttribute('data-title') + '"';
     });
+  </script>
+
+  <!-- AJAX Search -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    const categorySelect = document.querySelector('select[name="category"]');
+    const statusSelect = document.querySelector('select[name="status"]');
+    const tbody = document.getElementById('posts-tbody');
+    const resultCount = document.querySelector('.table-responsive .text-muted');
+    
+    if (!searchInput || !tbody) return;
+    
+    let debounce;
+    
+    function fetchPosts() {
+      const q = searchInput.value.trim();
+      const cat = categorySelect?.value || '';
+      const stat = statusSelect?.value || '';
+      
+      tbody.style.opacity = '0.5';
+      
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (cat) params.set('category', cat);
+      if (stat) params.set('status', stat);
+      
+      fetch('./backoffice/posts/search.php?' + params.toString())
+        .then(r => r.text())
+        .then(html => {
+          tbody.innerHTML = html;
+          tbody.style.opacity = '1';
+          // Update result count
+          const rows = tbody.querySelectorAll('tr');
+          if (resultCount) {
+            const count = rows.length === 1 && rows[0].querySelector('td[colspan]') ? 0 : rows.length;
+            resultCount.textContent = count + ' result(s)';
+          }
+        })
+        .catch(() => { tbody.style.opacity = '1'; });
+    }
+    
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounce);
+      debounce = setTimeout(fetchPosts, 350);
+    });
+    
+    if (categorySelect) categorySelect.addEventListener('change', fetchPosts);
+    if (statusSelect) statusSelect.addEventListener('change', fetchPosts);
+  });
   </script>
 </body>
 </html>
