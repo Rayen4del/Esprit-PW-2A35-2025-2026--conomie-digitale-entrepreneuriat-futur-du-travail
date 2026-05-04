@@ -100,9 +100,9 @@ function renderEvents($events) {
                  data-event-id="<?= intval($ev['ID']) ?>"
                  data-event-title="<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>"
                  data-event-status="<?= htmlspecialchars($eventStatus, ENT_QUOTES) ?>">
-              <div class="event-image-placeholder">
-
-                <i class="bi bi-calendar-event"></i>
+              <div class="event-image-placeholder" style="cursor:pointer" onclick="openMapModal('<?= htmlspecialchars($ev['lieu_lien'], ENT_QUOTES) ?>', '<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>')">
+                <i class="bi bi-geo-alt"></i>
+                <span class="map-hint">Cliquez pour voir la carte</span>
               </div>
               <div style="position:relative;margin-top:-2rem;padding:0 .75rem">
                 <span class="status-badge <?= $statusClass ?>"><?= strtoupper($ev['Statut']) ?></span>
@@ -188,7 +188,8 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
     .user-actions{display:flex;justify-content:flex-end;margin-bottom:1rem}
     .card{background:#fff;border:none;border-radius:.5rem;box-shadow:0 2px 6px rgba(67,89,113,.12);transition:transform .2s,box-shadow .2s}
     .event-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(67,89,113,.18)}
-    .event-image-placeholder{height:160px;background:linear-gradient(135deg,#696cff22,#a3a4ff44);display:flex;align-items:center;justify-content:center;font-size:3rem;color:#696cff}
+    .event-image-placeholder{height:160px;background:linear-gradient(135deg,#696cff22,#a3a4ff44);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:3rem;color:#696cff;gap:.5rem}
+    .map-hint{font-size:.8rem;color:#696cff;font-weight:500}
     .status-badge{position:absolute;top:.75rem;right:.75rem;padding:.25rem .65rem;border-radius:999px;font-size:.7rem;font-weight:700;color:#fff}
     .content-footer{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;font-size:.8125rem;color:#a1acb8;border-top:1px solid rgba(67,89,113,.08)}
     .footer-link{color:#a1acb8;text-decoration:none;margin-left:1rem}
@@ -228,15 +229,12 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
     <div class="layout-page">
       <nav class="layout-navbar">
         <div class="navbar-search">
-          <form method="GET" action="/projet/view/evenement/html/user_events.php" id="searchForm">
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" name="search" id="searchInput"
-                     placeholder="Rechercher un événement..."
-                     value="<?= $searchVal ?>" />
-              <input type="hidden" name="type" value="<?= $typeVal ?>">
-            </div>
-          </form>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="navbarSearchInput"
+                   placeholder="Rechercher un événement..."
+                   value="<?= $searchVal ?>" />
+          </div>
         </div>
         <div class="navbar-nav-right">
           <button class="nav-icon-btn"><i class="bi bi-bell"></i><span class="nav-badge"></span></button>
@@ -367,9 +365,41 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
   </div>
 </div>
 
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mapModalLabel">Localisation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe
+          id="mapIframe"
+          width="100%"
+          height="400"
+          style="border:0"
+          loading="lazy"
+          allowfullscreen
+          src="">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+// Open map modal
+function openMapModal(location, title) {
+    const mapIframe = document.getElementById('mapIframe');
+    const mapModalLabel = document.getElementById('mapModalLabel');
+    mapIframe.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(location) + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
+    mapModalLabel.textContent = 'Localisation - ' + title;
+    const mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+    mapModal.show();
+}
+
 // Show tooltip on non-open events
 document.querySelectorAll('.event-card').forEach(card => {
   if (card.dataset.eventStatus !== 'ouvert') {
@@ -435,10 +465,29 @@ function updateResults(page = 1) {
     .catch(error => console.error('Error:', error));
 }
 
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-    searchInput.addEventListener('input', () => updateResults(1));
+const filterSearchInput = document.getElementById('searchInput');
+const navbarSearchInput = document.getElementById('navbarSearchInput');
+
+// Sync navbar search with filter search
+if (navbarSearchInput) {
+    navbarSearchInput.addEventListener('input', (e) => {
+        if (filterSearchInput) {
+            filterSearchInput.value = e.target.value;
+        }
+        updateResults(1);
+    });
 }
+
+// Sync filter search with navbar search
+if (filterSearchInput) {
+    filterSearchInput.addEventListener('input', (e) => {
+        if (navbarSearchInput) {
+            navbarSearchInput.value = e.target.value;
+        }
+        updateResults(1);
+    });
+}
+
 document.querySelector('select[name="type"]').addEventListener('change', () => updateResults(1));
 </script>
 </body>
