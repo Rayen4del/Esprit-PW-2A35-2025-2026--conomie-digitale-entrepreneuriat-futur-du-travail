@@ -341,8 +341,15 @@ class EvenementController {
         $params = [];
 
         if ($search !== '') {
-            $sql .= " AND (e.Titre LIKE :search OR e.lieu_lien LIKE :search OR e.Type LIKE :search)";
+            $sql .= " AND (e.Titre LIKE :search OR e.lieu_lien LIKE :search OR e.Type LIKE :search";
             $params[':search'] = "%$search%";
+
+            if (ctype_digit($search)) {
+                $sql .= " OR r.ID = :searchId OR r.IDUtilisateur = :searchId OR r.IDEvent = :searchId";
+                $params[':searchId'] = intval($search);
+            }
+
+            $sql .= ")";
         }
         if ($statut !== '') {
             $sql .= " AND r.Statut = :statut";
