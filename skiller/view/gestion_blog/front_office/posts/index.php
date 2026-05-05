@@ -488,5 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script src="js/speech-to-text.js"></script>
+<script src="js/speech-to-text.js"></script>
+<script src="../comments/js/emotion.js"></script>  <!-- ← add this -->
 </body>
 </html>

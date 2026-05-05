@@ -30,6 +30,10 @@ function displayComments(postId, comments) {
         });
 
         const isOwner = comment.IDUtilisateur == 1;
+        const emotionValue = (comment.emotion || comment.Emotion || '').toString();
+        const hasEmotion = !!emotionValue;
+        const emotionLabel = hasEmotion ? formatEmotionLabel(emotionValue) : '';
+        const emotionIcon  = hasEmotion ? emotionToEmoji(emotionValue.toLowerCase()) : '';
 
         html += `
             <div class="comment-item mb-3" data-comment-id="${comment.ID}">
@@ -44,11 +48,18 @@ function displayComments(postId, comments) {
                         <!-- View mode -->
                         <div class="comment-view-${comment.ID}">
                             <div class="bg-light p-2 rounded" style="background:#f0f2f5 !important;">
-                                <strong class="small">${escapeHtml(comment.auteur || 'Anonymous')}</strong>
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <strong class="small">${escapeHtml(comment.auteur || 'Anonymous')}</strong>
+                                    ${hasEmotion ? `
+                                    <span class="comment-emotion-badge" title="${escapeHtml(emotionLabel)}" style="font-size:1.2rem;cursor:help;" aria-label="${escapeHtml(emotionLabel)}">
+                                        ${emotionIcon}
+                                    </span>` : ''}
+                                </div>
                                 <p class="mb-0 small comment-text-${comment.ID}">${escapeHtml(comment.Contenu).replace(/\n/g, '<br>')}</p>
                             </div>
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <small class="text-muted">${date}</small>
+                                ${hasEmotion ? `<small class="text-muted">${escapeHtml(emotionLabel)}</small>` : ''}
                                 <small class="comment-like-btn"
                                        onclick="toggleCommentLike(${comment.ID}, ${postId})"
                                        style="cursor:pointer;color:${comment.user_liked ? '#dc3545' : '#6c757d'}">
@@ -64,7 +75,6 @@ function displayComments(postId, comments) {
                                 </small>` : ''}
                             </div>
                         </div>
-
                         <!-- Edit mode (hidden by default) -->
                         <div class="comment-edit-${comment.ID}" style="display:none;">
                             <div class="d-flex gap-2 mt-1">
@@ -137,34 +147,39 @@ function submitEditComment(commentId, postId) {
 
 // ── SUBMIT NEW COMMENT ───────────────────────────────────────────
 
-function submitComment(event, postId) {
+async function submitComment(event, postId) {
     event.preventDefault();
-    const form         = event.target;
-    const contentInput = form.querySelector('input[name="content"]');
-    const content      = contentInput.value.trim();
-    const userId       = 1;
+    const form    = event.target;
+    const input   = form.querySelector('input[name="content"]');
+    const content = input.value.trim();
+    if (!content) return;
 
-    if (!content) {
-        showNotification('Please enter a comment', 'warning');
-        return;
-    }
+    // Disable form while processing
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Analyzing...';
 
-    fetch(COMMENT_CONTROLLER, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=create_comment&post_id=${postId}&user_id=${userId}&content=${encodeURIComponent(content)}`
-    })
-    .then(r => r.json())
-    .then(data => {
+    // Detect emotion ONCE before submitting
+    const emotion = await detectEmotion(content);
+
+    const formData = new FormData();
+    formData.append('action',   'create_comment');
+    formData.append('post_id',  postId);
+    formData.append('user_id',  1); // replace with real user id
+    formData.append('content',  content);
+    formData.append('emotion',  emotion); // ← send emotion
+
+    try {
+        const res  = await fetch(COMMENT_CONTROLLER, { method: 'POST', body: formData });
+        const data = await res.json();
         if (data.success) {
-            contentInput.value = '';
-            showNotification('Comment added!', 'success');
-            loadComments(postId);
-        } else {
-            showNotification(data.message || 'Error adding comment', 'error');
+            input.value = '';
+            loadComments(postId); // reload to show new comment with emoji
         }
-    })
-    .catch(() => showNotification('Error adding comment', 'error'));
+    } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Send';
+    }
 }
 
 // ── DELETE ──────────────────────────────────────────────────────
@@ -225,6 +240,14 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function formatEmotionLabel(emotion) {
+    if (!emotion) return '';
+    return emotion.toString()
+        .replace(/[_-]/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function showNotification(message, type = 'success') {

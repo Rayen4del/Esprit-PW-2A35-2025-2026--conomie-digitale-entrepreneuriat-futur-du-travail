@@ -31,15 +31,16 @@ function sendJson(array $data): void {
 
 // ── CREATE ──────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create_comment') {
-    $postId  = (int)($_POST['post_id']  ?? 0);
-    $userId  = (int)($_POST['user_id']  ?? 0);
-    $content = trim($_POST['content']   ?? '');
+    $postId   = (int)($_POST['post_id']  ?? 0);
+    $userId   = (int)($_POST['user_id']  ?? 0);
+    $content  = trim($_POST['content']   ?? '');
+    $emotion  = trim($_POST['emotion']   ?? '') ?: null; // ← add this
 
     if (!$postId || !$userId || !$content) {
         sendJson(['success' => false, 'message' => 'Missing required fields']);
     }
 
-    $result = $commentModel->create($userId, $postId, $content);
+    $result = $commentModel->create($userId, $postId, $content, $emotion); // ← pass it
     if ($result) {
         $comment = $commentModel->getLastComment($postId, $userId);
         sendJson(['success' => true, 'message' => 'Comment added successfully', 'comment' => $comment]);

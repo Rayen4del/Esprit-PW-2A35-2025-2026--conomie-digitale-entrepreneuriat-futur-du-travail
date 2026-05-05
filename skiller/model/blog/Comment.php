@@ -12,18 +12,19 @@ class Comment
 
     // ─── CREATE ───────────────────────────────────────────────
 
-    public function create($idUtilisateur, $idPost, $contenu)
-    {
-        $sql = "INSERT INTO commentaire (IDUtilisateur, IDPost, Contenu, DateCom)
-                VALUES (:idUtilisateur, :idPost, :contenu, NOW())";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':idUtilisateur' => $idUtilisateur,
-            ':idPost'        => $idPost,
-            ':contenu'       => $contenu
-        ]);
-        return $this->pdo->lastInsertId();
-    }
+    public function create($idUtilisateur, $idPost, $contenu, $emotion = null)
+{
+    $sql = "INSERT INTO commentaire (IDUtilisateur, IDPost, Contenu, DateCom, emotion)
+            VALUES (:idUtilisateur, :idPost, :contenu, NOW(), :emotion)";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+        ':idUtilisateur' => $idUtilisateur,
+        ':idPost'        => $idPost,
+        ':contenu'       => $contenu,
+        ':emotion'       => $emotion
+    ]);
+    return $this->pdo->lastInsertId();
+}
 
     // ─── READ ALL COMMENTS FOR A POST ─────────────────────────
 
