@@ -179,7 +179,7 @@ function clearEditErrors() {
 function validateCreateForm(e) {
     e.preventDefault();
     const titre   = document.getElementById('createPostTitre');
-    const contenu = document.getElementById('createPostContenu');
+    const contenuHidden = document.getElementById('createPostContenu');
     let valid = true;
 
     clearError('createPostTitre');
@@ -193,12 +193,20 @@ function validateCreateForm(e) {
         valid = false;
     }
 
-    if (!contenu.value.trim()) {
+    // Get Quill editor content
+    const quillContent = quillCreateEditor.root.innerHTML.trim();
+    const plainText = quillCreateEditor.getText().trim();
+
+    if (!plainText) {
         showError('createPostContenu', 'Content is required.');
         valid = false;
     }
 
-    if (valid) e.target.submit();
+    if (valid) {
+        // Copy Quill content to hidden input before submission
+        contenuHidden.value = quillContent;
+        e.target.submit();
+    }
 }
 
 // ─────────────────────────────────────────────

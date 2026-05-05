@@ -316,9 +316,16 @@ unset($post);
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Content</label>
-                        <div id="createPostEditor" style="background:white;"></div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-semibold">Content</label>
+                            <button type="button" id="speakBtn" class="btn btn-outline-primary btn-sm">
+                                <i class="bx bx-mic"></i> 
+                                <span id="speakBtnText">Start Speaking</span>
+                            </button>
+                        </div>
+                        <div id="createPostEditor" style="background:white; min-height: 220px;"></div>
                         <input type="hidden" id="createPostContenu" name="contenu">
+                        <small id="speechStatus" class="text-muted d-block mt-1"></small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
@@ -480,5 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<script src="js/speech-to-text.js"></script>
 </body>
 </html>

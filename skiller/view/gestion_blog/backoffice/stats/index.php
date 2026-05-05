@@ -100,6 +100,12 @@ $topPost = !empty($stats) ? $stats[0] : null;
 
                     <h4 class="fw-bold py-3 mb-4">
                         <i class="bx bx-bar-chart-alt-2 me-2" style="color:#696cff"></i>Post Engagement Stats
+                        <small class="text-muted fw-normal ms-2" style="font-size:12px;">
+                            <i class="bx bx-time-five"></i> Last updated: <span id="lastUpdated">-</span>
+                        </small>
+                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="fetchStats()" id="refreshBtn">
+                            <i class="bx bx-refresh"></i> Refresh
+                        </button>
                     </h4>
 
                     <!-- Summary Cards -->
@@ -110,7 +116,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                     <div class="d-flex align-items-center">
                                         <div class="avatar bg-label-primary p-3"><i class="bx bx-news bx-lg"></i></div>
                                         <div class="ms-3">
-                                            <h4 class="mb-0"><?= $totalPosts ?></h4>
+                                            <h4 class="mb-0" id="totalPosts"><?= $totalPosts ?></h4>
                                             <span class="text-muted">Total Posts</span>
                                         </div>
                                     </div>
@@ -123,7 +129,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                     <div class="d-flex align-items-center">
                                         <div class="avatar bg-label-info p-3"><i class="bx bx-comment-dots bx-lg"></i></div>
                                         <div class="ms-3">
-                                            <h4 class="mb-0"><?= $totalComments ?></h4>
+                                            <h4 class="mb-0" id="totalComments"><?= $totalComments ?></h4>
                                             <span class="text-muted">Total Comments</span>
                                         </div>
                                     </div>
@@ -136,7 +142,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                     <div class="d-flex align-items-center">
                                         <div class="avatar bg-label-danger p-3"><i class="bx bxs-heart bx-lg"></i></div>
                                         <div class="ms-3">
-                                            <h4 class="mb-0"><?= $totalLikes ?></h4>
+                                            <h4 class="mb-0" id="totalLikes"><?= $totalLikes ?></h4>
                                             <span class="text-muted">Total Likes</span>
                                         </div>
                                     </div>
@@ -149,7 +155,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                     <div class="d-flex align-items-center">
                                         <div class="avatar bg-label-success p-3"><i class="bx bx-trending-up bx-lg"></i></div>
                                         <div class="ms-3">
-                                            <h4 class="mb-0"><?= $avgRatio ?>x</h4>
+                                            <h4 class="mb-0" id="avgRatio"><?= $avgRatio ?>x</h4>
                                             <span class="text-muted">Avg Like/Comment Ratio</span>
                                         </div>
                                     </div>
@@ -212,7 +218,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                         <th class="text-center">Engagement</th>
                                     </tr>
                                 </thead>
-                                <tbody id="statsBody">
+                                <tbody id="statsBody" data-stats="<?= htmlspecialchars(json_encode($stats)) ?>">
                                     <?php
                                     $maxLikes = !empty($stats) ? max(array_column($stats, 'total_likes')) : 1;
                                     $maxLikes = max($maxLikes, 1);
@@ -286,25 +292,75 @@ window.Menu = function(el, opts){ this.element=el; this.options=opts; return thi
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-(function(){
-    const raw = <?= json_encode($stats) ?>;
-    if (!raw || !raw.length) return;
+let barChart = null;
+let ratioChart = null;
+const REFRESH_INTERVAL = 10000; // 10 seconds
 
-    const top8bar   = [...raw].sort((a,b) => b.total_likes - a.total_likes).slice(0,8);
-    const top8ratio = [...raw]
+function renderSummary(data) {
+    document.getElementById('totalPosts').textContent = data.totalPosts;
+    document.getElementById('totalComments').textContent = data.totalComments;
+    document.getElementById('totalLikes').textContent = data.totalLikes;
+    document.getElementById('avgRatio').textContent = data.avgRatio + 'x';
+    document.getElementById('lastUpdated').textContent = data.timestamp || new Date().toLocaleTimeString();
+}
+
+function renderTable(stats) {
+    const tbody = document.getElementById('statsBody');
+    const maxLikes = stats.length ? Math.max(...stats.map(s => s.total_likes), 1) : 1;
+    
+    if (!stats.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No post data found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = stats.map((s, i) => {
+        const ratio = s.comment_count > 0 ? +(s.total_likes / s.comment_count).toFixed(1) : +s.total_likes;
+        const pct = Math.round((s.total_likes / maxLikes) * 100);
+        const level = ratio >= 3 ? 'high' : ratio >= 1 ? 'med' : 'low';
+        const badgeCls = level === 'high' ? 'bg-label-success' : level === 'med' ? 'bg-label-warning' : 'bg-label-secondary';
+        const badgeTxt = level === 'high' ? 'High' : level === 'med' ? 'Medium' : 'Low';
+        const barColor = level === 'high' ? '#71dd37' : level === 'med' ? '#ffab00' : '#a1acb8';
+        
+        return `<tr>
+            <td>${i + 1}</td>
+            <td class="post-title-cell" title="${s.Titre}">${s.Titre}</td>
+            <td class="text-center fw-semibold">${s.comment_count}</td>
+            <td class="text-center fw-semibold">${s.total_likes}</td>
+            <td style="min-width:130px;">
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted" style="min-width:32px;">${ratio}x</small>
+                    <div class="ratio-bar-wrap flex-grow-1">
+                        <div class="ratio-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+                    </div>
+                </div>
+            </td>
+            <td class="text-center">
+                <span class="badge engagement-badge ${badgeCls}">${badgeTxt}</span>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function renderCharts(stats) {
+    const shorten = t => t.length > 20 ? t.slice(0,18) + '…' : t;
+    
+    const top8bar = [...stats].sort((a,b) => b.total_likes - a.total_likes).slice(0,8);
+    const top8ratio = [...stats]
         .map(s => ({...s, ratio: s.comment_count > 0 ? +(s.total_likes/s.comment_count).toFixed(1) : +s.total_likes}))
         .sort((a,b) => b.ratio - a.ratio)
         .slice(0,8);
 
-    const shorten = t => t.length > 20 ? t.slice(0,18)+'…' : t;
+    // Destroy existing charts
+    if (barChart) barChart.destroy();
+    if (ratioChart) ratioChart.destroy();
 
     // Bar chart
-    new Chart(document.getElementById('barChart'), {
+    barChart = new Chart(document.getElementById('barChart'), {
         type: 'bar',
         data: {
             labels: top8bar.map(s => shorten(s.Titre)),
             datasets: [
-                { label:'Likes',    data: top8bar.map(s => s.total_likes),   backgroundColor:'#696cff', borderRadius:4 },
+                { label:'Likes', data: top8bar.map(s => s.total_likes), backgroundColor:'#696cff', borderRadius:4 },
                 { label:'Comments', data: top8bar.map(s => s.comment_count), backgroundColor:'#03c3ec', borderRadius:4 }
             ]
         },
@@ -319,15 +375,14 @@ window.Menu = function(el, opts){ this.element=el; this.options=opts; return thi
     });
 
     // Ratio chart
-    new Chart(document.getElementById('ratioChart'), {
+    ratioChart = new Chart(document.getElementById('ratioChart'), {
         type:'bar',
         data:{
             labels: top8ratio.map(s => shorten(s.Titre)),
             datasets:[{
                 label:'Likes per comment',
                 data: top8ratio.map(s => s.ratio),
-                backgroundColor: top8ratio.map(s =>
-                    s.ratio >= 3 ? '#71dd37' : s.ratio >= 1 ? '#ffab00' : '#a1acb8'),
+                backgroundColor: top8ratio.map(s => s.ratio >= 3 ? '#71dd37' : s.ratio >= 1 ? '#ffab00' : '#a1acb8'),
                 borderRadius:4
             }]
         },
@@ -341,15 +396,41 @@ window.Menu = function(el, opts){ this.element=el; this.options=opts; return thi
             }
         }
     });
+}
 
-    // Table search
-    document.getElementById('tableSearch').addEventListener('input', function(){
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('#statsBody tr').forEach(function(row){
-            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-        });
+async function fetchStats() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bx bx-loader bx-spin"></i> Loading...';
+    
+    try {
+        const response = await fetch('api.php');
+        const data = await response.json();
+        
+        renderSummary(data.summary);
+        renderTable(data.stats);
+        renderCharts(data.stats);
+    } catch (err) {
+        console.error('Failed to fetch stats:', err);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bx bx-refresh"></i> Refresh';
+    }
+}
+
+// Initial load
+fetchStats();
+
+// Auto-refresh every 30 seconds
+setInterval(fetchStats, REFRESH_INTERVAL);
+
+// Table search (works with dynamic content)
+document.getElementById('tableSearch').addEventListener('input', function(){
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#statsBody tr').forEach(function(row){
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
-})();
+});
 </script>
 </body>
 </html>

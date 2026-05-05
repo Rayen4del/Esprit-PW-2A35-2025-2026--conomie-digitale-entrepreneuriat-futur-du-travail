@@ -178,11 +178,17 @@ public function getPostEngagementStats()
         SELECT 
             p.ID, p.Titre,
             COUNT(DISTINCT c.ID)          AS comment_count,
-            COUNT(DISTINCT cl.comment_id) AS total_likes
+            COUNT(DISTINCT cl.comment_id) AS comment_likes,
+            COALESCE(pl.post_likes, 0)    AS post_likes,
+            COALESCE(pl.post_likes, 0) + COUNT(DISTINCT cl.comment_id) AS total_likes
         FROM post p
         LEFT JOIN commentaire c   ON c.IDPost = p.ID
         LEFT JOIN comment_likes cl ON cl.comment_id = c.ID
-        GROUP BY p.ID, p.Titre
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS post_likes 
+            FROM post_likes GROUP BY post_id
+        ) pl ON pl.post_id = p.ID
+        GROUP BY p.ID, p.Titre, pl.post_likes
         ORDER BY total_likes DESC
     ";
     $stmt = $this->pdo->prepare($sql);
