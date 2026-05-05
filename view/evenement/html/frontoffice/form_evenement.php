@@ -16,8 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lieu_lien   = trim($_POST['lieu_lien']   ?? '');
     $statut      = trim($_POST['statut']      ?? '');
     $nbplaces    = intval($_POST['nbplaces']  ?? 0);
+    $prix        = floatval($_POST['prix']     ?? 0.0);
 
-    $evenement = new Evenement($titre, $type, $description, $dateEvent, $duree, $lieu_lien, $statut, $nbplaces);
+    $evenement = new Evenement($titre, $type, $description, $dateEvent, $duree, $lieu_lien, $statut, $nbplaces, $prix);
 
     $controller = new EvenementController();
     if ($controller->addEvenement($evenement)) {
@@ -324,6 +325,21 @@ $old = function(string $key, $default = '') {
                     <span class="input-group-text">participants</span>
                   </div>
                   <div class="field-error" id="err-places"></div>
+                </div>
+              </div>
+
+              <!-- Prix -->
+              <div class="row mb-3">
+                <label class="col-sm-3 col-form-label" for="event-prix">Prix *</label>
+                <div class="col-sm-9">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
+                    <input type="number" class="form-control" id="event-prix" name="prix"
+                           value="<?= $old('prix') ?>"
+                           placeholder="ex: 50.00" min="0" step="0.01" required />
+                    <span class="input-group-text">€</span>
+                  </div>
+                  <div class="field-error" id="err-prix"></div>
                 </div>
               </div>
 

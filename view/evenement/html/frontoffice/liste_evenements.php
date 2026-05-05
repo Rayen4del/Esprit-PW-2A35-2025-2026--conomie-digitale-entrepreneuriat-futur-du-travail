@@ -41,9 +41,10 @@ function renderEvents($events) {
             $dateFormatted = date('d/m/Y', strtotime($ev['dateEvent']));
           ?>
           <div class="col">
-            <div class="card event-card h-100">
-              <div class="event-image-placeholder">
-                <i class="bi bi-calendar-event"></i>
+            <div class="card event-card h-100" data-event-title="<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>" data-event-location="<?= htmlspecialchars($ev['lieu_lien'], ENT_QUOTES) ?>">
+              <div class="event-image-placeholder" style="cursor:pointer" onclick="openMapModal('<?= htmlspecialchars($ev['lieu_lien'], ENT_QUOTES) ?>', '<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>')">
+                <i class="bi bi-geo-alt"></i>
+                <span class="map-hint">Cliquez pour voir la carte</span>
               </div>
               <div style="position:relative;margin-top:-2rem;padding:0 .75rem">
                 <span class="status-badge <?= $statusClass ?>"><?= $statusText ?></span>
@@ -57,7 +58,8 @@ function renderEvents($events) {
                   <?= $ev['duree'] > 0 ? ' · ' . $ev['duree'] . 'h' : '' ?>
                 </p>
                 <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars(substr($ev['lieu_lien'], 0, 50)) ?><?= strlen($ev['lieu_lien']) > 50 ? '…' : '' ?></p>
-                <p class="mb-3 small"><i class="bi bi-people me-1"></i><?= $ev['nbplaces'] ?> place(s)</p>
+                <p class="mb-1 small"><i class="bi bi-people me-1"></i><?= $ev['nbplaces'] ?> place(s)</p>
+                <p class="mb-3 small"><i class="bi bi-tag me-1"></i><?= $ev['prix'] > 0 ? $ev['prix'] . ' €' : 'Gratuit' ?></p>
                 <?php if (!empty($ev['Description'])): ?>
                 <p class="small text-muted mb-3" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">
                   <?= htmlspecialchars($ev['Description']) ?>
@@ -163,8 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_action']) && $_POST[
         $lieu_lien   = trim($_POST['lieu_lien']   ?? '');
         $statut      = trim($_POST['statut']      ?? '');
         $nbplaces    = intval($_POST['nbplaces']  ?? 0);
+        $prix        = floatval($_POST['prix']     ?? 0.0);
 
-        $evenement = new Evenement($titre, $type, $description, $dateEvent, $duree, $lieu_lien, $statut, $nbplaces, $editId);
+        $evenement = new Evenement($titre, $type, $description, $dateEvent, $duree, $lieu_lien, $statut, $nbplaces, $prix, $editId);
 
         if ($controller->updateEvenement($evenement, $editId)) {
             $editSuccess = true;
@@ -276,7 +279,8 @@ $typeVal   = htmlspecialchars($type);
     .event-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(67,89,113,.18)}
     .event-image{height:160px;background-size:cover;background-position:center;position:relative}
     .event-image-placeholder{height:160px;background:linear-gradient(135deg,#696cff22,#a3a4ff44);
-      display:flex;align-items:center;justify-content:center;font-size:3rem;color:#696cff}
+      display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:3rem;color:#696cff}
+    .map-hint{font-size:.8rem;color:#696cff;font-weight:500}
     .status-badge{position:absolute;top:.75rem;right:.75rem;padding:.25rem .65rem;
       border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.5px;color:#fff}
     .content-footer{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;
@@ -606,6 +610,18 @@ $typeVal   = htmlspecialchars($type);
             </div>
           </div>
 
+          <!-- Prix -->
+          <div class="row mb-3">
+            <label class="col-sm-3 col-form-label" for="edit-prix">Prix *</label>
+            <div class="col-sm-9">
+              <div class="input-group">
+                <span class="input-group-text">€</span>
+                <input type="number" class="form-control" id="edit-prix" name="prix" min="0" step="0.01" required />
+              </div>
+              <div class="field-error" id="eerr-prix"></div>
+            </div>
+          </div>
+
           <div class="section-divider">Statut</div>
 
           <div class="row mb-3">
@@ -653,6 +669,32 @@ $typeVal   = htmlspecialchars($type);
   </div>
 </div>
 
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mapModalLabel">Localisation</h5>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="getDirectionsBtn">
+          <i class="bi bi-signpost-2 me-1"></i> Itinéraire
+        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe
+          id="mapIframe"
+          width="100%"
+          height="400"
+          style="border:0"
+          loading="lazy"
+          allowfullscreen
+          src="">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast area -->
 <div id="toast-area" style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;"></div>
 
@@ -661,6 +703,51 @@ $typeVal   = htmlspecialchars($type);
 <script src="/projet/view/evenement/html/frontoffice/js/validate_rules.js"></script>
 <script src="/projet/view/evenement/html/frontoffice/js/list_validation.js"></script>
 <script>
+// Open map modal
+let currentDestination = '';
+
+function openMapModal(location, title) {
+    const mapIframe = document.getElementById('mapIframe');
+    const mapModalLabel = document.getElementById('mapModalLabel');
+    currentDestination = location;
+    mapIframe.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(location) + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
+    mapModalLabel.textContent = 'Localisation - ' + title;
+    const mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+    mapModal.show();
+}
+
+// Get directions from user's location to destination
+function setupDirectionsButton() {
+    const btn = document.getElementById('getDirectionsBtn');
+    if (btn) {
+        btn.onclick = function() {
+            if (!currentDestination) return;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        const mapIframe = document.getElementById('mapIframe');
+                        mapIframe.src = 'https://maps.google.com/maps?saddr=' + userLat + ',' + userLng + '&daddr=' + encodeURIComponent(currentDestination) + '&output=embed';
+                    },
+                    function(error) {
+                        alert('Impossible d\'obtenir votre position. Veuillez autoriser la géolocalisation.');
+                        // Fallback: open Google Maps with directions
+                        window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(currentDestination), '_blank');
+                    }
+                );
+            } else {
+                alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                // Fallback: open Google Maps with directions
+                window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(currentDestination), '_blank');
+            }
+        };
+    }
+}
+
+setupDirectionsButton();
+
     // Données PHP → JS : index des événements par ID pour la vue rapide
     const allEvents = <?php
         $eventsJs = [];
@@ -675,6 +762,7 @@ $typeVal   = htmlspecialchars($type);
                 'lieu_lien'   => $ev['lieu_lien'],
                 'Statut'      => $ev['Statut'],
                 'nbplaces'    => $ev['nbplaces'],
+                'prix'        => $ev['prix'] ?? 0.0,
             ];
         }
         echo json_encode($eventsJs);
@@ -737,7 +825,8 @@ $typeVal   = htmlspecialchars($type);
                     duree: ev.duree,
                     lieu_lien: ev.lieu_lien,
                     Statut: ev.Statut,
-                    nbplaces: ev.nbplaces
+                    nbplaces: ev.nbplaces,
+                    prix: ev.prix ?? 0.0
                 };
             });
         })
