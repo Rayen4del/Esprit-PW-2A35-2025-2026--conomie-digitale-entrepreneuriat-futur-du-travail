@@ -444,7 +444,7 @@ class UserController {
     
     // Envoyer l'email de reset avec PHPMailer
     public function sendResetEmail($email, $token) {
-        $reset_link = "http://localhost/skiller/reset-password.php?token=" . $token;
+        $reset_link = "http://localhost/skiller/view/gestion_utilisateur/frontoffice/reset-password.php?token=" . $token;
         
         $subject = "Réinitialisation de votre mot de passe - Skiller";
         $htmlBody = "

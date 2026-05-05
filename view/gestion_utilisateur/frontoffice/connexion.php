@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="email" class="form-label">
                             <i class="fas fa-envelope me-1"></i>Email
                         </label>
-                        <input type="email" class="form-control" id="email" name="email" 
+                        <input type="text" class="form-control" id="email" name="email" 
                                placeholder="votre@email.com"
                                value="<?php echo htmlspecialchars($_COOKIE['user_email'] ?? ''); ?>">
                         <div class="invalid-feedback d-block" id="emailError"></div>
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </button>
                     
                     <div class="text-center mb-3">
-                        <a href="forgot_password.php" class="text-decoration-none">
+                        <a href="forgot-password.php" class="text-decoration-none">
                             <small>Mot de passe oublié ?</small>
                         </a>
                     </div>
@@ -129,7 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="inscription.php" class="btn btn-outline-primary w-100">
                     <i class="fas fa-user-plus me-2"></i>Créer un compte
                 </a>
-                
                 <div class="text-center mt-4">
                     <p class="text-muted mb-0">
                         <small>© 2024 Skiller. Tous droits réservés.</small>
