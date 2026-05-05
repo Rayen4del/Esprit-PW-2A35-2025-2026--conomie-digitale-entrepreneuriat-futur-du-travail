@@ -120,7 +120,7 @@ switch ($action) {
         }
         break;
 
-    // ── ADMIN: hard-delete a comment from the backoffice ──
+    // ── ADMIN: soft-delete a comment from the backoffice ──
     case 'backDelete':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $commentId = (int)$_POST['comment_id'];
@@ -131,10 +131,7 @@ switch ($action) {
                 exit;
             }
 
-            $stmt   = Config::getConnexion()->prepare(
-                "DELETE FROM commentaire WHERE ID = ?"
-            );
-            $result = $stmt->execute([$commentId]);
+            $result = $commentModel->delete($commentId);
 
             header('Content-Type: application/json');
             echo json_encode(['success' => $result]);

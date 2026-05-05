@@ -246,15 +246,6 @@ foreach ($comments as $c) {
                                                 <td><?= date('d M Y', strtotime($c['DateCom'] ?? 'now')) ?></td>
                                                 <td>
                                                     <div class="action-btns">
-                                                        <button onclick="window.commentsManager.updateStatus(<?= $c['ID'] ?>, 'approved')" class="btn btn-sm btn-outline-success" title="Approve" <?= $st === 'approved' ? 'disabled' : '' ?>>
-                                                            <i class="bx bx-check"></i>
-                                                        </button>
-                                                        <button onclick="window.commentsManager.updateStatus(<?= $c['ID'] ?>, 'rejected')" class="btn btn-sm btn-outline-warning" title="Reject" <?= $st === 'rejected' ? 'disabled' : '' ?>>
-                                                            <i class="bx bx-x"></i>
-                                                        </button>
-                                                        <button onclick="window.commentsManager.updateStatus(<?= $c['ID'] ?>, 'pending')" class="btn btn-sm btn-outline-secondary" title="Set Pending" <?= $st === 'pending' ? 'disabled' : '' ?>>
-                                                            <i class="bx bx-time"></i>
-                                                        </button>
                                                         <button onclick="window.commentsManager.deleteComment(<?= $c['ID'] ?>)" class="btn btn-sm btn-outline-danger" title="Delete">
                                                             <i class="bx bx-trash"></i>
                                                         </button>
@@ -333,8 +324,8 @@ foreach ($comments as $c) {
     <script>
     // Single script with no external dependencies
     (function() {
-        // Controller URL - using relative path
-        const CONTROLLER_URL = "../../../controller/CommentController.php";
+        // Controller URL - using relative path (from backoffice/comments/index.php)
+        const CONTROLLER_URL = "../../../../controller/CommentController.php";
         
         // Create a namespace for our functions
         window.commentsManager = {

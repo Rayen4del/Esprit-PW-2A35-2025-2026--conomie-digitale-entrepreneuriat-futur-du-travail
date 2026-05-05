@@ -34,13 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     $postId   = (int)($_POST['post_id']  ?? 0);
     $userId   = (int)($_POST['user_id']  ?? 0);
     $content  = trim($_POST['content']   ?? '');
-    $emotion  = trim($_POST['emotion']   ?? '') ?: null; // ← add this
+    $emotion  = trim($_POST['emotion']   ?? '') ?: null;
+    $status   = trim($_POST['status']    ?? 'publié');
+    $scheduledDate = trim($_POST['scheduled_date'] ?? '');
 
     if (!$postId || !$userId || !$content) {
         sendJson(['success' => false, 'message' => 'Missing required fields']);
     }
 
-    $result = $commentModel->create($userId, $postId, $content, $emotion); // ← pass it
+    $result = $commentModel->create($userId, $postId, $content, $emotion, $status, $scheduledDate ?: null);
     if ($result) {
         $comment = $commentModel->getLastComment($postId, $userId);
         sendJson(['success' => true, 'message' => 'Comment added successfully', 'comment' => $comment]);

@@ -151,6 +151,8 @@ async function submitComment(event, postId) {
     event.preventDefault();
     const form    = event.target;
     const input   = form.querySelector('input[name="content"]');
+    const status  = form.querySelector('select[name="status"]').value;
+    const scheduledInput = form.querySelector('input[name="scheduled_date"]');
     const content = input.value.trim();
     if (!content) return;
 
@@ -167,13 +169,19 @@ async function submitComment(event, postId) {
     formData.append('post_id',  postId);
     formData.append('user_id',  1); // replace with real user id
     formData.append('content',  content);
-    formData.append('emotion',  emotion); // ← send emotion
+    formData.append('emotion',  emotion);
+    formData.append('status',   status);
+
+    if (status === 'planifié' && scheduledInput.value) {
+        formData.append('scheduled_date', scheduledInput.value);
+    }
 
     try {
         const res  = await fetch(COMMENT_CONTROLLER, { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) {
             input.value = '';
+            if (scheduledInput) scheduledInput.value = '';
             loadComments(postId); // reload to show new comment with emoji
         }
     } finally {
@@ -269,3 +277,18 @@ function showNotification(message, type = 'success') {
     document.body.appendChild(n);
     setTimeout(() => n.remove(), 3000);
 }
+
+// ── STATUS CHANGE HANDLER ───────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status change for comment forms
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'status') {
+            const form = e.target.closest('form');
+            const scheduledInput = form.querySelector('input[name="scheduled_date"]');
+            if (scheduledInput) {
+                scheduledInput.classList.toggle('d-none', e.target.value !== 'planifié');
+            }
+        }
+    });
+});

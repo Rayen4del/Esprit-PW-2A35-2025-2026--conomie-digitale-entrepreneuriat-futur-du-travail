@@ -80,9 +80,18 @@ foreach ($posts as $post):
         <div id="comments-list-<?= $postId ?>">
             <p class="text-muted small text-center">Loading comments...</p>
         </div>
-        <form onsubmit="submitComment(event, <?= $postId ?>)" class="d-flex gap-2 mt-3">
-            <input type="text" name="content" class="form-control" placeholder="Write a comment...">
-            <button type="submit" class="btn btn-primary">Send</button>
+        <form onsubmit="submitComment(event, <?= $postId ?>)" class="mt-3">
+            <div class="mb-2">
+                <select name="status" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                    <option value="publié">📢 Publish Now</option>
+                    <option value="planifié">⏰ Schedule Comment</option>
+                </select>
+                <input type="datetime-local" name="scheduled_date" class="form-control form-control-sm d-none" style="width: auto; display: inline-block; margin-left: 8px;">
+            </div>
+            <div class="d-flex gap-2">
+                <input type="text" name="content" class="form-control" placeholder="Write a comment...">
+                <button type="submit" class="btn btn-primary">Send</button>
+            </div>
         </form>
     </div>
 </div>

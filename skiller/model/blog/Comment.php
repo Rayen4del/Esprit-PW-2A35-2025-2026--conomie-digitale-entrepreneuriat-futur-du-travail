@@ -12,19 +12,29 @@ class Comment
 
     // ─── CREATE ───────────────────────────────────────────────
 
-    public function create($idUtilisateur, $idPost, $contenu, $emotion = null)
-{
-    $sql = "INSERT INTO commentaire (IDUtilisateur, IDPost, Contenu, DateCom, emotion)
-            VALUES (:idUtilisateur, :idPost, :contenu, NOW(), :emotion)";
-    $stmt = $this->pdo->prepare($sql);
-    $stmt->execute([
-        ':idUtilisateur' => $idUtilisateur,
-        ':idPost'        => $idPost,
-        ':contenu'       => $contenu,
-        ':emotion'       => $emotion
-    ]);
-    return $this->pdo->lastInsertId();
-}
+    public function create($idUtilisateur, $idPost, $contenu, $emotion = null, $statut = 'publié', $scheduledDate = null)
+    {
+        $dateCom = $statut === 'planifié' && $scheduledDate ? $scheduledDate : 'NOW()';
+
+        $sql = "INSERT INTO commentaire (IDUtilisateur, IDPost, Contenu, DateCom, emotion, Statut)
+                VALUES (:idUtilisateur, :idPost, :contenu, " . ($statut === 'planifié' && $scheduledDate ? ":dateCom" : "NOW()") . ", :emotion, :statut)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = [
+            ':idUtilisateur' => $idUtilisateur,
+            ':idPost'        => $idPost,
+            ':contenu'       => $contenu,
+            ':emotion'       => $emotion,
+            ':statut'        => $statut
+        ];
+
+        if ($statut === 'planifié' && $scheduledDate) {
+            $params[':dateCom'] = $scheduledDate;
+        }
+
+        $stmt->execute($params);
+        return $this->pdo->lastInsertId();
+    }
 
     // ─── READ ALL COMMENTS FOR A POST ─────────────────────────
 
@@ -106,11 +116,35 @@ class Comment
         ]);
     }
 
-    // ─── DELETE ───────────────────────────────────────────────
+    // ─── SOFT DELETE ──────────────────────────────────────────
 
     public function delete($id)
     {
-        $sql = "DELETE FROM commentaire WHERE ID = :id";
+        $sql = "UPDATE commentaire SET deleted_at = NOW() WHERE ID = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    // ─── GET DELETED COMMENTS ─────────────────────────────────
+
+    public function getDeleted()
+    {
+        $sql = "SELECT c.*, u.Nom AS auteur, p.Titre AS post_titre
+                FROM commentaire c
+                JOIN utilisateur u ON c.IDUtilisateur = u.ID
+                JOIN post p ON c.IDPost = p.ID
+                WHERE c.deleted_at IS NOT NULL AND c.deleted_at != ''
+                ORDER BY c.deleted_at DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ─── RESTORE COMMENT ──────────────────────────────────────
+
+    public function restore($id)
+    {
+        $sql = "UPDATE commentaire SET deleted_at = NULL WHERE ID = :id";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }

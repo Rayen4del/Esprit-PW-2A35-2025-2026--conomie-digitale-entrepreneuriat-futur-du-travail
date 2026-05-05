@@ -20,7 +20,8 @@ class Post
         $image = null,
         $media = null,
         $statut = 'pending',
-        $idUtilisateur = null
+        $idUtilisateur = null,
+        $scheduledDate = null
     ) {
         // 🔥 TESTING FALLBACK USER (IMPORTANT FOR YOUR PRESENTATION)
         if ($idUtilisateur === null) {
@@ -30,7 +31,8 @@ class Post
         $sql = "INSERT INTO post 
                 (Titre, Contenu, Categorie, Image, media, Statut, idUtilisateur, DatePublication)
                 VALUES
-                (:titre, :contenu, :categorie, :image, :media, :statut, :idUtilisateur, NOW())";
+                (:titre, :contenu, :categorie, :image, :media, :statut, :idUtilisateur, " . 
+                ($statut === 'planifié' && $scheduledDate ? ":datePublication" : "NOW()") . ")";
 
         $stmt = $this->pdo->prepare($sql);
 
@@ -41,6 +43,10 @@ class Post
         $stmt->bindValue(':media', $media);
         $stmt->bindValue(':statut', $statut);
         $stmt->bindValue(':idUtilisateur', $idUtilisateur, PDO::PARAM_INT);
+
+        if ($statut === 'planifié' && $scheduledDate) {
+            $stmt->bindValue(':datePublication', $scheduledDate);
+        }
 
         $stmt->execute();
 
@@ -116,26 +122,33 @@ class Post
     // ─────────────────────────────────────────────
     // UPDATE POST
     // ─────────────────────────────────────────────
-    public function update($id, $titre, $contenu, $categorie, $image = null, $media = null)
+    public function update($id, $titre, $contenu, $categorie, $image = null, $media = null, $statut = null)
     {
         $sql = "UPDATE post
                 SET Titre = :titre,
                     Contenu = :contenu,
                     Categorie = :categorie,
                     Image = :image,
-                    media = :media
-                WHERE ID = :id";
+                    media = :media";
+
+        $params = [
+            ':titre' => $titre,
+            ':contenu' => $contenu,
+            ':categorie' => $categorie,
+            ':image' => $image,
+            ':media' => $media,
+            ':id' => $id
+        ];
+
+        if ($statut !== null) {
+            $sql .= ", Statut = :statut";
+            $params[':statut'] = $statut;
+        }
+
+        $sql .= " WHERE ID = :id";
 
         $stmt = $this->pdo->prepare($sql);
-
-        $stmt->bindValue(':titre', $titre);
-        $stmt->bindValue(':contenu', $contenu);
-        $stmt->bindValue(':categorie', $categorie);
-        $stmt->bindValue(':image', $image);
-        $stmt->bindValue(':media', $media);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-
-        return $stmt->execute();
+        return $stmt->execute($params);
     }
 
     // ─────────────────────────────────────────────
@@ -153,15 +166,39 @@ class Post
         ]);
     }
 
+
     // ─────────────────────────────────────────────
-    // DELETE POST
+    // SOFT DELETE POST
     // ─────────────────────────────────────────────
     public function delete($id)
     {
-        $sql = "DELETE FROM post WHERE ID = :id";
-
+        $sql = "UPDATE post SET deleted_at = NOW() WHERE ID = :id";
         $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([':id' => $id]);
+    }
 
+    // ─────────────────────────────────────────────
+    // GET DELETED POSTS
+    // ─────────────────────────────────────────────
+    public function getDeleted()
+    {
+        $sql = "SELECT p.*, u.Nom AS auteur
+                FROM post p
+                JOIN utilisateur u ON p.idUtilisateur = u.ID
+                WHERE p.deleted_at IS NOT NULL
+                ORDER BY p.deleted_at DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    // ─────────────────────────────────────────────
+    // RESTORE POST
+    // ─────────────────────────────────────────────
+    public function restore($id)
+    {
+        $sql = "UPDATE post SET deleted_at = NULL WHERE ID = :id";
+        $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }
 

@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'like_
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create_post') {
     $titre   = trim($_POST['titre']   ?? '');
     $contenu = trim($_POST['contenu'] ?? '');
+    $status  = trim($_POST['status']  ?? 'publié');
+    $scheduled_date = null;
     $media   = null;
 
     if (!empty($_FILES['media']['name']) && $_FILES['media']['error'] === UPLOAD_ERR_OK) {
@@ -59,8 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         }
     }
 
+    if ($status === 'planifié') {
+        $scheduled_date = trim($_POST['scheduled_date'] ?? '');
+        if (empty($scheduled_date)) {
+            $status = 'brouillon'; // fallback to draft if no date
+        }
+    }
+
     if ($titre && $contenu) {
-        $postModel->create($titre, $contenu, null, null, $media, 'publié', null);
+        $postModel->create($titre, $contenu, null, null, $media, $status, $currentUserId, $scheduled_date);
         header('Location: index.php');
         exit;
     }
@@ -99,7 +108,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit_
 
 // ── LOAD POSTS ──────────────────────────────────────────────────
 $search = $_GET['search'] ?? '';
-$posts  = $postModel->getAll($search);
+$filter = $_GET['filter'] ?? '';
+
+if ($filter === 'drafts') {
+    $posts = $postModel->getByUser($currentUserId);
+    $posts = array_filter($posts, fn($p) => ($p['Statut'] ?? '') === 'brouillon');
+} else {
+    $posts = $postModel->getAll($search, '', 'publié'); // Only show published posts
+}
 
 foreach ($posts as &$post) {
     $post['like_count'] = $postModel->getPostLikeCount($post['ID']);
@@ -112,7 +128,7 @@ unset($post);
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feed - Skiller</title>
+    <title><?= $filter === 'drafts' ? 'My Drafts' : 'Feed' ?> - Skiller</title>
 
     <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
     <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
@@ -162,7 +178,8 @@ unset($post);
                 </a>
             </div>
             <ul class="menu-inner py-1">
-                <li class="menu-item active"><a href="index.php" class="menu-link"><i class="bx bx-home"></i><div>Feed</div></a></li>
+                <li class="menu-item <?= $filter !== 'drafts' ? 'active' : '' ?>"><a href="index.php" class="menu-link"><i class="bx bx-home"></i><div>Feed</div></a></li>
+                <li class="menu-item <?= $filter === 'drafts' ? 'active' : '' ?>"><a href="index.php?filter=drafts" class="menu-link"><i class="bx bx-edit"></i><div>My Drafts</div></a></li>
                 <li class="menu-item"><a href="#" class="menu-link"><i class="bx bx-user"></i><div>My Profile</div></a></li>
                 <li class="menu-item"><a href="#" class="menu-link"><i class="bx bx-bell"></i><div>Notifications</div></a></li>
             </ul>
@@ -178,6 +195,10 @@ unset($post);
                         <input type="text" id="searchInput" class="form-control" placeholder="Search posts..." value="<?= htmlspecialchars($search) ?>">
                     </div>
                     <div class="ms-auto d-flex align-items-center gap-3">
+                        <span class="fw-semibold text-muted">
+                            <i class='bx <?= $filter === 'drafts' ? 'bx-edit' : 'bx-home' ?> me-1'></i>
+                            <?= $filter === 'drafts' ? 'My Drafts' : 'Feed' ?>
+                        </span>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
                             <i class="bx bx-plus me-1"></i> Create Post
                         </button>
@@ -281,9 +302,18 @@ unset($post);
                                 <div id="comments-list-<?= $postId ?>">
                                     <p class="text-muted small text-center">Loading comments...</p>
                                 </div>
-                                <form onsubmit="submitComment(event, <?= $postId ?>)" class="d-flex gap-2 mt-3">
-                                    <input type="text" name="content" class="form-control" placeholder="Write a comment...">
-                                    <button type="submit" class="btn btn-primary">Send</button>
+                                <form onsubmit="submitComment(event, <?= $postId ?>)" class="mt-3">
+                                    <div class="mb-2">
+                                        <select name="status" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                                            <option value="publié">📢 Publish Now</option>
+                                            <option value="planifié">⏰ Schedule Comment</option>
+                                        </select>
+                                        <input type="datetime-local" name="scheduled_date" class="form-control form-control-sm d-none" style="width: auto; display: inline-block; margin-left: 8px;">
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" name="content" class="form-control" placeholder="Write a comment...">
+                                        <button type="submit" class="btn btn-primary">Send</button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -328,12 +358,24 @@ unset($post);
                         <small id="speechStatus" class="text-muted d-block mt-1"></small>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select id="postStatus" name="status" class="form-select">
+                            <option value="publié">📢 Publish Now</option>
+                            <option value="brouillon">📝 Save as Draft</option>
+                            <option value="planifié">⏰ Schedule Post</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="scheduledDateContainer" style="display: none;">
+                        <label class="form-label fw-semibold">Schedule Date & Time</label>
+                        <input type="datetime-local" id="scheduledDate" name="scheduled_date" class="form-control">
+                        <small class="text-muted">When should this post be published?</small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            <i class="bx bx-image-add me-1"></i> Add Image or Video
-                            <small class="text-muted fw-normal">(jpg, png, gif, webp, mp4, webm, mov)</small>
+                            <i class="bx bx-image-add me-1"></i> Image or Video
                         </label>
                         <input type="file" id="createMediaInput" name="media" class="form-control" accept="image/*,video/*">
-                        <!-- Live preview -->
+                        <small class="text-muted">JPG, PNG, GIF, WebP, MP4, WebM, MOV</small>
                         <div id="createMediaPreview" class="mt-2"></div>
                     </div>
                 </div>
@@ -429,6 +471,25 @@ unset($post);
     document.getElementById('createPostForm').addEventListener('submit', function(e) {
         const content = quillCreateEditor.root.innerHTML;
         document.getElementById('createPostContenu').value = content;
+    });
+
+    // Handle status change
+    document.getElementById('postStatus').addEventListener('change', function() {
+        const status = this.value;
+        const scheduledContainer = document.getElementById('scheduledDateContainer');
+        const submitBtn = document.querySelector('#createPostForm .btn-primary');
+        
+        if (status === 'planifié') {
+            scheduledContainer.style.display = 'block';
+            submitBtn.innerHTML = '<i class="bx bx-calendar me-1"></i>Schedule Post';
+        } else {
+            scheduledContainer.style.display = 'none';
+            if (status === 'brouillon') {
+                submitBtn.innerHTML = '<i class="bx bx-save me-1"></i>Save Draft';
+            } else {
+                submitBtn.innerHTML = '<i class="bx bx-send me-1"></i>Publish Now';
+            }
+        }
     });
 
     // Handle edit post form
