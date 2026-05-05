@@ -1,7 +1,0 @@
-.env
-.env.local
-.env.*.php
-node_modules/
-vendor/
-*.log
-.DS_Store

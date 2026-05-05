@@ -533,9 +533,27 @@ function initializeStripePayment(eventId, price) {
     // Initialize Stripe only once
     if (!stripe) {
         // Fetch the publishable key from server
-        const publishableKey = 'pk_test_51TTSafCNmWKnJp9nhZRzwuHK5J4ZPHdJJlzGTPKF3a1LGQFImJv4px252BiqakFv1gDkRIlQLW6zvsFciZc5YjL000AfMgF62A';
-        stripe = Stripe(publishableKey);
+        fetch('/projet/controller/evenement/get_stripe_config.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.publishableKey) {
+                    stripe = Stripe(data.publishableKey);
+                    continuePaymentInit(eventId, price);
+                } else {
+                    showPaymentError('Erreur: Configuration Stripe manquante');
+                }
+            })
+            .catch(err => {
+                console.error('Config fetch error:', err);
+                showPaymentError('Erreur: Impossible de charger la configuration');
+            });
+        return;
     }
+    continuePaymentInit(eventId, price);
+}
+
+function continuePaymentInit(eventId, price) {
+function continuePaymentInit(eventId, price) {
     
     // Create or recreate elements
     const paymentElement = document.getElementById('payment-element');
