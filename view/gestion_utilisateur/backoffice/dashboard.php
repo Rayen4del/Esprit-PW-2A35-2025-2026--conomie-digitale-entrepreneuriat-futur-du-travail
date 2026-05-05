@@ -41,6 +41,7 @@ $offset = ($currentPage - 1) * $perPage;
 
 $users = $userC->filterUsersPaginated($typeFilter, $statusFilter, $perPage, $offset, null, $sortDate, $sortName);
 $stats = $userC->getStats();
+$registrationsByDate = $userC->getRegistrationsByDate();
 
 $exportBaseParams = [
     'type' => $typeFilter,
@@ -87,6 +88,16 @@ $donutGradient = $rolesTotal > 0
     ? 'conic-gradient(#5b63f6 0% ' . $adminStop . '%, #17b890 ' . $adminStop . '% ' . $etudiantStop . '%, #e2951a ' . $etudiantStop . '% 100%)'
     : '#d8dbe2';
 
+// Préparer les données pour la chart des inscriptions par date
+$dates = [];
+$counts = [];
+foreach ($registrationsByDate as $row) {
+    $dates[] = date('d/m', strtotime($row['date']));
+    $counts[] = (int) $row['count'];
+}
+$datesJson = json_encode($dates);
+$countsJson = json_encode($counts);
+
 $success = $_SESSION['success'] ?? '';
 $error = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
@@ -99,6 +110,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <title>Dashboard - Gestion des Utilisateurs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../../../assets/css/style.css">
     <style>
         .roles-chart-wrap {
@@ -292,7 +304,15 @@ unset($_SESSION['success'], $_SESSION['error']);
                     </div>
                 </div>
                 
-                <!-- Filtres -->
+                <!-- Graphe des inscriptions par date -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Inscriptions par date (30 derniers jours)</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="registrationsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtrer les utilisateurs</h5>
@@ -562,6 +582,42 @@ unset($_SESSION['success'], $_SESSION['error']);
             doSearch(page);
         });
     })();
+    
+    // Chart des inscriptions par date
+    const ctx = document.getElementById('registrationsChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: <?php echo $datesJson; ?>,
+                datasets: [{
+                    label: 'Inscriptions',
+                    data: <?php echo $countsJson; ?>,
+                    borderColor: '#5b63f6',
+                    backgroundColor: 'rgba(91, 99, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

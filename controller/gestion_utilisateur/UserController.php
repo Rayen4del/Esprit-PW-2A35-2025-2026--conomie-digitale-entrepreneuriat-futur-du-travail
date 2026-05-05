@@ -404,6 +404,19 @@ class UserController {
         return $stats;
     }
     
+    // Récupérer les inscriptions par date (derniers 30 jours)
+    public function getRegistrationsByDate() {
+        $db = config::getConnexion();
+        $query = $db->query("
+            SELECT DATE(created_at) as date, COUNT(*) as count 
+            FROM utilisateur 
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(created_at) 
+            ORDER BY DATE(created_at) ASC
+        ");
+        return $query->fetchAll();
+    }
+    
     // Générer un token sécurisé pour reset password
     public function generateResetToken($email) {
         $token = bin2hex(random_bytes(32));
