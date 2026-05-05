@@ -37,7 +37,7 @@ $list = $bookC->listBooks();
 
 					<div class="col-md-2">
 						<div class="main-logo">
-							<a href="index.html"><img src="images/logoEspritBook.png" alt="logo" width="40%" height="50%"></a>
+							<a href="index.php"><img src="images/logoEspritBook.png" alt="logo" width="40%" height="50%"></a>
 						</div>
 
 					</div>
@@ -48,7 +48,7 @@ $list = $bookC->listBooks();
 							<div class="main-menu stellarnav">
 								<ul class="menu-list">
                                     
-									<li class="menu-item"><a href="index.html">Home</a></li>
+									<li class="menu-item"><a href="index.php">Home</a></li>
 									<li class="menu-item active"><a href="bookList.php">Books</a></li>
 									<li class="menu-item"><a href="#about" class="nav-link">About</a></li>
 									<li class="menu-item"><a href="#contact" class="nav-link">Contact</a></li>
@@ -145,7 +145,7 @@ $list = $bookC->listBooks();
 				<div class="col-lg-4 col-md-6">
 					<div class="footer-widget">
 						<div class="footer-logo">
-							<a href="index.html"><img src="images/logoEspritBook.png" alt="logo" width="30%" height="40%"></a>
+							<a href="index.php"><img src="images/logoEspritBook.png" alt="logo" width="30%" height="40%"></a>
 						</div>
 						<p>EspritBook University Library - Your gateway to knowledge and learning.</p>
 					</div>
@@ -154,7 +154,7 @@ $list = $bookC->listBooks();
 					<div class="footer-widget">
 						<h4 class="footer-title">Quick Links</h4>
 						<ul class="footer-links">
-							<li><a href="index.html">Home</a></li>
+							<li><a href="index.php">Home</a></li>
 							<li><a href="bookList.php">Books</a></li>
 							<li><a href="#about">About</a></li>
 							<li><a href="#contact">Contact</a></li>

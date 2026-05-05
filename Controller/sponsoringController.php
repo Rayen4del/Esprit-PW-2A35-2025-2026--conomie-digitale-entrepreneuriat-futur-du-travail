@@ -1,6 +1,6 @@
 <?php
-include(__DIR__ . '/../config.php');
-include(__DIR__ . '/../Model/Sponsoring.php');
+include_once(__DIR__ . '/../config.php');
+include_once(__DIR__ . '/../Model/Sponsoring.php');
 
 class SponsoringController {
 
@@ -29,8 +29,8 @@ class SponsoringController {
     }
 
     public function addSponsoring(Sponsoring $sponsoring) {
-        $sql = "INSERT INTO sponsoring 
-                VALUES (NULL, :id_u, :nom_ent, :logo_entp, :date_deb, :date_fin, :mail_event)";
+        $sql = "INSERT INTO sponsoring (id_u, nom_ent, logo_entp, date_deb, date_fin, mail_event) 
+                VALUES (:id_u, :nom_ent, :logo_entp, :date_deb, :date_fin, :mail_event)";
         $db = config::getConnexion();
 
         try {

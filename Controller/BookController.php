@@ -1,6 +1,6 @@
 <?php
-include(__DIR__ . '/../config.php');
-include(__DIR__ . '/../Model/Book.php');
+include_once(__DIR__ . '/../config.php');
+include_once(__DIR__ . '/../Model/Book.php');
 
 class BookController {
 
