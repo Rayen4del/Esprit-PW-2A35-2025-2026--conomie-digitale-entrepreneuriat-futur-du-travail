@@ -68,13 +68,48 @@ $success = $_GET['success'] ?? '';
             </div>
         </nav>
         
-        <div class="container-lg mt-4">
-            <?php if ($success == 'updated'): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>Profil mis à jour avec succès !
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="row">
+            <nav class="col-12 col-md-3 col-lg-2 bg-white sidebar p-0">
+                <div class="text-center p-4">
+                    <h4 class="text-dark mb-1"><i class="fas fa-user-circle text-primary"></i> Mon Espace</h4>
+                    <small class="text-muted d-block">Menu utilisateur</small>
                 </div>
-            <?php endif; ?>
+                <div class="px-3 py-2">
+                    <small class="text-muted text-uppercase d-block mb-2" style="letter-spacing: 0.5px;">Navigation</small>
+                </div>
+                <ul class="nav flex-column px-2">
+                    <?php if (strtolower($_SESSION['user_type']) === 'admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../backoffice/dashboard.php">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard Admin
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="profil.php">
+                            <i class="fas fa-user me-2"></i>Mon Profil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="edit_profil.php">
+                            <i class="fas fa-edit me-2"></i>Modifier Profil
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-danger" href="logout.php">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <main class="col-12 col-md-9 col-lg-10">
+                <div class="container-lg mt-4">
+                    <?php if ($success == 'updated'): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>Profil mis à jour avec succès !
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
             
             <div class="row g-4">
                 <!-- Carte de profil -->
@@ -188,6 +223,8 @@ $success = $_GET['success'] ?? '';
                     </div>
                 </div>
             </div>
+                </div>
+            </main>
         </div>
     </div>
     

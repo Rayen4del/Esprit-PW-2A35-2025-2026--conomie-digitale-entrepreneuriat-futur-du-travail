@@ -114,6 +114,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="submit" class="btn btn-primary w-100 mb-3">
                         <i class="fas fa-sign-in-alt me-2"></i>Se connecter
                     </button>
+                    
+                    <div class="text-center mb-3">
+                        <a href="forgot_password.php" class="text-decoration-none">
+                            <small>Mot de passe oublié ?</small>
+                        </a>
+                    </div>
                 </form>
                 
                 <div class="auth-divider">

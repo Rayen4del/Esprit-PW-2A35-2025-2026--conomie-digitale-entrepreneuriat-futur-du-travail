@@ -2,6 +2,11 @@
 // controller/gestion_utilisateur/UserController.php
 require_once __DIR__ . '/../../model/gestion_utilisateur/config.php';
 require_once __DIR__ . '/../../model/gestion_utilisateur/User.php';
+require_once __DIR__ . '/../../model/gestion_utilisateur/EmailConfig.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class UserController {
     
@@ -397,6 +402,159 @@ class UserController {
         $stats['by_status'] = $query->fetchAll();
         
         return $stats;
+    }
+    
+    // Générer un token sécurisé pour reset password
+    public function generateResetToken($email) {
+        $token = bin2hex(random_bytes(32));
+        $expires_at = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+        
+        $db = config::getConnexion();
+        $query = $db->prepare("UPDATE utilisateur SET reset_token = :token, reset_expires = :expires_at WHERE Email = :email");
+        $query->execute(['email' => $email, 'token' => password_hash($token, PASSWORD_DEFAULT), 'expires_at' => $expires_at]);
+        
+        return $token;
+    }
+
+    public function clearResetToken($email) {
+        $db = config::getConnexion();
+        $query = $db->prepare("UPDATE utilisateur SET reset_token = NULL, reset_expires = NULL WHERE Email = :email");
+        $query->execute(['email' => $email]);
+    }
+    
+    // Vérifier si l'email existe et peut recevoir un reset
+    public function canResetPassword($email) {
+        // Vérifier si l'utilisateur existe
+        if (!$this->emailExists($email)) {
+            return ['success' => false, 'message' => 'Aucun compte trouvé avec cet email'];
+        }
+        
+        // Rate limiting : vérifier les tentatives récentes (dernière heure)
+        $db = config::getConnexion();
+        $query = $db->prepare("SELECT reset_expires FROM utilisateur WHERE Email = :email AND reset_expires > NOW()");
+        $query->execute(['email' => $email]);
+        $recent_reset = $query->fetch();
+        
+        if ($recent_reset) {
+            return ['success' => false, 'message' => 'Un lien de reset a déjà été envoyé récemment. Vérifiez votre email.'];
+        }
+        
+        return ['success' => true];
+    }
+    
+    // Envoyer l'email de reset avec PHPMailer
+    public function sendResetEmail($email, $token) {
+        $reset_link = "http://localhost/skiller/reset-password.php?token=" . $token;
+        
+        $subject = "Réinitialisation de votre mot de passe - Skiller";
+        $htmlBody = "
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <title>Réinitialisation de mot de passe</title>
+            <style>
+                body { font-family: 'DM Sans', Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #6c63ff 0%, #5a53e6 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
+                .content { background: #f8f9fc; padding: 30px 20px; border: 1px solid #e0e0e0; border-radius: 0 0 8px 8px; }
+                .cta-button { display: inline-block; background: #6c63ff; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+                .cta-button:hover { background: #5a53e6; }
+                .footer { font-size: 12px; color: #999; margin-top: 20px; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2 style='margin: 0;'>Réinitialisation de mot de passe</h2>
+                </div>
+                <div class='content'>
+                    <p>Bonjour,</p>
+                    <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte <strong>Skiller</strong>.</p>
+                    <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
+                    <div style='text-align: center;'>
+                        <a href='$reset_link' class='cta-button'>Réinitialiser mon mot de passe</a>
+                    </div>
+                    <p style='color: #999; font-size: 12px;'>Ou copiez ce lien dans votre navigateur :<br><code>$reset_link</code></p>
+                    <hr style='border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;'>
+                    <p style='color: #999; font-size: 12px;'><strong>Important :</strong> Ce lien expirera dans 15 minutes.</p>
+                    <p style='color: #999; font-size: 12px;'>Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email. Votre compte reste sécurisé.</p>
+                    <div class='footer'>
+                        <p>Cordialement,<br>L'équipe Skiller</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+        
+        try {
+            $mail = new PHPMailer(true);
+            
+            // Configuration SMTP
+            $mail->isSMTP();
+            $mail->Host = EmailConfig::SMTP_HOST;
+            $mail->Port = EmailConfig::SMTP_PORT;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPAuth = true;
+            $mail->Username = EmailConfig::SMTP_USERNAME;
+            $mail->Password = EmailConfig::SMTP_PASSWORD;
+            
+            // Paramètres de l'email
+            $mail->setFrom(EmailConfig::SMTP_FROM_EMAIL, EmailConfig::SMTP_FROM_NAME);
+            $mail->addAddress($email);
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body = $htmlBody;
+            $mail->AltBody = strip_tags($htmlBody);
+            
+            // Envoyer l'email
+            $sent = $mail->send();
+            return $sent;
+            
+        } catch (Exception $e) {
+            // En cas d'erreur, nettoyer le token
+            $this->clearResetToken($email);
+            return false;
+        }
+    }
+    
+    // Vérifier le token de reset
+    public function verifyResetToken($token) {
+        $db = config::getConnexion();
+        $query = $db->prepare("SELECT Email, reset_token, reset_expires FROM utilisateur WHERE reset_token IS NOT NULL");
+        $query->execute();
+        $users = $query->fetchAll();
+        
+        foreach ($users as $user) {
+            if (password_verify($token, $user['reset_token'])) {
+                if (strtotime($user['reset_expires']) < time()) {
+                    return ['success' => false, 'message' => 'Token expiré'];
+                }
+                return ['success' => true, 'email' => $user['Email']];
+            }
+        }
+        
+        return ['success' => false, 'message' => 'Token invalide'];
+    }
+    
+    // Mettre à jour le mot de passe et supprimer le token
+    public function resetPassword($token, $new_password) {
+        $verification = $this->verifyResetToken($token);
+        if (!$verification['success']) {
+            return $verification;
+        }
+        
+        $email = $verification['email'];
+        
+        // Hash du nouveau mot de passe
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        
+        // Mettre à jour le mot de passe et supprimer le token
+        $db = config::getConnexion();
+        $update_query = $db->prepare("UPDATE utilisateur SET MDP = :mdp, reset_token = NULL, reset_expires = NULL WHERE Email = :email");
+        $update_query->execute(['mdp' => $hashed_password, 'email' => $email]);
+        
+        return ['success' => true, 'message' => 'Mot de passe mis à jour avec succès'];
     }
 }
 ?>
