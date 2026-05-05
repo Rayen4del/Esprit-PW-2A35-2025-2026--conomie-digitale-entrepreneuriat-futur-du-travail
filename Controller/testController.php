@@ -101,5 +101,15 @@ public function countTests($search = "")
 
     return $stmt->fetchColumn();
 }
+public function listTestsByFormation($id_f) {
+    $db = config::getConnexion();
+
+    $query = $db->prepare("SELECT * FROM test WHERE id_f = :id_f");
+    $query->execute([
+        ':id_f' => $id_f
+    ]);
+
+    return $query->fetchAll();
+}
 }
 ?>

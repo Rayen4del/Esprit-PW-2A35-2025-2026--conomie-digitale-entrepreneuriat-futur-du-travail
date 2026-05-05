@@ -3,7 +3,41 @@ include_once(__DIR__ . '/../config.php');
 include_once(__DIR__ . '/../Model/chapitre.php');
 
 class ChapitreController {
+    public function getLastOrderByFormation($id_f)
+{
+    $db = config::getConnexion();
 
+    $stmt = $db->prepare("
+        SELECT MAX(ordre) as max_order 
+        FROM chapitre 
+        WHERE id_f = ?
+    ");
+
+    $stmt->execute([$id_f]);
+    $result = $stmt->fetch();
+
+    return $result['max_order'] ?? 0;
+}
+    // =========================
+    // LIST CHAPITRES BY FORMATION ID
+    // =========================
+    public function listChapitresByFormation($id_f)
+    {
+        $db = config::getConnexion();
+
+        $sql = "SELECT * FROM chapitre WHERE id_f = :id_f ORDER BY ordre ASC";
+
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':id_f', $id_f, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (Exception $e) {
+            die('Error: ' . $e->getMessage());
+        }
+    }
     // =========================
     // LIST ALL
     // =========================
@@ -50,19 +84,36 @@ class ChapitreController {
     // =========================
     public function addChapitre(Chapitre $chapitre)
     {
-        $sql = "INSERT INTO chapitre (id_f, titre_c, ordre)
-                VALUES (:id_f, :titre_c, :ordre)";
-
         $db = config::getConnexion();
 
         try {
+            // Ensure ordre is computed server-side to avoid race conditions
+            $db->beginTransaction();
+
+            $ordre = $chapitre->getOrdre();
+
+            if (!$ordre) {
+                // lock rows for this formation while determining max ordre
+                $stmt = $db->prepare("SELECT MAX(ordre) as max_order FROM chapitre WHERE id_f = :id_f FOR UPDATE");
+                $stmt->execute(['id_f' => $chapitre->getFormationId()]);
+                $res = $stmt->fetch();
+                $last = $res['max_order'] ?? 0;
+                $ordre = $last + 1;
+            }
+
+            $sql = "INSERT INTO chapitre (id_f, titre_c, ordre) VALUES (:id_f, :titre_c, :ordre)";
             $query = $db->prepare($sql);
             $query->execute([
                 'id_f' => $chapitre->getFormationId(),
                 'titre_c' => $chapitre->getTitre(),
-                'ordre' => $chapitre->getOrdre()
+                'ordre' => $ordre
             ]);
+
+            $db->commit();
         } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             echo 'Error: ' . $e->getMessage();
         }
     }

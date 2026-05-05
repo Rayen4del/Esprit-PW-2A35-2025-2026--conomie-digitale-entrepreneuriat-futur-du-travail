@@ -1,6 +1,6 @@
 <?php
-include(__DIR__ . '/../config.php');
-include(__DIR__ . '/../Model/progression.php');
+include_once(__DIR__ . '/../config.php');
+include_once(__DIR__ . '/../Model/progression.php');
 
 class ProgressionController {
 
@@ -74,5 +74,59 @@ class ProgressionController {
             die('Error: ' . $e->getMessage());
         }
     }
+    public function countCompletedChapitres($id_user, $id_formation) {
+
+    $db = config::getConnexion();
+
+    $sql = "
+        SELECT COUNT(DISTINCT p.id_c) as total_done
+        FROM progression p
+        JOIN chapitre c ON p.id_c = c.id_c
+        WHERE p.id_u = :id_u
+        AND c.id_f = :id_f
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        'id_u' => $id_user,
+        'id_f' => $id_formation
+    ]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC)['total_done'];
+}
+public function getProgressionByUser($user_id) {
+    $db = config::getConnexion();
+
+    $sql = "
+        SELECT 
+            f.id_f,
+            f.titre,
+            f.image,
+
+
+            COUNT(DISTINCT c.id_c) AS total_chapitres,
+
+            COUNT(DISTINCT p.id_c) AS chapitres_finis,
+
+            MAX(p.date_p) AS derniere_date
+
+        FROM formation f
+
+        JOIN chapitre c ON c.id_f = f.id_f
+
+        LEFT JOIN progression p 
+            ON p.id_c = c.id_c 
+            AND p.id_u = :user_id
+
+        GROUP BY f.id_f, f.titre
+
+        HAVING chapitres_finis > 0
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['user_id' => $user_id]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
 ?>

@@ -26,8 +26,7 @@ class FormationController {
 
         // 2. supprimer image du dossier
         if ($formation && !empty($formation['image'])) {
-            $imagePath = __DIR__ . '/../../../' . $formation['image'];
-
+            $imagePath = UPLOAD_DIR . basename($formation['image']);
             if (file_exists($imagePath)) {
                 unlink($imagePath);
             }
@@ -84,45 +83,43 @@ class FormationController {
             echo 'Error: ' . $e->getMessage();
         }
     }
-public function countFormations($search = "")
-{
-    $db = config::getConnexion();
+    public function countFormations($search = "")
+    {
+        $db = config::getConnexion();
 
-    $sql = "SELECT COUNT(*) FROM formation WHERE titre LIKE :search";
-    $stmt = $db->prepare($sql);
-    $stmt->execute([
-        ':search' => "%$search%"
-    ]);
+        $sql = "SELECT COUNT(*) FROM formation WHERE titre LIKE :search";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':search' => "%$search%"
+        ]);
 
-    return $stmt->fetchColumn();
-}
+        return $stmt->fetchColumn();
+    }
     // =========================
     // UPDATE FORMATION (UPDATED)
     // =========================
-public function updateFormation(Formation $formation)
-{
-    $uploadDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : __DIR__ . '/../../../uploads/';
+    public function updateFormation(Formation $formation)
+    {
+        $sql = "UPDATE formation SET 
+                titre = :titre,
+                description = :description,
+                nom_propr = :nom_propr,
+                image = :image,
+                etat = :etat
+                WHERE id_f = :id";
 
-    $sql = "UPDATE formation SET 
-            titre = :titre,
-            description = :description,
-            nom_propr = :nom_propr,
-            image = :image,
-            etat = :etat
-            WHERE id_f = :id";
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
 
-    $db = config::getConnexion();
-    $query = $db->prepare($sql);
-
-    $query->execute([
-        'id' => $formation->getId(),
-        'titre' => $formation->getTitre(),
-        'description' => $formation->getDescription(),
-        'nom_propr' => $formation->getNomProprietaire(),
-        'image' => $formation->getImage(),
-        'etat' => $formation->getEtat()
-    ]);
-}
+        $query->execute([
+            'id' => $formation->getId(),
+            'titre' => $formation->getTitre(),
+            'description' => $formation->getDescription(),
+            'nom_propr' => $formation->getNomProprietaire(),
+            'image' => $formation->getImage(),
+            'etat' => $formation->getEtat()
+        ]);
+    }
     // =========================
     // SHOW FORMATION
     // =========================
@@ -139,54 +136,54 @@ public function updateFormation(Formation $formation)
         }
     }
     public function getFormationById($id)
-{
-    $db = config::getConnexion();
+    {
+        $db = config::getConnexion();
 
-    $stmt = $db->prepare("SELECT * FROM formation WHERE id_f = ?");
-    $stmt->execute([$id]);
+        $stmt = $db->prepare("SELECT * FROM formation WHERE id_f = ?");
+        $stmt->execute([$id]);
 
-    return $stmt->fetch();
-}
-public function searchPaginated($search = "", $page = 1, $limit = 6, $sort = "ASC")
-{
-    $db = config::getConnexion();
+        return $stmt->fetch();
+    }
+    public function searchPaginated($search = "", $page = 1, $limit = 6, $sort = "ASC")
+    {
+        $db = config::getConnexion();
 
-    $offset = ($page - 1) * $limit;
+        $offset = ($page - 1) * $limit;
 
-    $sort = strtoupper($sort);
-    
-    // COUNT
-    $sqlCount = "SELECT COUNT(*) FROM formation
-                 WHERE titre LIKE :search OR nom_propr LIKE :search";
+        $sort = strtoupper($sort);
+        
+        // COUNT
+        $sqlCount = "SELECT COUNT(*) FROM formation
+                    WHERE titre LIKE :search OR nom_propr LIKE :search";
 
-    $stmtCount = $db->prepare($sqlCount);
-    $stmtCount->execute([
-        'search' => "%" . $search . "%"
-    ]);
+        $stmtCount = $db->prepare($sqlCount);
+        $stmtCount->execute([
+            'search' => "%" . $search . "%"
+        ]);
 
-    $total = $stmtCount->fetchColumn();
-    $totalPages = ceil($total / $limit);
+        $total = $stmtCount->fetchColumn();
+        $totalPages = ceil($total / $limit);
 
-    // DATA
-    $sql = "SELECT * FROM formation 
-            WHERE titre LIKE :search 
-            ORDER BY titre $sort
-            LIMIT :limit OFFSET :offset";
+        // DATA
+        $sql = "SELECT * FROM formation 
+                WHERE titre LIKE :search 
+                ORDER BY titre $sort
+                LIMIT :limit OFFSET :offset";
 
-    $stmt = $db->prepare($sql);
-    $stmt->bindValue(':search', "%" . $search . "%");
-    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':search', "%" . $search . "%");
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
-    $stmt->execute();
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    return [
-        'data' => $data,
-        'totalPages' => $totalPages,
-        'currentPage' => $page
-    ];
-}
+        return [
+            'data' => $data,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
+        ];
+    }
     public function searchActivePaginated($search = "", $page = 1, $limit = 9, $sort = "ASC")
     {
         $db = config::getConnexion();
@@ -277,16 +274,16 @@ public function searchPaginated($search = "", $page = 1, $limit = 6, $sort = "AS
         ];
     }
     public function updateEtat($id, $etat) {
-    $db = config::getConnexion();
+        $db = config::getConnexion();
 
-    $sql = "UPDATE formation SET etat = :etat WHERE id_f = :id";
-    $stmt = $db->prepare($sql);
+        $sql = "UPDATE formation SET etat = :etat WHERE id_f = :id";
+        $stmt = $db->prepare($sql);
 
-    $stmt->bindValue(':etat', $etat);
-    $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':etat', $etat);
+        $stmt->bindValue(':id', $id);
 
-    return $stmt->execute();
-}
+        return $stmt->execute();
+    }
 
 }
 ?>

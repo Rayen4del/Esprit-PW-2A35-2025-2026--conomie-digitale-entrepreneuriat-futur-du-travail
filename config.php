@@ -1,7 +1,11 @@
 <?php
-// Constantes globales pour les uploads
-define('UPLOADS_DIR', __DIR__ . '/uploads/'); // dossier physique
-define('UPLOADS_URL', '/skiller6/uploads/'); // chemin web relatif (URL absolue sous htdocs)
+// =====================
+// PATH CONSTANTS
+// =====================
+define("BASE_PATH", __DIR__);
+
+define("UPLOAD_DIR", BASE_PATH . "/View/gestionformation/uploads/");
+define("UPLOAD_URL", "/skiller7finalversion/View/gestionformation/uploads/");
 
 class config
 {   private static $pdo = null;
@@ -30,10 +34,6 @@ class config
     }
 }
 config::getConnexion();
-// s'assurer que le dossier d'uploads existe
-if (!is_dir(UPLOADS_DIR)) {
-    @mkdir(UPLOADS_DIR, 0777, true);
-}
 ?>
 
 

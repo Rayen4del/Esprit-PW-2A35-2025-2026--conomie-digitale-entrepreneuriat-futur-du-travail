@@ -8,12 +8,34 @@ class ChapContenuController {
         return $db->query("SELECT * FROM chap_contenu");
     }
 
-    public function deleteContenu($id) {
-        $db = config::getConnexion();
+   public function deleteContenu($id) {
 
-        $req = $db->prepare("DELETE FROM chap_contenu WHERE id_cc = :id");
-        return $req->execute(['id' => $id]);
+    $db = config::getConnexion();
+
+    // 1️⃣ récupérer le contenu avant suppression
+    $stmt = $db->prepare("SELECT contenu, type_cc FROM chap_contenu WHERE id_cc = :id");
+    $stmt->execute(['id' => $id]);
+    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($data) {
+
+        $file = $data['contenu'];
+
+        // 2️⃣ supprimer fichier si image/video/pdf
+        if (in_array($data['type_cc'], ['image', 'video', 'pdf'])) {
+
+            $path = __DIR__ . "/../../uploads/" . $file;
+
+            if (file_exists($path)) {
+                unlink($path); // 🔥 supprime fichier
+            }
+        }
     }
+
+    // 3️⃣ supprimer en base
+    $req = $db->prepare("DELETE FROM chap_contenu WHERE id_cc = :id");
+    return $req->execute(['id' => $id]);
+}
 
     public function showContenu($id) {
         $db = config::getConnexion();
