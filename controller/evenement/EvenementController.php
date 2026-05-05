@@ -139,8 +139,8 @@ class EvenementController {
     // ─── Create ────────────────────────────────────────────────────
 
     public function addEvenement(Evenement $evenement) : bool {
-        $sql = "INSERT INTO `event` (Titre, Type, Description, dateEvent, duree, lieu_lien, Statut, nbplaces, prix)
-                VALUES (:titre, :type, :description, :dateEvent, :duree, :lieu_lien, :statut, :nbplaces, :prix)";
+        $sql = "INSERT INTO `event` (Titre, Type, Description, dateEvent, duree, lieu_lien, Statut, nbplaces)
+                VALUES (:titre, :type, :description, :dateEvent, :duree, :lieu_lien, :statut, :nbplaces)";
 
         $db = config::getConnexion();
         try {
@@ -154,7 +154,6 @@ class EvenementController {
                 ':lieu_lien'   => $evenement->getLieuLien(),
                 ':statut'      => $evenement->getStatut(),
                 ':nbplaces'    => $evenement->getNbplaces(),
-                ':prix'        => $evenement->getPrix(),
             ]);
             return true;
         } catch (Exception $e) {
@@ -174,8 +173,7 @@ class EvenementController {
                     duree       = :duree,
                     lieu_lien   = :lieu_lien,
                     Statut      = :statut,
-                    nbplaces    = :nbplaces,
-                    prix        = :prix
+                    nbplaces    = :nbplaces
                 WHERE ID = :id";
 
         $db = config::getConnexion();
@@ -190,7 +188,6 @@ class EvenementController {
                 ':lieu_lien'   => $evenement->getLieuLien(),
                 ':statut'      => $evenement->getStatut(),
                 ':nbplaces'    => $evenement->getNbplaces(),
-                ':prix'        => $evenement->getPrix(),
                 ':id'          => $id,
             ]);
             return true;

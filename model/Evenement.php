@@ -12,7 +12,6 @@ class Evenement
     private string $lieu_lien;
     private string $Statut;
     private int    $nbplaces;
-    private float  $prix;
 
     // ─── Constructeur ─────────────────────────────────────────
     public function __construct(
@@ -24,7 +23,6 @@ class Evenement
         string $lieu_lien   = '',
         string $Statut      = 'ouvert',
         int    $nbplaces    = 0,
-        float  $prix        = 0.0,
         int    $ID          = 0
     ) {
         $this->ID          = $ID;
@@ -36,7 +34,6 @@ class Evenement
         $this->lieu_lien   = $lieu_lien;
         $this->Statut      = $Statut;
         $this->nbplaces    = $nbplaces;
-        $this->prix        = $prix;
     }
 
     // ─── Getters ──────────────────────────────────────────────
@@ -49,7 +46,6 @@ class Evenement
     public function getLieuLien()    : string { return $this->lieu_lien;   }
     public function getStatut()      : string { return $this->Statut;      }
     public function getNbplaces()    : int    { return $this->nbplaces;    }
-    public function getPrix()        : float  { return $this->prix;        }
 
     // ─── Setters ──────────────────────────────────────────────
     public function setID(int $v)             : void { $this->ID          = $v; }
@@ -61,6 +57,5 @@ class Evenement
     public function setLieuLien(string $v)    : void { $this->lieu_lien   = $v; }
     public function setStatut(string $v)      : void { $this->Statut      = $v; }
     public function setNbplaces(int $v)       : void { $this->nbplaces    = $v; }
-    public function setPrix(float $v)         : void { $this->prix        = $v; }
 }
 ?>

@@ -21,7 +21,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     $html   = renderEvents($events);
     $paginationHtml = renderPagination($page, $totalPages, $search, $type);
     header('Content-Type: application/json');
-    echo json_encode(['html' => $html, 'count' => count($events), 'events' => $events, 'paginationHtml' => $paginationHtml]);
+    echo json_encode(['html' => $html, 'count' => count($events), 'paginationHtml' => $paginationHtml]);
     exit;
 }
 
@@ -94,9 +94,11 @@ function renderEvents($events) {
           ?>
           <div class="col">
             <div class="card event-card h-100 <?= !$isOpen ? 'opacity-75' : '' ?>"
+                 role="button"
+                 style="<?= $isOpen ? 'cursor:pointer' : 'cursor:not-allowed' ?>"
+                 <?= $isOpen ? 'data-bs-toggle="modal" data-bs-target="#joinEventModal"' : '' ?>
                  data-event-id="<?= intval($ev['ID']) ?>"
                  data-event-title="<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>"
-                 data-event-location="<?= htmlspecialchars($ev['lieu_lien'], ENT_QUOTES) ?>"
                  data-event-status="<?= htmlspecialchars($eventStatus, ENT_QUOTES) ?>">
               <div class="event-image-placeholder" style="cursor:pointer" onclick="openMapModal('<?= htmlspecialchars($ev['lieu_lien'], ENT_QUOTES) ?>', '<?= htmlspecialchars($ev['Titre'], ENT_QUOTES) ?>')">
                 <i class="bi bi-geo-alt"></i>
@@ -110,18 +112,9 @@ function renderEvents($events) {
                 <h5 class="mt-1 mb-2"><?= htmlspecialchars($ev['Titre']) ?></h5>
                 <p class="mb-1 small"><i class="bi bi-calendar3 me-1"></i><?= date('d/m/Y', strtotime($ev['dateEvent'])) ?></p>
                 <p class="mb-1 small"><i class="bi bi-people me-1"></i><?= intval($ev['inscrits_count'] ?? 0) ?> / <?= intval($ev['nbplaces']) ?> inscrits</p>
-                <p class="mb-1 small"><i class="bi bi-currency-euro me-1"></i><?= number_format($ev['prix'] ?? 0, 2, ',', ' ') ?> €</p>
                 <p class="mb-3 small <?= intval($ev['places_restantes'] ?? 0) <= 0 ? 'text-danger' : 'text-success' ?>">
                   <i class="bi bi-door-open me-1"></i><?= intval($ev['places_restantes'] ?? 0) ?> places restantes
                 </p>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-sm btn-outline-primary flex-fill" onclick="viewEventDetail(<?= $ev['ID'] ?>)">
-                    <i class="bi bi-eye"></i> Détail
-                  </button>
-                  <button class="btn btn-sm btn-primary flex-fill" onclick="openJoinModal(this)" <?= !$isOpen ? 'disabled' : '' ?>>
-                    <i class="bi bi-check-lg"></i> S'inscrire
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -327,31 +320,25 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
 </div>
 
 <div class="modal fade" id="joinEventModal" tabindex="-1" aria-labelledby="joinEventModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="joinEventModalLabel">Inscription à l'événement</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-      </div>
-      <div class="modal-body">
-        <p class="text-muted mb-3" id="selectedEventTitle">Choisissez un événement</p>
-        
-        <!-- Alert for payment events -->
-        <div id="paymentAlert" class="alert alert-info d-none mb-3">
-          <i class="bi bi-credit-card me-2"></i>
-          <span id="paymentAlertText">Cet événement est payant. Veuillez procéder au paiement.</span>
+      <form method="POST" action="">
+        <input type="hidden" name="join_event" value="1">
+        <div class="modal-header">
+          <h5 class="modal-title" id="joinEventModalLabel">Inscription à l'événement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
         </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3" id="selectedEventTitle">Choisissez un événement</p>
 
-        <!-- Form Section -->
-        <div id="formSection" class="mb-4">
           <div class="mb-3">
-            <label class="form-label" for="idUtilisateur">ID Utilisateur *</label>
-            <input type="number" class="form-control" id="idUtilisateur" min="1" required>
+            <label class="form-label" for="idUtilisateur">ID Utilisateur</label>
+            <input type="number" class="form-control" id="idUtilisateur" name="idUtilisateur" min="1" required>
           </div>
 
           <div class="mb-3">
             <label class="form-label" for="idEvent">ID Événement</label>
-            <input type="number" class="form-control" id="idEvent" readonly required>
+            <input type="number" class="form-control" id="idEvent" name="idEvent" readonly required>
           </div>
 
           <div class="mb-3">
@@ -359,30 +346,21 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
             <input type="text" class="form-control" id="dateInscription" value="<?= date('Y-m-d') ?>" readonly>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-0">
             <label class="form-label" for="statut">Statut</label>
-            <select class="form-select" id="statut" required>
+            <select class="form-select" id="statut" name="statut" required>
               <option value="inscrit" selected>Inscrit</option>
               <option value="annulé">Annulé</option>
             </select>
           </div>
         </div>
-
-        <!-- Payment Section (shown only for paid events) -->
-        <div id="paymentSection" class="d-none">
-          <div class="mb-3">
-            <h6 class="mb-3 fw-bold">Détails de paiement</h6>
-            <div id="payment-element"></div>
-            <div id="payment-message" class="text-danger mt-2 d-none"></div>
-          </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i> Confirmer
+          </button>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" id="submitBtn" class="btn btn-primary">
-          <i class="bi bi-check-lg me-1"></i> <span id="submitBtnText">Confirmer</span>
-        </button>
-      </div>
+      </form>
     </div>
   </div>
 </div>
@@ -392,9 +370,6 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="mapModalLabel">Localisation</h5>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="getDirectionsBtn">
-          <i class="bi bi-signpost-2 me-1"></i> Itinéraire
-        </button>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body p-0">
@@ -412,72 +387,18 @@ function renderPagination($currentPage, $totalPages, $search, $type) {
   </div>
 </div>
 
-<!-- View Event Detail Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewModalTitle">Détail de l'événement</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-      </div>
-      <div class="modal-body" id="viewModalBody">
-        <!-- Event details will be inserted here -->
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://js.stripe.com/v3/"></script>
 
 <script>
 // Open map modal
-let currentDestination = '';
-
 function openMapModal(location, title) {
     const mapIframe = document.getElementById('mapIframe');
     const mapModalLabel = document.getElementById('mapModalLabel');
-    currentDestination = location;
     mapIframe.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(location) + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
     mapModalLabel.textContent = 'Localisation - ' + title;
     const mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
     mapModal.show();
 }
-
-// Get directions from user's location to destination
-function setupDirectionsButton() {
-    const btn = document.getElementById('getDirectionsBtn');
-    if (btn) {
-        btn.onclick = function() {
-            if (!currentDestination) return;
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-                        const mapIframe = document.getElementById('mapIframe');
-                        mapIframe.src = 'https://maps.google.com/maps?saddr=' + userLat + ',' + userLng + '&daddr=' + encodeURIComponent(currentDestination) + '&output=embed';
-                    },
-                    function(error) {
-                        alert('Impossible d\'obtenir votre position. Veuillez autoriser la géolocalisation.');
-                        // Fallback: open Google Maps with directions
-                        window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(currentDestination), '_blank');
-                    }
-                );
-            } else {
-                alert('La géolocalisation n\'est pas supportée par votre navigateur.');
-                // Fallback: open Google Maps with directions
-                window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(currentDestination), '_blank');
-            }
-        };
-    }
-}
-
-setupDirectionsButton();
 
 // Show tooltip on non-open events
 document.querySelectorAll('.event-card').forEach(card => {
@@ -486,269 +407,33 @@ document.querySelectorAll('.event-card').forEach(card => {
   }
 });
 
-function openJoinModal(element) {
-    const card = element.closest('.event-card');
-    const eventId = card.dataset.eventId;
-    const eventTitle = card.dataset.eventTitle;
-    const eventData = allEvents[eventId];
-    
-    // Set event data
-    document.getElementById('idEvent').value = eventId;
-    document.getElementById('selectedEventTitle').textContent = eventTitle
-        ? `Événement sélectionné : ${eventTitle}`
-        : 'Événement sélectionné';
-    
-    // Check if event is paid
-    const isPaid = eventData && eventData.prix > 0;
-    
-    if (isPaid) {
-        // Show payment section for paid events
-        document.getElementById('paymentAlert').classList.remove('d-none');
-        document.getElementById('paymentSection').classList.remove('d-none');
-        document.getElementById('submitBtnText').textContent = 'Procéder au paiement';
-        
-        // Initialize Stripe for this event
-        initializeStripePayment(eventId, eventData.prix);
-    } else {
-        // Hide payment section for free events
-        document.getElementById('paymentAlert').classList.add('d-none');
-        document.getElementById('paymentSection').classList.add('d-none');
-        document.getElementById('submitBtnText').textContent = 'Confirmer';
-    }
-    
-    currentEventId = eventId;
-    currentEventPrice = eventData ? eventData.prix : 0;
-    
-    const joinEventModal = new bootstrap.Modal(document.getElementById('joinEventModal'));
-    joinEventModal.show();
-}
+function bindModalEvents() {
+    const joinEventModal = document.getElementById('joinEventModal');
+    const modal = new bootstrap.Modal(joinEventModal);
 
-// Stripe initialization variables
-let stripe = null;
-let elements = null;
-let currentEventId = null;
-let currentEventPrice = 0;
+    document.querySelectorAll('.event-card').forEach(card => {
+        const eventStatus = (card.dataset.eventStatus || '').trim().toLowerCase();
+        if (eventStatus !== 'ouvert') {
+            card.title = "Cet événement n'est pas disponible pour l'inscription.";
+            return;
+        }
 
-function initializeStripePayment(eventId, price) {
-    // Initialize Stripe only once
-    if (!stripe) {
-        // Fetch the publishable key from server
-        fetch('/projet/controller/evenement/get_stripe_config.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.publishableKey) {
-                    stripe = Stripe(data.publishableKey);
-                    continuePaymentInit(eventId, price);
-                } else {
-                    showPaymentError('Erreur: Configuration Stripe manquante');
-                }
-            })
-            .catch(err => {
-                console.error('Config fetch error:', err);
-                showPaymentError('Erreur: Impossible de charger la configuration');
-            });
-        return;
-    }
-    continuePaymentInit(eventId, price);
-}
-
-function continuePaymentInit(eventId, price) {
-function continuePaymentInit(eventId, price) {
-    
-    // Create or recreate elements
-    const paymentElement = document.getElementById('payment-element');
-    if (paymentElement.innerHTML) {
-        paymentElement.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Chargement...</span></div>'; // Clear previous content
-    }
-    
-    if (!elements) {
-        elements = stripe.elements();
-    }
-    
-    // Create payment intent
-    fetch('/projet/controller/evenement/create_payment_intent.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            amount: Math.round(price * 100), // Convert to cents
-            eventId: eventId
-        })
-    })
-    .then(res => {
-        // Check if response is JSON
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return res.text().then(text => {
-                console.error('Non-JSON response:', text);
-                throw new Error('Server returned non-JSON: ' + text.substring(0, 300));
-            });
-        }
-        if (!res.ok) {
-            return res.json().then(data => {
-                throw new Error(data.error || 'Server error');
-            });
-        }
-        return res.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Create payment element with client secret
-            if (elements) {
-                const paymentEl = elements.getElement('payment');
-                if (paymentEl) paymentEl.destroy();
-            }
-            elements = stripe.elements({ clientSecret: data.clientSecret });
-            const paymentElement = elements.create('payment');
-            paymentElement.mount('#payment-element');
-            document.getElementById('payment-message').classList.add('d-none');
-        } else {
-            showPaymentError('Erreur: ' + data.error);
-        }
-    })
-    .catch(err => {
-        console.error('Payment init error:', err);
-        showPaymentError('Erreur réseau: ' + err.message);
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => {
+            const eventId = card.dataset.eventId;
+            const eventTitle = card.dataset.eventTitle;
+            document.getElementById('idEvent').value = eventId;
+            document.getElementById('selectedEventTitle').textContent = eventTitle
+                ? `Événement sélectionné : ${eventTitle}`
+                : 'Événement sélectionné';
+            modal.show();
+        });
     });
 }
 
-function showPaymentError(message) {
-    const errorDiv = document.getElementById('payment-message');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('d-none');
-}
-
-function viewEventDetail(eventId) {
-    const eventData = allEvents[eventId];
-    if (!eventData) return;
-    
-    const detailHtml = `
-        <div class="mb-3">
-            <h6 class="text-muted small">Type</h6>
-            <p>${eventData.Type}</p>
-        </div>
-        <div class="mb-3">
-            <h6 class="text-muted small">Date</h6>
-            <p><i class="bi bi-calendar3 me-2"></i>${eventData.dateEvent}</p>
-        </div>
-        <div class="mb-3">
-            <h6 class="text-muted small">Durée</h6>
-            <p>${eventData.duree > 0 ? eventData.duree + ' heure(s)' : 'Non spécifiée'}</p>
-        </div>
-        <div class="mb-3">
-            <h6 class="text-muted small">Localisation</h6>
-            <p><i class="bi bi-geo-alt me-2"></i>${eventData.lieu_lien}</p>
-        </div>
-        <div class="mb-3">
-            <h6 class="text-muted small">Prix</h6>
-            <p>${eventData.prix > 0 ? eventData.prix.toFixed(2) + ' €' : 'Gratuit'}</p>
-        </div>
-        <div class="mb-3">
-            <h6 class="text-muted small">Description</h6>
-            <p>${eventData.Description || 'Aucune description disponible'}</p>
-        </div>
-        <div class="mb-0">
-            <h6 class="text-muted small">Statut</h6>
-            <p><span class="badge bg-${eventData.Statut === 'ouvert' ? 'success' : (eventData.Statut === 'ferme' ? 'danger' : 'warning')}">${eventData.Statut.toUpperCase()}</span></p>
-        </div>
-    `;
-    
-    document.getElementById('viewModalTitle').textContent = 'Détail - ' + eventData.Titre;
-    document.getElementById('viewModalBody').innerHTML = detailHtml;
-    new bootstrap.Modal(document.getElementById('viewModal')).show();
-}
+bindModalEvents();
 
 document.getElementById('year').textContent = new Date().getFullYear();
-
-// Event data for event detail modal
-const allEvents = <?php
-    $eventsJs = [];
-    foreach ($events as $ev) {
-        $eventsJs[$ev['ID']] = [
-            'ID'          => $ev['ID'],
-            'Titre'       => $ev['Titre'],
-            'Type'        => $ev['Type'],
-            'Description' => $ev['Description'],
-            'dateEvent'   => date('d/m/Y', strtotime($ev['dateEvent'])),
-            'duree'       => $ev['duree'],
-            'lieu_lien'   => $ev['lieu_lien'],
-            'Statut'      => $ev['Statut'],
-            'nbplaces'    => $ev['nbplaces'],
-            'prix'        => $ev['prix'] ?? 0,
-        ];
-    }
-    echo json_encode($eventsJs);
-?>;
-
-// Handle join/payment form submission
-document.getElementById('submitBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    
-    const idUtilisateur = document.getElementById('idUtilisateur').value;
-    const idEvent = document.getElementById('idEvent').value;
-    const statut = document.getElementById('statut').value;
-    
-    if (!idUtilisateur || !idEvent) {
-        alert('Veuillez remplir tous les champs');
-        return;
-    }
-    
-    // If event is free, submit directly
-    if (currentEventPrice <= 0) {
-        submitRegistration(idUtilisateur, idEvent, statut);
-    } else {
-        // For paid events, process payment first
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Traitement...';
-        
-        try {
-            const { error, paymentIntent } = await stripe.confirmPayment({
-                elements,
-                redirect: 'if_required'
-            });
-            
-            if (error) {
-                showPaymentError('Erreur de paiement: ' + error.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Procéder au paiement';
-            } else if (paymentIntent.status === 'succeeded') {
-                // Payment successful, now register
-                submitRegistration(idUtilisateur, idEvent, statut);
-            }
-        } catch (err) {
-            showPaymentError('Erreur: ' + err.message);
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Procéder au paiement';
-        }
-    }
-});
-
-function submitRegistration(idUtilisateur, idEvent, statut) {
-    // Create a form and submit it
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = window.location.pathname;
-    
-    const fields = {
-        'join_event': '1',
-        'idUtilisateur': idUtilisateur,
-        'idEvent': idEvent,
-        'statut': statut
-    };
-    
-    for (const [key, value] of Object.entries(fields)) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-    }
-    
-    document.body.appendChild(form);
-    form.submit();
-}
 
 function goToPage(page) {
     updateResults(page);
@@ -769,25 +454,6 @@ function updateResults(page = 1) {
         document.querySelector('.badge.bg-primary').textContent = data.count + ' événement(s)';
         document.getElementById('eventsContainer').innerHTML = data.html;
         document.getElementById('paginationContainer').innerHTML = data.paginationHtml || '';
-        
-        // Update allEvents object with new event data for detail modal
-        if (data.events && Array.isArray(data.events)) {
-            data.events.forEach(ev => {
-                allEvents[ev.ID] = {
-                    ID: ev.ID,
-                    Titre: ev.Titre,
-                    Type: ev.Type,
-                    Description: ev.Description,
-                    dateEvent: new Date(ev.dateEvent).toLocaleDateString('fr-FR'),
-                    duree: ev.duree,
-                    lieu_lien: ev.lieu_lien,
-                    Statut: ev.Statut,
-                    nbplaces: ev.nbplaces,
-                    prix: ev.prix || 0
-                };
-            });
-        }
-        
         // Re-bind tooltips and modal events
         document.querySelectorAll('.event-card').forEach(card => {
             if (card.dataset.eventStatus !== 'ouvert') {
