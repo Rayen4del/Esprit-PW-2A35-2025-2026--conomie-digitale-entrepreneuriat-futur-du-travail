@@ -1,0 +1,5 @@
+Inscription	http://localhost/skiller/view/gestion_utilisateur/frontoffice/inscription.php
+Connexion	http://localhost/skiller/view/gestion_utilisateur/frontoffice/connexion.php
+Profil	http://localhost/skiller/view/gestion_utilisateur/frontoffice/profil.php
+Modifier profil	http://localhost/skiller/view/gestion_utilisateur/frontoffice/edit_profil.php
+Dashboard Admin	http://localhost/skiller/view/gestion_utilisateur/backoffice/dashboard.php
