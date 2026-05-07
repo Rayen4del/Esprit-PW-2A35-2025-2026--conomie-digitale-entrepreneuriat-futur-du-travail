@@ -7,8 +7,10 @@ class Produit {
     private ?string $description;
     private ?string $image;
     private ?int $id_sp;
+    private ?string $nom_ent;
+    private ?string $statut;
+    private ?string $licence;
 
-    // Constructor
     public function __construct(
         ?int $id_p,
         ?string $nom,
@@ -16,7 +18,10 @@ class Produit {
         ?float $prix,
         ?string $description,
         ?string $image,
-        ?int $id_sp
+        ?int $id_sp,
+        ?string $nom_ent,
+        ?string $statut = 'non acheter',
+        ?string $licence = null
     ) {
         $this->id_p = $id_p;
         $this->nom = $nom;
@@ -25,6 +30,9 @@ class Produit {
         $this->description = $description;
         $this->image = $image;
         $this->id_sp = $id_sp;
+        $this->nom_ent = $nom_ent;
+        $this->statut = $statut;
+        $this->licence = $licence;
     }
 
     public function show() {
@@ -37,6 +45,9 @@ class Produit {
                 <th>Description</th>
                 <th>Image</th>
                 <th>ID Sponsoring</th>
+                <th>Nom Entreprise</th>
+                <th>Statut</th>
+                <th>Licence</th>
               </tr>";
         echo "<tr>";
         echo "<td>{$this->id_p}</td>";
@@ -46,11 +57,12 @@ class Produit {
         echo "<td>{$this->description}</td>";
         echo "<td>{$this->image}</td>";
         echo "<td>{$this->id_sp}</td>";
+        echo "<td>{$this->nom_ent}</td>";
+        echo "<td>{$this->statut}</td>";
+        echo "<td>{$this->licence}</td>";
         echo "</tr>";
         echo "</table>";
     }
-
-    // Getters and Setters
 
     public function getIdP(): ?int {
         return $this->id_p;
@@ -106,6 +118,30 @@ class Produit {
 
     public function setIdSp(?int $id_sp): void {
         $this->id_sp = $id_sp;
+    }
+
+    public function getNomEnt(): ?string {
+        return $this->nom_ent;
+    }
+
+    public function setNomEnt(?string $nom_ent): void {
+        $this->nom_ent = $nom_ent;
+    }
+
+    public function getStatut(): ?string {
+        return $this->statut;
+    }
+
+    public function setStatut(?string $statut): void {
+        $this->statut = $statut;
+    }
+
+    public function getLicence(): ?string {
+        return $this->licence;
+    }
+
+    public function setLicence(?string $licence): void {
+        $this->licence = $licence;
     }
 }
 ?>

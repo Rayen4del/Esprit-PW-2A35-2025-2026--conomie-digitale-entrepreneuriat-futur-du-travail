@@ -77,6 +77,23 @@ class SponsoringController {
         }
     }
 
+    public function findSponsoringByNomEnt($nom_ent, $excludeId = null) {
+        $sql = "SELECT * FROM sponsoring WHERE nom_ent = :nom_ent" . ($excludeId ? " AND id_sp != :exclude_id" : "") . " LIMIT 1";
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
+
+        try {
+            $params = ['nom_ent' => $nom_ent];
+            if ($excludeId) {
+                $params['exclude_id'] = $excludeId;
+            }
+            $query->execute($params);
+            return $query->fetch();
+        } catch (Exception $e) {
+            die('Error: ' . $e->getMessage());
+        }
+    }
+
     public function showSponsoring($id_sp) {
         $sql = "SELECT * FROM sponsoring WHERE id_sp = :id_sp";
         $db = config::getConnexion();

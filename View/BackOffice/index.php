@@ -6,6 +6,30 @@ $view = isset($_GET['view']) ? $_GET['view'] : 'statistics';
 $produitC = new ProduitController();
 $sponsoringC = new SponsoringController();
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && isset($_GET['id'])) {
+    $id = intval($_GET['id']);
+    if ($_GET['action'] === 'delete_prod') {
+        $produitC->deleteProduit($id);
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?view=products');
+        exit;
+    }
+    if ($_GET['action'] === 'delete_sp') {
+        $productCount = $produitC->getProduitCountBySponsoring($id);
+        if ($productCount > 0 && empty($_GET['cascade'])) {
+            // Redirect with cascade parameter to show confirmation
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?view=sponsors&confirm_delete=' . $id . '&product_count=' . $productCount);
+            exit;
+        } else {
+            if ($productCount > 0) {
+                $produitC->deleteProduitsBySponsoring($id);
+            }
+            $sponsoringC->deleteSponsoring($id);
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?view=sponsors');
+            exit;
+        }
+    }
+}
+
 $produits = [];
 $sponsors = [];
 $statistics = [];
@@ -307,8 +331,8 @@ switch($view) {
                   <table id="produitTable" class="table top-selling-table">
                     <thead>
                       <tr>
-                        <th class="min-width">
-                          <h6 class="text-sm text-medium">ID</h6>
+                        <th>
+                          <h6 class="text-sm text-medium">ID Produit</h6>
                         </th>
                         <th>
                           <h6 class="text-sm text-medium">Nom</h6>
@@ -326,7 +350,16 @@ switch($view) {
                           <h6 class="text-sm text-medium">Image</h6>
                         </th>
                         <th>
-                          <h6 class="text-sm text-medium">ID Sponsor</h6>
+                          <h6 class="text-sm text-medium">Nom Entreprise</h6>
+                        </th>
+                        <th>
+                          <h6 class="text-sm text-medium">Statut</h6>
+                        </th>
+                        <th>
+                          <h6 class="text-sm text-medium">Licence</h6>
+                        </th>
+                        <th>
+                          <h6 class="text-sm text-medium">Actions</h6>
                         </th>
                       </tr>
                     </thead>
@@ -336,26 +369,17 @@ switch($view) {
                         {
                       ?>
                       <tr>
+                        <td><?php echo htmlspecialchars($produit['id_p']); ?></td>
+                        <td><?php echo htmlspecialchars($produit['nom']); ?></td>
+                        <td><?php echo htmlspecialchars($produit['categrie']); ?></td>
+                        <td><?php echo htmlspecialchars($produit['prix']); ?> €</td>
+                        <td><?php echo htmlspecialchars($produit['description']); ?></td>
+                        <td><img src="<?php echo htmlspecialchars($produit['image']); ?>" alt="Image" style="max-width: 50px; max-height: 50px;"></td>
+                        <td><?php echo htmlspecialchars($produit['nom_ent'] ?? ''); ?></td>
+                        <td><?php echo htmlspecialchars($produit['statut'] ?? 'non acheter'); ?></td>
+                        <td><?php echo (($produit['statut'] ?? '') === 'acheter' && !empty($produit['licence'])) ? htmlspecialchars($produit['licence']) : '—'; ?></td>
                         <td>
-                          <p class="text-sm"><?php echo $produit['id_p']; ?></p>
-                        </td>
-                        <td>
-                          <p class="text-sm"><?php echo $produit['nom']; ?></p>
-                        </td>
-                        <td>
-                          <p class="text-sm"><?php echo $produit['categrie']; ?></p>
-                        </td>
-                        <td>
-                          <p class="text-sm"><?php echo $produit['prix']; ?> TND</p>
-                        </td>
-                        <td>
-                          <p class="text-sm"><?php echo substr($produit['description'], 0, 50) . '...'; ?></p>
-                        </td>
-                        <td>
-                          <img src="<?php echo $produit['image']; ?>" alt="Product" style="height: 50px; width: auto; border-radius: 4px;">
-                        </td>
-                        <td>
-                          <p class="text-sm"><?php echo $produit['id_sp']; ?></p>
+                          <a href="?action=delete_prod&id=<?php echo $produit['id_p']; ?>&view=products" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')">Supprimer</a>
                         </td>
                       </tr>
                       <?php
@@ -380,6 +404,19 @@ switch($view) {
                     <h6 class="text-medium mb-30">Sponsors List</h6>
                   </div>
                 </div>
+                <?php if (isset($_GET['confirm_delete']) && isset($_GET['product_count'])): ?>
+                <div class="alert alert-warning mb-3">
+                  <strong>Attention !</strong> Ce sponsoring possède <?php echo $_GET['product_count']; ?> produit(s) associé(s).
+                  <div class="mt-2">
+                    <a href="?action=delete_sp&id=<?php echo $_GET['confirm_delete']; ?>&cascade=1&view=sponsors" class="btn btn-sm btn-danger">
+                      <i class="lni lni-trash"></i> Continuer et supprimer tout
+                    </a>
+                    <a href="?view=sponsors" class="btn btn-sm btn-secondary">
+                      <i class="lni lni-close"></i> Annuler
+                    </a>
+                  </div>
+                </div>
+                <?php endif; ?>
                 <!-- End Title -->
                 <div class="mb-4">
                   <div class="row g-2 align-items-end">
@@ -438,6 +475,9 @@ switch($view) {
                         <th class="min-width">
                           <h6 class="text-sm text-medium">Email</h6>
                         </th>
+                        <th>
+                          <h6 class="text-sm text-medium">Actions</h6>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -466,6 +506,9 @@ switch($view) {
                         </td>
                         <td>
                           <p class="text-sm"><?php echo $sponsor['mail_event']; ?></p>
+                        </td>
+                        <td>
+                          <a href="?action=delete_sp&id=<?php echo $sponsor['id_sp']; ?>&view=sponsors" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce sponsoring ?')">Supprimer</a>
                         </td>
                       </tr>
                       <?php
@@ -732,47 +775,45 @@ switch($view) {
         <script src="assets/js/main.js"></script>
         <script>
           function updateSponsorSearchInputType() {
-            const category = document.getElementById('sponsor-search-category');
-            const input = document.getElementById('sponsor-search-input');
-            if (!category || !input) return;
+  const category = document.getElementById('sponsor-search-category');
+  const input = document.getElementById('sponsor-search-input');
+  if (!category || !input) return;
 
-            if (category.value === 'date_deb' || category.value === 'date_fin') {
-              input.type = 'date';
-              input.placeholder = 'Sélectionner une date';
-            } else {
-              input.type = 'text';
-              input.placeholder = 'Rechercher ' + (category.value === 'nom_ent' ? 'un nom' : 'un email');
-            }
-          }
+  if (category.value === 'date_deb' || category.value === 'date_fin') {
+    input.type = 'date';
+    input.placeholder = 'Sélectionner une date';
+  } else {
+    input.type = 'text';
+    input.placeholder = 'Rechercher ' + (category.value === 'nom_ent' ? 'un nom' : 'un email');
+  }
+}
 
-          function filterSponsorTable() {
-            const category = document.getElementById('sponsor-search-category')?.value;
-            const query = document.getElementById('sponsor-search-input')?.value.trim().toLowerCase() || '';
-            const rows = document.querySelectorAll('#sponsorTable tbody tr');
-            if (!category || !rows.length) return;
+function filterSponsorTable() {
+  const category = document.getElementById('sponsor-search-category')?.value;
+  const query = document.getElementById('sponsor-search-input')?.value.trim().toLowerCase() || '';
+  const rows = document.querySelectorAll('#sponsorTable tbody tr');
+  if (!category || !rows.length) return;
 
-            const columnIndex = {
-              id_sp: 0,
-              id_u: 1,
-              nom_ent: 2,
-              date_deb: 4,
-              date_fin: 5,
-              mail_event: 6
-            }[category];
+  const columnIndex = {
+    nom_ent: 2,
+    date_deb: 4,
+    date_fin: 5,
+    mail_event: 6
+  }[category];
 
-            rows.forEach(row => {
-              const cell = row.children[columnIndex];
-              const cellText = cell ? cell.innerText.trim().toLowerCase() : '';
-              if (!query || cellText.includes(query)) {
-                row.style.display = '';
-              } else {
-                row.style.display = 'none';
-              }
-            });
-            sortSponsorTable();
-          }
+  rows.forEach(row => {
+    const cell = row.children[columnIndex];
+    const cellText = cell ? cell.innerText.trim().toLowerCase() : '';
+    if (!query || cellText.includes(query)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  sortSponsorTable();
+}
 
-      function sortSponsorTable() {
+function sortSponsorTable() {
   const sortValue = document.getElementById('sponsor-sort-select')?.value;
   const tbody = document.querySelector('#sponsorTable tbody');
   if (!tbody) return;
@@ -810,7 +851,7 @@ switch($view) {
   rows.forEach(row => tbody.appendChild(row));
 }
 
-      function setupSponsorSearchControls() {
+function setupSponsorSearchControls() {
   const category = document.getElementById('sponsor-search-category');
   const input = document.getElementById('sponsor-search-input');
   const sortSelect = document.getElementById('sponsor-sort-select');
@@ -831,7 +872,9 @@ switch($view) {
   updateSponsorSearchInputType();
 }
 
-      function updateProduitSearchInputType() {
+setupSponsorSearchControls();
+
+function updateProduitSearchInputType() {
   const category = document.getElementById('produit-search-category');
   const input = document.getElementById('produit-search-input');
   if (!category || !input) return;
@@ -846,7 +889,7 @@ switch($view) {
   }
 }
 
-      function filterProduitTable() {
+function filterProduitTable() {
   const category = document.getElementById('produit-search-category')?.value;
   const rawValue = document.getElementById('produit-search-input')?.value.trim();
   const rows = document.querySelectorAll('#produitTable tbody tr');
@@ -874,7 +917,7 @@ switch($view) {
   sortProduitTable();
 }
 
-      function sortProduitTable() {
+function sortProduitTable() {
   const sortValue = document.getElementById('produit-sort-select')?.value;
   const tbody = document.querySelector('#produitTable tbody');
   if (!tbody) return;
@@ -905,7 +948,7 @@ switch($view) {
   rows.forEach(row => tbody.appendChild(row));
 }
 
-      function setupProduitSearchControls() {
+function setupProduitSearchControls() {
   const category = document.getElementById('produit-search-category');
   const input = document.getElementById('produit-search-input');
   const sortSelect = document.getElementById('produit-sort-select');
@@ -926,16 +969,15 @@ switch($view) {
   updateProduitSearchInputType();
 }
 
-      document.addEventListener('DOMContentLoaded', function() {
-        setupSponsorSearchControls();
-        setupProduitSearchControls();
-        
-        // Initialize statistics charts if on statistics view
-        var isStatisticsView = <?php echo ($view === 'statistics') ? 'true' : 'false'; ?>;
-        if (isStatisticsView) {
-          initializeStatisticsCharts();
-        }
-      });
+setupProduitSearchControls();
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize statistics charts if on statistics view
+  var isStatisticsView = <?php echo ($view === 'statistics') ? 'true' : 'false'; ?>;
+  if (isStatisticsView) {
+    initializeStatisticsCharts();
+  }
+});
 
       function initializeStatisticsCharts() {
         try {
