@@ -15,14 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['ids'])) {
     }
 
     if ($deletedCount > 0) {
-        header('Location: /projet/view/evenement/html/backoffice/backoffice_evenements.php?deleted=1');
+        header('Location: /projet/view/evenement/backoffice/backoffice_evenements.php?deleted=1');
     } else {
-        header('Location: /projet/view/evenement/html/backoffice/backoffice_evenements.php?error=no_delete');
+        header('Location: /projet/view/evenement/backoffice/backoffice_evenements.php?error=no_delete');
     }
     exit;
 }
 
 // If accessed directly
-header('Location: /projet/view/evenement/html/backoffice/backoffice_evenements.php');
+header('Location: /projet/view/evenement/backoffice/backoffice_evenements.php');
 exit;
 ?>

@@ -42,5 +42,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include(__DIR__ . '/../../view/evenement/html/frontoffice/form_evenement.php');
+include(__DIR__ . '/../../view/evenement/frontoffice/form_evenement.php');
 ?>

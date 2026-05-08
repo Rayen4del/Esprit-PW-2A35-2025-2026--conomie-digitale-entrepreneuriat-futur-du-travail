@@ -1,6 +1,6 @@
 <?php
 include_once(__DIR__ . '/../../config.php');
-include_once(__DIR__ . '/../../model/Evenement.php');
+include_once(__DIR__ . '/../../model/evenement/Evenement.php');
 
 class EvenementController {
     private string $lastError = '';

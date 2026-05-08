@@ -1,7 +1,7 @@
 <?php
 include_once(__DIR__ . '/../../config.php');
-include_once(__DIR__ . '/../../model/Inscription.php');
-include_once(__DIR__ . '/../../model/Evenement.php');
+include_once(__DIR__ . '/../../model/evenement/Inscription.php');
+include_once(__DIR__ . '/../../model/evenement/Evenement.php');
 
 class InscriptionController {
     private string $lastError = '';

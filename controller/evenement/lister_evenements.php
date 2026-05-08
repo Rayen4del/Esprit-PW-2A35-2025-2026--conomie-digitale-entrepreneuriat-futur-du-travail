@@ -9,5 +9,5 @@ $type   = trim($_GET['type']   ?? '');
 $controller = new EvenementController();
 $events = $controller->filtrer($search, $statut, $type);
 
-include(__DIR__ . '/../../view/evenement/html/frontoffice/liste_evenements.php');
+include(__DIR__ . '/../../view/evenement/frontoffice/liste_evenements.php');
 ?>
