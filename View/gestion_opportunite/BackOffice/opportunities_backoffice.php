@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../Controller/OportunityController.php';
-requireRole(['admin']);
+include_once '/../../../config.php';
+include_once  '/../../../Controller/gestion_opportunite/OportunityController.php';
 
 $controller = new OportunityController();
 $message = ''; $messageType = '';
