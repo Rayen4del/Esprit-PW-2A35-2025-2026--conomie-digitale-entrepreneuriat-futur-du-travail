@@ -1,9 +1,9 @@
 <?php
 // controller/gestion_utilisateur/UserController.php
-require_once __DIR__ . '/../../model/gestion_utilisateur/config.php';
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../model/gestion_utilisateur/User.php';
 require_once __DIR__ . '/../../model/gestion_utilisateur/EmailConfig.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../app/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;

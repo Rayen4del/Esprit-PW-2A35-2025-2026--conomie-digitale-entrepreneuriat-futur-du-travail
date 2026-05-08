@@ -1,0 +1,10 @@
+{
+    "name": "skiller/app",
+    "description": "school project mvc php",
+    "autoload": {
+        "psr-4": {
+            "Skiller\\App\\": "app/"
+        }
+    },
+    "require": {}
+}

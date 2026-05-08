@@ -1,11 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+
 
 if (!isset($_SESSION['user_type']) || strtolower($_SESSION['user_type']) !== 'admin') {
     http_response_code(403);
