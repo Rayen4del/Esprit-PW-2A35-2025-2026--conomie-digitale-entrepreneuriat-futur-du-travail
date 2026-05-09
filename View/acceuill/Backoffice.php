@@ -208,19 +208,19 @@ session_start();
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../gestion_blog/backoffice/comments/comments.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Posts</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/consulterformations.php" class="menu-link">
-                    <div>Articles</div>
+                  <a href="../gestion_blog/backoffice/stats/stats.php" class="menu-link">
+                    <div>Statestique</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/ajouterformation.php" class="menu-link">
+                  <a href="../gestion_blog/backoffice/comments/comments.php" class="menu-link">
                     <div>Comments</div>
                   </a>
                 </li>
@@ -238,19 +238,19 @@ session_start();
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../dashboard.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Products</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/consulterformations.php" class="menu-link">
+                  <a href="../gestion_sponsor/BackOffice/sponsor.php" class="menu-link">
                     <div>Sponsors</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/ajouterformation.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Statistics</div>
                   </a>
                 </li>
@@ -298,13 +298,13 @@ session_start();
                 </li>
 
                 <li class="menu-item">
-                  <a href="../gestion_formation/BackOffice/Test/consultertests.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Tests</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../gestion_formation/BackOffice/Test/ajoutertest.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Add Test</div>
                   </a>
                 </li>
@@ -322,13 +322,13 @@ session_start();
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../opportunities/dashboard.php" class="menu-link">
+                  <a href="../gestion_opportunite/BackOffice/opportunities_backoffice.php" class="menu-link">
                     <div>Opportunities Dashboard</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../opportunities/applications.php" class="menu-link">
+                  <a href="../gestion_opportunite/BackOffice/applications_backoffice.php" class="menu-link">
                     <div>Applications</div>
                   </a>
                 </li>

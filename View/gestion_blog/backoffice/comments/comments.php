@@ -151,11 +151,10 @@ foreach ($comments as $c) {
           </div>
 
           <div class="menu-inner-shadow"></div>
-
-          <ul class="menu-inner py-1 list-unstyled">
+         <ul class="menu-inner py-1 list-unstyled">
             <!-- Dashboard -->
             <li class="menu-item">
-              <a href="Frontoffice.php" class="menu-link">
+              <a href="../acceuill/Frontoffice.php" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home"></i>
                 <div>Backoffice Home</div>
               </a>
@@ -171,19 +170,19 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../gestion_utilisateur/dashboard.php" class="menu-link">
+                  <a href="../../gestion_utilisateur/dashboard.php" class="menu-link">
                     <div>Users</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../gestion_utilisateur/frontoffice/profil.php" class="menu-link">
+                  <a href="../../gestion_utilisateur/frontoffice/profil.php" class="menu-link">
                     <div>My Profile</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../gestion_utilisateur/frontoffice/logout.php" class="menu-link">
+                  <a href="../../gestion_utilisateur/frontoffice/logout.php" class="menu-link">
 
                     <div>Logout</div>
                   </a>
@@ -202,13 +201,13 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../gestion_evenemnt/backoffice/backoffice_evenements.php" class="menu-link">
+                  <a href="../../gestion_evenemnt/backoffice/backoffice_evenements.php" class="menu-link">
                     <div>Events</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../gestion_evenemnt/backoffice/statistics_dashboard.php" class="menu-link">
+                  <a href="../../gestion_evenemnt/backoffice/statistics_dashboard.php" class="menu-link">
                     <div>Statistics</div>
                   </a>
                 </li>
@@ -217,7 +216,7 @@ foreach ($comments as $c) {
             </li>
 
             <!-- Blog -->
-            <li class="menu-item">
+            <li class="menu-item active">
               <a href="#" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-news"></i>
                 <div>Blog Management</div>
@@ -226,19 +225,19 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../gestion_blog/backoffice/comments/comments.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Posts</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/consulterformations.php" class="menu-link">
-                    <div>Articles</div>
+                  <a href="../stats/stats.php" class="menu-link">
+                    <div>Statestique</div>
                   </a>
                 </li>
 
-                <li class="menu-item">
-                  <a href="../Formation/ajouterformation.php" class="menu-link">
+                <li class="menu-item active">
+                  <a href="../comments/comments.php" class="menu-link">
                     <div>Comments</div>
                   </a>
                 </li>
@@ -256,19 +255,19 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../dashboard.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Products</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/consulterformations.php" class="menu-link">
+                  <a href="../../gestion_sponsor/BackOffice/sponsor.php" class="menu-link">
                     <div>Sponsors</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Formation/ajouterformation.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Statistics</div>
                   </a>
                 </li>
@@ -277,7 +276,7 @@ foreach ($comments as $c) {
             </li>
 
             <!-- Training -->
-            <li class="menu-item active">
+            <li class="menu-item">
               <a href="#" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-book-open"></i>
                 <div>Training Management</div>
@@ -286,43 +285,43 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../dashboard.php" class="menu-link">
+                  <a href="../../gestion_formation/BackOffice/dashboard.php" class="menu-link">
                     <div>Dashboard</div>
                   </a>
                 </li>
 
-                <li class="menu-item active">
-                  <a href="consulterformations.php" class="menu-link">
+                <li class="menu-item">
+                  <a href="../../gestion_formation/BackOffice/Formation/consulterformations.php" class="menu-link">
                     <div>View Trainings</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="ajouterformation.php" class="menu-link">
+                  <a href="../../gestion_formation/BackOffice/Formation/ajouterformation.php" class="menu-link">
                     <div>Add Training</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Chapitre/consulterchapitres.php" class="menu-link">
+                  <a href="../../gestion_formation/BackOffice/Chapitre/consulterchapitres.php" class="menu-link">
                     <div>Chapters</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Chapitre/ajouterchapitre.php" class="menu-link">
+                  <a href="../../gestion_formation/BackOffice/Chapitre/ajouterchapitre.php" class="menu-link">
                     <div>Add Chapter</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Test/consultertests.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Tests</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../Test/ajoutertest.php" class="menu-link">
+                  <a href="#" class="menu-link">
                     <div>Add Test</div>
                   </a>
                 </li>
@@ -340,13 +339,13 @@ foreach ($comments as $c) {
               <ul class="menu-sub list-unstyled">
 
                 <li class="menu-item">
-                  <a href="../opportunities/dashboard.php" class="menu-link">
+                  <a href="../../gestion_opportunite/BackOffice/opportunities_backoffice.php" class="menu-link">
                     <div>Opportunities Dashboard</div>
                   </a>
                 </li>
 
                 <li class="menu-item">
-                  <a href="../opportunities/applications.php" class="menu-link">
+                  <a href="../../gestion_opportunite/BackOffice/applications_backoffice.php" class="menu-link">
                     <div>Applications</div>
                   </a>
                 </li>
@@ -355,6 +354,9 @@ foreach ($comments as $c) {
             </li>
 
           </ul>
+                    
+
+        
         </aside>
         <!-- / Menu ------------------------------------------------------------------------------------------------->
 

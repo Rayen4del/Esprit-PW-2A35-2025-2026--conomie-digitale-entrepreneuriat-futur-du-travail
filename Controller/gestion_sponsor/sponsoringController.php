@@ -1,7 +1,6 @@
 <?php
-include_once(__DIR__ . '/../config.php');
-include_once(__DIR__ . '/../Model/Sponsoring.php');
-
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Model/gestion_sponsor/Sponsoring.php';
 class SponsoringController {
 
     public function listSponsoring() {

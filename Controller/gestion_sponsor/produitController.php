@@ -1,6 +1,6 @@
 <?php
-include_once(__DIR__ . '/../config.php');
-include_once(__DIR__ . '/../Model/Produit.php');
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Model/gestion_sponsor/Produit.php';
 
 class ProduitController {
 

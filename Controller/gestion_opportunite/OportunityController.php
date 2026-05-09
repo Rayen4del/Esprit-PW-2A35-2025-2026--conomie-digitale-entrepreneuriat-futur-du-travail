@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../Model/oportunity.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Model/gestion_opportunite/oportunity.php';
 
 class OportunityController {
 

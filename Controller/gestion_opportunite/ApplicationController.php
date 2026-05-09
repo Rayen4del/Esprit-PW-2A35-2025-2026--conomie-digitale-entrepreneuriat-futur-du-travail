@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../Model/application.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Model/gestion_opportunite/application.php';
 
 class ApplicationController {
 
