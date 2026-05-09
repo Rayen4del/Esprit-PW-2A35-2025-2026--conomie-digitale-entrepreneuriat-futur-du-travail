@@ -12,29 +12,31 @@ class Comment
 
     // ─── CREATE ───────────────────────────────────────────────
 
-    public function create($idUtilisateur, $idPost, $contenu, $emotion = null, $statut = 'publié', $scheduledDate = null)
-    {
-        $dateCom = $statut === 'planifié' && $scheduledDate ? $scheduledDate : 'NOW()';
+ public function create($idUtilisateur, $idPost, $contenu, $emotion = null, $statut = 'publié', $scheduledDate = null)
+{
+    $sql = "INSERT INTO commentaire 
+            (IDUtilisateur, IDPost, Contenu, DateCom, emotion) 
+            VALUES 
+            (:idUtilisateur, :idPost, :contenu, 
+             " . ($statut === 'planifié' && $scheduledDate ? ":dateCom" : "NOW()") . ", 
+             :emotion)";
 
-        $sql = "INSERT INTO commentaire (IDUtilisateur, IDPost, Contenu, DateCom, emotion, Statut)
-                VALUES (:idUtilisateur, :idPost, :contenu, " . ($statut === 'planifié' && $scheduledDate ? ":dateCom" : "NOW()") . ", :emotion, :statut)";
+    $stmt = $this->pdo->prepare($sql);
 
-        $stmt = $this->pdo->prepare($sql);
-        $params = [
-            ':idUtilisateur' => $idUtilisateur,
-            ':idPost'        => $idPost,
-            ':contenu'       => $contenu,
-            ':emotion'       => $emotion,
-            ':statut'        => $statut
-        ];
+    $params = [
+        ':idUtilisateur' => $idUtilisateur,
+        ':idPost'        => $idPost,
+        ':contenu'       => $contenu,
+        ':emotion'       => $emotion
+    ];
 
-        if ($statut === 'planifié' && $scheduledDate) {
-            $params[':dateCom'] = $scheduledDate;
-        }
-
-        $stmt->execute($params);
-        return $this->pdo->lastInsertId();
+    if ($statut === 'planifié' && $scheduledDate) {
+        $params[':dateCom'] = $scheduledDate;
     }
+
+    $stmt->execute($params);
+    return $this->pdo->lastInsertId();
+}
 
     // ─── READ ALL COMMENTS FOR A POST ─────────────────────────
 
@@ -116,11 +118,11 @@ class Comment
         ]);
     }
 
-    // ─── SOFT DELETE ──────────────────────────────────────────
+    // ─── DELETE (HARD DELETE) ──────────────────────────────────────────
 
     public function delete($id)
     {
-        $sql = "UPDATE commentaire SET deleted_at = NOW() WHERE ID = :id";
+        $sql = "DELETE FROM commentaire WHERE ID = :id";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }
@@ -171,30 +173,31 @@ class Comment
 
     // ─── NEW METHODS FOR FRONT OFFICE (using your table structure) ───
 
-    public function getByPostId($postId)
-    {
-        $sql = "SELECT c.*, u.Nom AS auteur
-                FROM commentaire c
-                LEFT JOIN utilisateur u ON c.IDUtilisateur = u.ID
-                WHERE c.IDPost = :post_id
-                ORDER BY c.DateCom ASC";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':post_id' => $postId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+public function getByPostId($postId)
+{
+    $sql = "SELECT c.*, u.Nom AS auteur 
+            FROM commentaire c
+            LEFT JOIN utilisateur u ON c.IDUtilisateur = u.ID
+            WHERE c.IDPost = :post_id 
+              AND c.deleted_at IS NULL
+            ORDER BY c.DateCom ASC";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([':post_id' => $postId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
-    public function getLastComment($postId, $userId)
-    {
-        $sql = "SELECT c.*, u.Nom AS auteur
-                FROM commentaire c
-                LEFT JOIN utilisateur u ON c.IDUtilisateur = u.ID
-                WHERE c.IDPost = :post_id AND c.IDUtilisateur = :user_id
-                ORDER BY c.ID DESC LIMIT 1";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':post_id' => $postId, ':user_id' => $userId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
+public function getLastComment($postId, $userId)
+{
+    $sql = "SELECT c.*, u.Nom AS auteur 
+            FROM commentaire c
+            LEFT JOIN utilisateur u ON c.IDUtilisateur = u.ID
+            WHERE c.IDPost = :post_id 
+              AND c.IDUtilisateur = :user_id
+            ORDER BY c.ID DESC LIMIT 1";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([':post_id' => $postId, ':user_id' => $userId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
     public function createComment($postId, $userId, $content)
     {
         $sql = "INSERT INTO commentaire (IDPost, IDUtilisateur, Contenu, DateCom) 

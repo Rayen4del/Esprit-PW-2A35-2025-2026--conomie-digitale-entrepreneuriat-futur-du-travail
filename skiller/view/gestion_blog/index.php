@@ -42,7 +42,7 @@ $baseUrl = rtrim(dirname(dirname(dirname($scriptName))), '/'); // Go up 3 levels
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-  <title>Blog Posts — Admin | Skiller</title>
+  <title>Publications — Admin | Skiller</title>
 
   <link rel="stylesheet" href="./assets/vendor/fonts/boxicons.css" />
   <link rel="stylesheet" href="./assets/vendor/css/core.css" />
@@ -103,7 +103,7 @@ function exportPostsPDF() {
 
     doc.autoTable({
         startY: 28,
-        head: [['#', 'Title', 'Author', 'Category', 'Status', 'Comments', 'Date']],
+        head: [['#', 'Titre', 'Auteur', 'Catégorie', 'Statut', 'Commentairetaires', 'Date']],
         body: rows,
         styles: { fontSize: 9, cellPadding: 4 },
         headStyles: { fillColor: [105, 108, 255], textColor: 255, fontStyle: 'bold' },
@@ -138,7 +138,7 @@ function exportPostPDF(postId) {
                 document.querySelector(`button[onclick*="exportPostPDF(${postId})"]`).closest('tr');
     
     if (!row) {
-        alert('Post not found');
+        alert('Publication introuvabletrouvable');
         return;
     }
 
@@ -179,9 +179,9 @@ function exportPostPDF(postId) {
     yPos += 10;
     doc.text(`Category: ${category}`, 14, yPos);
     yPos += 10;
-    doc.text(`Status: ${status}`, 14, yPos);
+    doc.text(`Statut : ${status}`, 14, yPos);
     yPos += 10;
-    doc.text(`Comments: ${comments}`, 14, yPos);
+    doc.text(`Commentaires : ${comments}`, 14, yPos);
     yPos += 10;
     doc.text(`Date: ${date}`, 14, yPos);
 
@@ -189,12 +189,12 @@ function exportPostPDF(postId) {
     yPos += 20;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Comments', 14, yPos);
+    doc.text('Commentaires', 14, yPos);
     
     yPos += 15;
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total Comments: ${comments}`, 14, yPos);
+    doc.text(`Total des commentaires : ${comments}`, 14, yPos);
 
     doc.save(`skiller-post-${postId}-${new Date().toISOString().slice(0,10)}.pdf`);
 }
@@ -206,7 +206,7 @@ function viewPost(postId) {
     content.innerHTML = `
         <div class="text-center">
             <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">Chargement...</span>
             </div>
         </div>
     `;
@@ -223,7 +223,7 @@ function viewPost(postId) {
             content.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="bx bx-error me-2"></i>
-                    Error loading post details. Please try again.
+                    Erreur lors du chargement des détails de la publication. Veuillez réessayer.
                 </div>
             `;
         });
@@ -243,12 +243,12 @@ function viewPost(postId) {
         <div class="menu-inner-shadow"></div>
         <ul class="menu-inner py-1">
           <li class="menu-header small text-uppercase"><span class="menu-header-text">Blog</span></li>
-          <li class="menu-item active"><a href="index.php" class="menu-link"><i class="menu-icon bx bx-news"></i><div>Posts</div></a></li>
-          <li class="menu-item"><a href="backoffice/comments/index.php" class="menu-link"><i class="menu-icon bx bx-comment-dots"></i><div>Comments</div></a></li>
+          <li class="menu-item active"><a href="index.php" class="menu-link"><i class="menu-icon bx bx-news"></i><div>Publications</div></a></li>
+          <li class="menu-item"><a href="backoffice/comments/index.php" class="menu-link"><i class="menu-icon bx bx-comment-dots"></i><div>Commentaires</div></a></li>
           <li class="menu-item">
     <a href="backoffice/stats/index.php" class="menu-link">
         <i class="menu-icon bx bx-bar-chart-alt-2"></i>
-        <div>Engagement Stats</div>
+        <div>Statistiques d'engagement</div>
     </a>
 </li>
           <li class="menu-header small text-uppercase mt-2"><span class="menu-header-text">Navigation</span></li>
@@ -262,9 +262,9 @@ function viewPost(postId) {
             <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
           </div>
           <div class="navbar-nav-right d-flex align-items-center">
-            <span class="fw-semibold text-muted"><i class='bx bx-shield-quarter me-1' style="color:#696cff"></i> Admin Panel</span>
+            <span class="fw-semibold text-muted"><i class='bx bx-shield-quarter me-1' style="color:#696cff"></i> Pannaux Administrateur</span>
             <div class="ms-auto">
-              <a href="../front_office/posts/index.php" class="btn btn-sm btn-primary"><i class="bx bx-globe me-1"></i> Switch to Front Office</a>
+              <a href="../front_office/posts/index.php" class="btn btn-sm btn-primary"><i class="bx bx-globe me-1"></i> Aller à l'interface utilisateur</a>
             </div>
           </div>
         </nav>
@@ -272,7 +272,7 @@ function viewPost(postId) {
         <div class="content-wrapper">
           <div class="container-xxl flex-grow-1 container-p-y">
             <div class="d-flex align-items-center justify-content-between mb-4">
-              <div><h4 class="fw-bold mb-1">Blog Posts</h4><p class="text-muted mb-0">Moderate, archive, or delete posts from here.</p></div>
+              <div><h4 class="fw-bold mb-1">Publications</h4><p class="text-muted mb-0">Modérez, archivez ou supprimez les publications depuis ici.</p></div>
             </div>
 
             <?php if ($flash): ?>
@@ -281,33 +281,33 @@ function viewPost(postId) {
 
             <div class="row stats-strip mb-4 g-3">
               <?php $total = count($posts); $published = count(array_filter($posts, fn($p) => ($p['statut'] ?? $p['Statut'] ?? '') === 'publié')); $drafts = count(array_filter($posts, fn($p) => ($p['statut'] ?? $p['Statut'] ?? '') === 'brouillon')); $scheduled = count(array_filter($posts, fn($p) => ($p['statut'] ?? $p['Statut'] ?? '') === 'planifié')); $archived = count(array_filter($posts, fn($p) => ($p['statut'] ?? $p['Statut'] ?? '') === 'archivé')); ?>
-              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class='bx bx-news'></i></span></div><div><div class="fw-bold fs-5"><?= $total ?></div><div class="text-muted">Total Posts</div></div></div></div></div>
-              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class='bx bx-check-circle'></i></span></div><div><div class="fw-bold fs-5"><?= $published ?></div><div class="text-muted">Published</div></div></div></div></div>
-              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class='bx bx-time-five'></i></span></div><div><div class="fw-bold fs-5"><?= $drafts ?></div><div class="text-muted">Drafts</div></div></div></div></div>
-              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-info"><i class='bx bx-calendar'></i></span></div><div><div class="fw-bold fs-5"><?= $scheduled ?></div><div class="text-muted">Scheduled</div></div></div></div></div>
+              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class='bx bx-news'></i></span></div><div><div class="fw-bold fs-5"><?= $total ?></div><div class="text-muted">Publications totales</div></div></div></div></div>
+              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class='bx bx-check-circle'></i></span></div><div><div class="fw-bold fs-5"><?= $published ?></div><div class="text-muted">Publié</div></div></div></div></div>
+              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class='bx bx-time-five'></i></span></div><div><div class="fw-bold fs-5"><?= $drafts ?></div><div class="text-muted">Brouillons</div></div></div></div></div>
+              <div class="col-6 col-md-3"><div class="card p-3"><div class="d-flex align-items-center gap-3"><div class="avatar"><span class="avatar-initial rounded bg-label-info"><i class='bx bx-calendar'></i></span></div><div><div class="fw-bold fs-5"><?= $scheduled ?></div><div class="text-muted">Planifiées</div></div></div></div></div>
             </div>
 
             <div class="filter-bar">
               <form method="GET" action="" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4"><label class="form-label mb-1 small fw-semibold">Search</label><div class="input-group input-group-sm"><span class="input-group-text"><i class='bx bx-search'></i></span><input type="text" name="search" class="form-control" placeholder="Title or content…" value="<?= htmlspecialchars($search) ?>"></div></div>
-                <div class="col-6 col-md-3"><label class="form-label mb-1 small fw-semibold">Category</label><select name="category" class="form-select form-select-sm"><option value="">All categories</option><?php foreach ($categories as $cat): ?><option value="<?= htmlspecialchars($cat) ?>" <?= $category === $cat ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option><?php endforeach; ?></select></div>
-                <div class="col-6 col-md-2"><label class="form-label mb-1 small fw-semibold">Status</label><select name="status" class="form-select form-select-sm"><option value="">All statuses</option><option value="publié" <?= $status === 'publié' ? 'selected' : '' ?>>Published</option><option value="brouillon" <?= $status === 'brouillon' ? 'selected' : '' ?>>Draft</option><option value="planifié" <?= $status === 'planifié' ? 'selected' : '' ?>>Scheduled</option><option value="archivé" <?= $status === 'archivé' ? 'selected' : '' ?>>Archived</option></select></div>
-                <div class="col-12 col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary btn-sm w-100"><i class='bx bx-filter-alt me-1'></i> Filter</button><?php if ($search || $category || $status): ?><a href="index.php" class="btn btn-outline-secondary btn-sm w-100"><i class='bx bx-x me-1'></i> Clear</a><?php endif; ?></div>
+                <div class="col-12 col-md-4"><label class="form-label mb-1 small fw-semibold">Recherche</label><div class="input-group input-group-sm"><span class="input-group-text"><i class='bx bx-search'></i></span><input type="text" name="search" class="form-control" placeholder="Title or content…" value="<?= htmlspecialchars($search) ?>"></div></div>
+                <div class="col-6 col-md-3"><label class="form-label mb-1 small fw-semibold">Catégorie</label><select name="category" class="form-select form-select-sm"><option value="">Toutes les catégories</option><?php foreach ($categories as $cat): ?><option value="<?= htmlspecialchars($cat) ?>" <?= $category === $cat ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option><?php endforeach; ?></select></div>
+                <div class="col-6 col-md-2"><label class="form-label mb-1 small fw-semibold">Statut</label><select name="status" class="form-select form-select-sm"><option value="">Tous les statuts</option><option value="publié" <?= $status === 'publié' ? 'selected' : '' ?>>Publié</option><option value="brouillon" <?= $status === 'brouillon' ? 'selected' : '' ?>>Brouillon</option><option value="planifié" <?= $status === 'planifié' ? 'selected' : '' ?>>Planifié</option><option value="archivé" <?= $status === 'archivé' ? 'selected' : '' ?>>Archivé</option></select></div>
+                <div class="col-12 col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary btn-sm w-100"><i class='bx bx-filter-alt me-1'></i> Filtrer</button><?php if ($search || $category || $status): ?><a href="index.php" class="btn btn-outline-secondary btn-sm w-100"><i class='bx bx-x me-1'></i> Réinitialiser</a><?php endif; ?></div>
               </form>
             </div>
 
             <div class="card">
 <div class="card-header d-flex align-items-center justify-content-between py-3">
-    <h6 class="mb-0">All Posts</h6>
+    <h6 class="mb-0">Toutes les publications</h6>
     <div class="d-flex align-items-center gap-2">
-        <small class="text-muted"><?= count($posts) ?> result(s)</small>
+        <small class="text-muted"><?= count($posts) ?> résultat(s)</small>
     </div>
 </div>              <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                  <thead class="table-light"><tr><th>#</th><th>Post</th><th>Author</th><th>Category</th><th>Status</th><th>Comments</th><th>Date</th><th class="text-center">Actions</th></tr></thead>
+                  <thead class="table-light"><tr><th>#</th><th>Publication</th><th>Auteur</th><th>Catégorie</th><th>Statut</th><th>Commentaires</th><th>Date</th><th class="text-center">Actions</th></tr></thead>
                   <tbody id="posts-tbody">
                     <?php if (empty($posts)): ?>
-                      <tr><td colspan="8" class="text-center py-5 text-muted">No posts found.</td></tr>
+                      <tr><td colspan="8" class="text-center py-5 text-muted">Aucune publication trouvée.</td></tr>
                     <?php else: ?>
                       <?php foreach ($posts as $i => $post): 
                         $postId = $post['ID'] ?? $post['id'] ?? 0;
@@ -327,19 +327,21 @@ function viewPost(postId) {
                         <td><?php if (!empty($postCategory)): ?><span class="badge bg-label-info"><?= htmlspecialchars($postCategory) ?></span><?php else: ?><span class="text-muted small">—</span><?php endif; ?></td>
                         <td>
                           <?php 
+                            $postStatus = strtolower(trim($post['statut'] ?? $post['Statut'] ?? 'brouillon'));
                             $statusClass = match($postStatus) {
-                              'publié' => 'bg-label-success',
-                              'brouillon' => 'bg-label-warning', 
-                              'planifié' => 'bg-label-info',
-                              'archivé' => 'bg-label-secondary',
-                              default => 'bg-label-default'
+                                'publié', 'published' => 'bg-label-success',
+                                'brouillon', 'draft'  => 'bg-label-warning',
+                                'planifié', 'scheduled' => 'bg-label-info',
+                                'archivé', 'archived' => 'bg-label-secondary',
+                                default => 'bg-label-default'
                             };
+
                             $statusIcon = match($postStatus) {
-                              'publié' => '✅',
-                              'brouillon' => '🕐',
-                              'planifié' => '⏰',
-                              'archivé' => '📦',
-                              default => '❓'
+                                'publié', 'published' => '✅',
+                                'brouillon', 'draft'  => '🕐',
+                                'planifié', 'scheduled' => '⏰',
+                                'archivé', 'archived' => '📦',
+                                default => '❓'
                             };
                           ?>
                           <span class="badge <?= $statusClass ?>"><?= $statusIcon ?> <?= ucfirst($postStatus) ?></span>
@@ -348,8 +350,8 @@ function viewPost(postId) {
                         <td class="text-muted small"><?= date('d M Y', strtotime($postDate)) ?></td>
                         <td class="text-center">
                           <div class="d-flex justify-content-center gap-1 action-btns">
-                            <button onclick="viewPost(<?= $postId ?>)" class="btn btn-sm btn-icon btn-outline-primary" title="View Post"><i class='bx bx-show'></i></button>
-                            <button onclick="exportPostPDF(<?= $postId ?>)" class="btn btn-sm btn-icon btn-outline-danger" title="Export PDF"><i class='bx bxs-file-pdf'></i></button>
+                            <button onclick="viewPost(<?= $postId ?>)" class="btn btn-sm btn-icon btn-outline-primary" title="Voir la publication"><i class='bx bx-show'></i></button>
+                            <button onclick="exportPostPDF(<?= $postId ?>)" class="btn btn-sm btn-icon btn-outline-danger" title="Exporter en PDF"><i class='bx bxs-file-pdf'></i></button>
                             <button type="button" class="btn btn-sm btn-icon btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $postId ?>" data-title="<?= htmlspecialchars($postTitle) ?>"><i class='bx bx-trash'></i></button>
                           </div>
                         </td>
@@ -371,18 +373,20 @@ function viewPost(postId) {
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title text-danger"><i class='bx bx-error-circle me-2'></i>Delete Post</h5>
+          <h5 class="modal-title text-danger"><i class='bx bx-error-circle me-2'></i>Supprimer la publication</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to permanently delete <strong id="deletePostTitle"></strong>? This will also remove all its comments and media.</p>
+          <p>Voulez-vous vraiment supprimer définitivement <strong id="deletePostTitle"></strong> ? Cela supprimera également tous ses commentaires et médias.</p>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
           <form method="POST" action="<?= $baseUrl ?>/controller/PostController.php" class="d-inline">
             <input type="hidden" name="action" value="backDelete">
             <input type="hidden" name="id" id="deletePostId">
-            <button type="submit" class="btn btn-danger btn-sm"><i class='bx bx-trash me-1'></i> Yes, delete</button>
+            <button type="submit" class="btn btn-danger btn-sm">
+                <i class='bx bx-trash me-1'></i> Oui, supprimer définitivement
+            </button>
           </form>
         </div>
       </div>
@@ -394,7 +398,7 @@ function viewPost(postId) {
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class='bx bx-show me-2'></i>View Post</h5>
+          <h5 class="modal-title"><i class='bx bx-show me-2'></i>Voir la publication</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body" id="postContent">

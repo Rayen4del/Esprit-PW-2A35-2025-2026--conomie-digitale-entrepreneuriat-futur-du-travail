@@ -1,3 +1,48 @@
+// ─────────────────────────────────────────────
+// SAVE POST
+// ─────────────────────────────────────────────
+function toggleSave(postId) {
+    const userId = 1;
+    fetch('index.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `action=save_post&post_id=${postId}&user_id=${userId}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll(`.save-btn[data-post-id="${postId}"] i`).forEach(icon => {
+                icon.className = `bx ${data.saved ? 'bxs-bookmark' : 'bx-bookmark'}`;
+            });
+            // Also update dropdown text if present
+            document.querySelectorAll(`.dropdown-menu .dropdown-item[onclick*='toggleSave(${postId})']`).forEach(item => {
+                item.innerHTML = `<i class='bx ${data.saved ? 'bxs-bookmark' : 'bx-bookmark'} me-2'></i> ${data.saved ? 'Retirer' : 'Enregistrer'}`;
+            });
+        }
+    })
+    .catch(() => showNotification('Erreur lors de l&apos;enregistrement du post', 'error'));
+}
+
+// ─────────────────────────────────────────────
+// SHARE POST
+// ─────────────────────────────────────────────
+function sharePost(postId) {
+    const userId = 1;
+    fetch('index.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `action=share_post&post_id=${postId}&user_id=${userId}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Copy link to clipboard
+            navigator.clipboard.writeText(data.url);
+            showNotification('Lien de partage copié !');
+        }
+    })
+    .catch(() => showNotification('Erreur lors du partage du post', 'error'));
+}
 // front_office/posts/js/feed.js
 
 // ─────────────────────────────────────────────
@@ -27,7 +72,7 @@ function toggleLike(postId) {
             }
         }
     })
-    .catch(() => showNotification('Error liking post', 'error'));
+    .catch(() => showNotification('Erreur lors du like du post', 'error'));
 }
 
 // ─────────────────────────────────────────────
@@ -45,19 +90,37 @@ function toggleComments(postId) {
 // DELETE POST
 // ─────────────────────────────────────────────
 function deletePost(postId) {
-    if (!confirm('Are you sure you want to delete this post permanently?')) return;
-    const form  = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'index.php';
-    const input = document.createElement('input');
-    input.type  = 'hidden';
-    input.name  = 'delete_post';
-    input.value = postId;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-}
+    if (!confirm('Voulez-vous vraiment supprimer cette publication ?\n\nCette action est irréversible pour vous.')) {
+        return;
+    }
 
+    fetch('index.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `action=delete_post&post_id=${postId}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the post card from the UI
+            const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+            if (postCard) {
+                postCard.style.transition = 'opacity 0.3s';
+                postCard.style.opacity = '0';
+                setTimeout(() => postCard.remove(), 300);
+            }
+            showNotification('Publication supprimée avec succès', 'success');
+        } else {
+            showNotification(data.message || 'Erreur lors de la suppression', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showNotification('Erreur de connexion', 'error');
+    });
+}
 // ─────────────────────────────────────────────
 // EDIT POST
 // ─────────────────────────────────────────────
@@ -81,16 +144,16 @@ function editPost(postId) {
     if (currentMediaEl) {
         if (imgEl) {
             currentMediaEl.innerHTML = `
-                <p class="text-muted small mb-1">Current image:</p>
+                <p class="text-muted small mb-1">Image actuelle :</p>
                 <img src="${imgEl.src}" style="max-height:100px;border-radius:8px;border:1px solid #dee2e6;">
             `;
         } else if (vidEl) {
             currentMediaEl.innerHTML = `
-                <p class="text-muted small mb-1">Current video:</p>
+                <p class="text-muted small mb-1">Vidéo actuelle :</p>
                 <video src="${vidEl.src}" style="max-height:100px;border-radius:8px;" muted></video>
             `;
         } else {
-            currentMediaEl.innerHTML = '<p class="text-muted small mb-0">No media currently attached.</p>';
+            currentMediaEl.innerHTML = '<p class="text-muted small mb-0">Aucun média actuellement attaché.</p>';
         }
     }
 
@@ -186,10 +249,10 @@ function validateCreateForm(e) {
     clearError('createPostContenu');
 
     if (!titre.value.trim()) {
-        showError('createPostTitre', 'Title is required.');
+        showError('createPostTitre', 'Le titre est requis.');
         valid = false;
     } else if (titre.value.trim().length > 50) {
-        showError('createPostTitre', 'Title must be 50 characters or less.');
+        showError('createPostTitre', 'Le titre doit contenir 50 caractères ou moins.');
         valid = false;
     }
 
@@ -198,7 +261,7 @@ function validateCreateForm(e) {
     const plainText = quillCreateEditor.getText().trim();
 
     if (!plainText) {
-        showError('createPostContenu', 'Content is required.');
+        showError('createPostContenu', 'Le contenu est requis.');
         valid = false;
     }
 
@@ -221,15 +284,15 @@ function validateEditForm(e) {
     clearEditErrors();
 
     if (!titre.value.trim()) {
-        showError('editPostTitre', 'Title is required.');
+        showError('editPostTitre', 'Le titre est requis.');
         valid = false;
     } else if (titre.value.trim().length > 50) {
-        showError('editPostTitre', 'Title must be 50 characters or less.');
+        showError('editPostTitre', 'Le titre doit contenir 50 caractères ou moins.');
         valid = false;
     }
 
     if (!contenu.value.trim()) {
-        showError('editPostContenu', 'Content is required.');
+        showError('editPostContenu', 'Le contenu est requis.');
         valid = false;
     }
 
@@ -289,11 +352,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Flash messages
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('deleted') === 'success') {
-        showNotification('Post deleted successfully!', 'success');
+        showNotification('Publication supprimée avec succès !', 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
     }
     if (urlParams.get('msg') === 'updated') {
-        showNotification('Post updated successfully!', 'success');
+        showNotification('Publication mise à jour avec succès !', 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 

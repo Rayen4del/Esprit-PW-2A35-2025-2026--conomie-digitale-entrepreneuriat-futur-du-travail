@@ -15,6 +15,15 @@ foreach ($comments as $c) {
     elseif ($s === 'approved') $approved++;
     else $rejected++;
 }
+
+function translateCommentStatus(string $status): string {
+    return match (strtolower($status)) {
+        'approved', 'approuvé' => 'Approuvé',
+        'rejected', 'rejeté'  => 'Rejeté',
+        'pending', 'en attente' => 'En attente',
+        default => ucfirst($status),
+    };
+}
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +31,7 @@ foreach ($comments as $c) {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <title>Comments Management — Admin | Skiller</title>
+    <title>Gestion des commentaires — Admin | Skiller</title>
 
     <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
     <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
@@ -82,26 +91,26 @@ foreach ($comments as $c) {
                     <li class="menu-item">
                         <a href="../../index.php" class="menu-link">
                             <i class="menu-icon bx bx-news"></i>
-                            <div>Posts</div>
+                            <div>Publications</div>
                         </a>
                     </li>
                     <li class="menu-item active">
                         <a href="index.php" class="menu-link">
                             <i class="menu-icon bx bx-comment-dots"></i>
-                            <div>Comments</div>
+                            <div>Commentaires</div>
                         </a>
                     </li>
                     <li class="menu-item">
     <a href="../stats/index.php" class="menu-link">
         <i class="menu-icon bx bx-bar-chart-alt-2"></i>
-        <div>Engagement Stats</div>
+        <div>Statistiques d'engagement</div>
     </a>
 </li>
                     <li class="menu-header small text-uppercase mt-2"><span class="menu-header-text">Navigation</span></li>
                     <li class="menu-item">
                         <a href="../../index.php" class="menu-link">
                             <i class="menu-icon bx bx-home-circle"></i>
-                            <div>Dashboard</div>
+                            <div>Tableau de bord</div>
                         </a>
                     </li>
                     
@@ -117,14 +126,14 @@ foreach ($comments as $c) {
                         </a>
                     </div>
                     <div class="navbar-nav-right d-flex align-items-center">
-                        <span class="fw-semibold text-muted">Admin Panel</span>
+                        <span class="fw-semibold text-muted">Panneau d'administration</span>
                     </div>
                 </nav>
 
                 <div class="content-wrapper">
                     <div class="container-xxl flex-grow-1 container-p-y">
 
-                        <h4 class="fw-bold py-3 mb-4">Comments Management</h4>
+                        <h4 class="fw-bold py-3 mb-4">Gestion des commentaires</h4>
 
                         <!-- Stats Cards -->
                         <div class="row g-3 mb-4 stats-strip">
@@ -148,7 +157,7 @@ foreach ($comments as $c) {
                                             <div class="avatar bg-label-warning p-3"><i class="bx bx-time bx-lg"></i></div>
                                             <div class="ms-3">
                                                 <h4 class="mb-0" id="stat-pending"><?= $pending ?></h4>
-                                                <span class="text-muted">Pending</span>
+                                                <span class="text-muted">En attente</span>
                                             </div>
                                         </div>
                                     </div>
@@ -161,7 +170,7 @@ foreach ($comments as $c) {
                                             <div class="avatar bg-label-success p-3"><i class="bx bx-check-circle bx-lg"></i></div>
                                             <div class="ms-3">
                                                 <h4 class="mb-0" id="stat-approved"><?= $approved ?></h4>
-                                                <span class="text-muted">Approved</span>
+                                                <span class="text-muted">Approuvés</span>
                                             </div>
                                         </div>
                                     </div>
@@ -174,7 +183,7 @@ foreach ($comments as $c) {
                                             <div class="avatar bg-label-danger p-3"><i class="bx bx-x-circle bx-lg"></i></div>
                                             <div class="ms-3">
                                                 <h4 class="mb-0" id="stat-rejected"><?= $rejected ?></h4>
-                                                <span class="text-muted">Rejected</span>
+                                                <span class="text-muted">Rejetés</span>
                                             </div>
                                         </div>
                                     </div>
@@ -189,15 +198,15 @@ foreach ($comments as $c) {
                                     <div class="col-md-5">
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bx bx-search"></i></span>
-                                            <input type="text" id="searchInput" class="form-control" placeholder="Search comments or author...">
+                                            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher des commentaires ou un auteur...">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <select id="statusFilter" class="form-select">
-                                            <option value="">All Status</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="approved">Approved</option>
-                                            <option value="rejected">Rejected</option>
+                                            <option value="">Tous les statuts</option>
+                                            <option value="pending">En attente</option>
+                                            <option value="approved">Approuvé</option>
+                                            <option value="rejected">Rejeté</option>
                                         </select>
                                     </div>
                                 </div>
@@ -207,24 +216,24 @@ foreach ($comments as $c) {
                         <!-- Comments Table -->
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="mb-0">All Comments</h5>
+                                <h5 class="mb-0">Tous les commentaires</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="commentsTable">
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>Post Title</th>
-                                            <th>Author</th>
-                                            <th>Comment</th>
-                                            <th>Status</th>
+                                            <th>Titre du post</th>
+                                            <th>Auteur</th>
+                                            <th>Commentaire</th>
+                                            <th>Statut</th>
                                             <th>Date</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if (empty($comments)): ?>
-                                            <tr><td colspan="7" class="text-center py-5">No comments found.</td></tr>
+                                            <tr><td colspan="7" class="text-center py-5">Aucun commentaire trouvé.</td></tr>
                                         <?php else: ?>
                                             <?php foreach ($comments as $i => $c):
                                                 $st = strtolower($c['Statut'] ?? 'pending');
@@ -233,20 +242,20 @@ foreach ($comments as $c) {
                                             ?>
                                             <tr id="row-<?= $c['ID'] ?>">
                                                 <td><?= $i + 1 ?></td>
-                                                <td><?= htmlspecialchars($c['post_titre'] ?? 'Deleted') ?></td>
-                                                <td><?= htmlspecialchars($c['auteur'] ?? 'Anonymous') ?></td>
+                                                <td><?= htmlspecialchars($c['post_titre'] ?? 'Supprimé') ?></td>
+                                                <td><?= htmlspecialchars($c['auteur'] ?? 'Anonyme') ?></td>
                                                 <td class="comment-text" title="<?= htmlspecialchars($c['Contenu'] ?? '') ?>">
                                                     <?= htmlspecialchars($c['Contenu'] ?? '') ?>
                                                 </td>
                                                 <td>
                                                     <span class="badge <?= $cls ?>" id="badge-<?= $c['ID'] ?>">
-                                                        <?= ucfirst($st) ?>
+                                                        <?= translateCommentStatus($st) ?>
                                                     </span>
                                                 </td>
                                                 <td><?= date('d M Y', strtotime($c['DateCom'] ?? 'now')) ?></td>
                                                 <td>
                                                     <div class="action-btns">
-                                                        <button onclick="window.commentsManager.deleteComment(<?= $c['ID'] ?>)" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <button onclick="window.commentsManager.deleteComment(<?= $c['ID'] ?>)" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                             <i class="bx bx-trash"></i>
                                                         </button>
                                                     </div>

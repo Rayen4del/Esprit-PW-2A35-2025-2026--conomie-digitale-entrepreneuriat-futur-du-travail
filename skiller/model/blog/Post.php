@@ -14,44 +14,40 @@ class Post
     // CREATE POST (SAFE FOR TESTING)
     // ─────────────────────────────────────────────
     public function create(
-        $titre,
-        $contenu,
-        $categorie = null,
-        $image = null,
-        $media = null,
-        $statut = 'pending',
-        $idUtilisateur = null,
-        $scheduledDate = null
-    ) {
-        // 🔥 TESTING FALLBACK USER (IMPORTANT FOR YOUR PRESENTATION)
-        if ($idUtilisateur === null) {
-            $idUtilisateur = 1; // <-- TEST USER ID
-        }
+    $titre,
+    $contenu,
+    $categorie = null,
+    $image = null,
+    $media = null,
+    $statut = 'publié',
+    $idUtilisateur = null,
+    $scheduledDate = null
+) {
+    if ($idUtilisateur === null) $idUtilisateur = 1;
 
-        $sql = "INSERT INTO post 
-                (Titre, Contenu, Categorie, Image, media, Statut, idUtilisateur, DatePublication)
-                VALUES
-                (:titre, :contenu, :categorie, :image, :media, :statut, :idUtilisateur, " . 
-                ($statut === 'planifié' && $scheduledDate ? ":datePublication" : "NOW()") . ")";
+    $sql = "INSERT INTO post 
+            (Titre, Contenu, Categorie, Image, media, Statut, idUtilisateur, DatePublication)
+            VALUES 
+            (:titre, :contenu, :categorie, :image, :media, :statut, :idUtilisateur, 
+             " . ($statut === 'planifié' && $scheduledDate ? ":datePublication" : "NOW()") . ")";
 
-        $stmt = $this->pdo->prepare($sql);
+    $stmt = $this->pdo->prepare($sql);
 
-        $stmt->bindValue(':titre', $titre);
-        $stmt->bindValue(':contenu', $contenu);
-        $stmt->bindValue(':categorie', $categorie);
-        $stmt->bindValue(':image', $image);
-        $stmt->bindValue(':media', $media);
-        $stmt->bindValue(':statut', $statut);
-        $stmt->bindValue(':idUtilisateur', $idUtilisateur, PDO::PARAM_INT);
+    $stmt->bindValue(':titre', $titre);
+    $stmt->bindValue(':contenu', $contenu);
+    $stmt->bindValue(':categorie', $categorie);
+    $stmt->bindValue(':image', $image);
+    $stmt->bindValue(':media', $media);
+    $stmt->bindValue(':statut', $statut);
+    $stmt->bindValue(':idUtilisateur', $idUtilisateur, PDO::PARAM_INT);
 
-        if ($statut === 'planifié' && $scheduledDate) {
-            $stmt->bindValue(':datePublication', $scheduledDate);
-        }
-
-        $stmt->execute();
-
-        return $this->pdo->lastInsertId();
+    if ($statut === 'planifié' && $scheduledDate) {
+        $stmt->bindValue(':datePublication', $scheduledDate);
     }
+
+    $stmt->execute();
+    return $this->pdo->lastInsertId();
+}
 
     // ─────────────────────────────────────────────
     // GET ALL POSTS
@@ -61,7 +57,7 @@ class Post
         $sql = "SELECT p.*, u.Nom AS auteur
                 FROM post p
                 JOIN utilisateur u ON p.idUtilisateur = u.ID
-                WHERE 1=1";
+                WHERE p.deleted_at IS NULL";
 
         $params = [];
 
@@ -110,7 +106,7 @@ class Post
     public function getByUser($idUtilisateur)
     {
         $sql = "SELECT * FROM post
-                WHERE idUtilisateur = :idUtilisateur
+                WHERE idUtilisateur = :idUtilisateur AND deleted_at IS NULL
                 ORDER BY DatePublication DESC";
 
         $stmt = $this->pdo->prepare($sql);
@@ -168,15 +164,74 @@ class Post
 
 
     // ─────────────────────────────────────────────
-    // SOFT DELETE POST
+    // SOFT DELETE (For Front Office Users)
     // ─────────────────────────────────────────────
-    public function delete($id)
+    public function softDelete($id)
     {
-        $sql = "UPDATE post SET deleted_at = NOW() WHERE ID = :id";
+        $sql = "UPDATE post SET deleted_at = NOW() WHERE ID = :id AND deleted_at IS NULL";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }
 
+    // Alias for backward compatibility
+    public function delete($id)
+    {
+        return $this->softDelete($id);
+    }
+
+     // ─────────────────────────────────────────────
+    // HARD DELETE - Cleans ALL related data
+    // ─────────────────────────────────────────────
+public function hardDelete($id)
+{
+    try {
+        $this->pdo->beginTransaction();
+
+        echo "🔄 Starting hardDelete for post ID: $id<br>";
+
+        // 1. Comment likes
+        $this->pdo->prepare("DELETE FROM comment_likes 
+            WHERE comment_id IN (SELECT ID FROM commentaire WHERE IDPost = ?)")->execute([$id]);
+        echo "✅ comment_likes deleted<br>";
+
+        // 2. Comments
+        $this->pdo->prepare("DELETE FROM commentaire WHERE IDPost = ?")->execute([$id]);
+        echo "✅ comments deleted<br>";
+
+        // 3. Post likes
+        $this->pdo->prepare("DELETE FROM post_likes WHERE post_id = ?")->execute([$id]);
+        echo "✅ post_likes deleted<br>";
+
+        // 4. Post shares
+        $this->pdo->prepare("DELETE FROM post_shares WHERE post_id = ?")->execute([$id]);
+        echo "✅ post_shares deleted<br>";
+
+        // 5. Saved posts
+        $this->pdo->prepare("DELETE FROM saved_posts WHERE post_id = ?")->execute([$id]);
+        echo "✅ saved_posts deleted<br>";
+
+        // 6. Notifications - Safe version
+        $this->pdo->prepare("DELETE FROM notifications WHERE post_id = ?")->execute([$id]);
+        echo "✅ notifications deleted<br>";
+
+        // 7. Delete the post itself
+        $result = $this->pdo->prepare("DELETE FROM post WHERE ID = ?")->execute([$id]);
+        echo "✅ Final post deletion: " . ($result ? 'SUCCESS' : 'FAILED') . "<br>";
+
+        $this->pdo->commit();
+        echo "<h3 style='color:green;'>🎉 Hard delete completed successfully!</h3>";
+
+        return $result;
+
+    } catch (Exception $e) {
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->rollBack();
+        }
+        
+        echo "<h3 style='color:red;'>❌ ERROR: " . htmlspecialchars($e->getMessage()) . "</h3>";
+        return false;
+    }
+}
     // ─────────────────────────────────────────────
     // GET DELETED POSTS
     // ─────────────────────────────────────────────

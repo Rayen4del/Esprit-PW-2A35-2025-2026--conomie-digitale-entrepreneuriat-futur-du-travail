@@ -49,25 +49,26 @@ $postModel = new Post();
 switch ($action) {
 
     // ─────────────────────────────────────────
-    // BACK-OFFICE: Delete a post
+    // HARD DELETE (backup case)
     // ─────────────────────────────────────────
-    case 'backDelete':
+        case 'backDelete':
         $id = (int)($_POST['id'] ?? 0);
-
+        
         if (!$id) {
-            if (isAjax()) jsonResponse(['success' => false, 'message' => 'Invalid post ID']);
             redirectTo('/view/gestion_blog/index.php', 'error');
         }
 
-        $result = $postModel->delete($id);
+        $result = $postModel->hardDelete($id);   // This will now show output on screen
 
-        if (isAjax()) {
-            jsonResponse(['success' => (bool)$result]);
+        // If we reach here with error
+        if (!$result) {
+            echo "<h2>Hard delete returned FALSE</h2>";
+            echo "<a href='../../view/gestion_blog/index.php'>← Go Back</a>";
+            exit;
         }
 
-        redirectTo('/view/gestion_blog/index.php', $result ? 'deleted' : 'error');
+        redirectTo('/view/gestion_blog/index.php', 'deleted');
         break;
-
     // ─────────────────────────────────────────
     // BACK-OFFICE: Change post status
     // ─────────────────────────────────────────
@@ -171,7 +172,18 @@ switch ($action) {
         $postModel->delete($id);
         redirectTo('/view/gestion_blog/front_office/posts/index.php', 'deleted');
         break;
-
+    // ─────────────────────────────────────────
+    // BACKOFFICE-OFFICE: HARD-Delete own post
+    // ─────────────────────────────────────────
+    case 'hardDelete':
+    $postId = (int)($_POST['id'] ?? $_POST['post_id'] ?? 0);
+    
+    if ($postId && $postModel->hardDelete($postId)) {
+        header('Location: ../../view/gestion_blog/index.php?msg=deleted');
+    } else {
+        header('Location: ../../view/gestion_blog/index.php?msg=error');
+    }
+    exit;
     // ─────────────────────────────────────────
     // Unknown action
     // ─────────────────────────────────────────

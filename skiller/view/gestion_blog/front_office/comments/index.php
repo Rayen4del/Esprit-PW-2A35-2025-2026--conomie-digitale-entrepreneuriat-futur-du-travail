@@ -31,23 +31,42 @@ function sendJson(array $data): void {
 
 // ── CREATE ──────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create_comment') {
+    
     $postId   = (int)($_POST['post_id']  ?? 0);
     $userId   = (int)($_POST['user_id']  ?? 0);
     $content  = trim($_POST['content']   ?? '');
-    $emotion  = trim($_POST['emotion']   ?? '') ?: null;
+    $emotion  = trim($_POST['emotion']   ?? '');
     $status   = trim($_POST['status']    ?? 'publié');
     $scheduledDate = trim($_POST['scheduled_date'] ?? '');
+
+    // === DEBUG LOGS ===
+    error_log("CREATE COMMENT - Received emotion: '" . $emotion . "'");
+    error_log("CREATE COMMENT - All POST data: " . print_r($_POST, true));
 
     if (!$postId || !$userId || !$content) {
         sendJson(['success' => false, 'message' => 'Missing required fields']);
     }
 
-    $result = $commentModel->create($userId, $postId, $content, $emotion, $status, $scheduledDate ?: null);
-    if ($result) {
-        $comment = $commentModel->getLastComment($postId, $userId);
-        sendJson(['success' => true, 'message' => 'Comment added successfully', 'comment' => $comment]);
+    $emotion = $emotion ? strtolower(trim($emotion)) : null;
+
+    try {
+        $result = $commentModel->create($userId, $postId, $content, $emotion, $status, $scheduledDate ?: null);
+        
+        if ($result) {
+            $comment = $commentModel->getLastComment($postId, $userId);
+            sendJson([
+                'success' => true, 
+                'message' => 'Commentaire ajouté avec succès', 
+                'comment' => $comment,
+                'saved_emotion' => $emotion   // debug
+            ]);
+        } else {
+            sendJson(['success' => false, 'message' => 'Échec de l\'ajout du commentaire']);
+        }
+    } catch (Exception $e) {
+        error_log("CREATE COMMENT ERROR: " . $e->getMessage());
+        sendJson(['success' => false, 'message' => 'Erreur de base de données : ' . $e->getMessage()]);
     }
-    sendJson(['success' => false, 'message' => 'Failed to add comment']);
 }
 
 // ── EDIT ────────────────────────────────────────────────────────
@@ -57,18 +76,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit_
     $content   = trim($_POST['content']     ?? '');
 
     if (!$commentId || !$userId || !$content) {
-        sendJson(['success' => false, 'message' => 'Missing required fields']);
+        sendJson(['success' => false, 'message' => 'Champs requis manquants']);
     }
 
     $comment = $commentModel->getById($commentId);
     if (!$comment || $comment['IDUtilisateur'] != $userId) {
-        sendJson(['success' => false, 'message' => 'Unauthorized']);
+        sendJson(['success' => false, 'message' => 'Non autorisé']);
     }
 
     $result = $commentModel->update($commentId, $content);
     sendJson([
         'success' => (bool)$result,
-        'message' => $result ? 'Comment updated' : 'Update failed',
+        'message' => $result ? 'Commentaire mis à jour' : 'Échec de la mise à jour',
         'content' => $content
     ]);
 }
@@ -81,9 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     $comment = $commentModel->getById($commentId);
     if ($comment && $comment['IDUtilisateur'] == $userId) {
         $result = $commentModel->delete($commentId);
-        sendJson(['success' => (bool)$result, 'message' => $result ? 'Comment deleted' : 'Delete failed']);
+        sendJson(['success' => (bool)$result, 'message' => $result ? 'Commentaire supprimé' : 'Échec de la suppression']);
     }
-    sendJson(['success' => false, 'message' => 'Unauthorized']);
+    sendJson(['success' => false, 'message' => 'Non autorisé']);
 }
 
 // ── LIKE ────────────────────────────────────────────────────────
@@ -107,19 +126,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'get_com
     $postId   = (int)($_GET['post_id'] ?? 0);
 
     if (!$postId) {
-        sendJson(['success' => false, 'message' => 'Missing post_id']);
+        sendJson(['success' => false, 'message' => 'post_id manquant']);
     }
 
-    $comments = $commentModel->getByPostId($postId);
-    $userId   = (int)($_GET['user_id'] ?? $currentUserId); // Fix: pass user_id in GET too
+    try {
+        $comments = $commentModel->getByPostId($postId);
+        $userId   = (int)($_GET['user_id'] ?? $currentUserId); // Fix: pass user_id in GET too
 
-    foreach ($comments as &$comment) {
-        $comment['like_count'] = $commentModel->getCommentLikeCount($comment['ID']);
-        $comment['user_liked'] = $commentModel->hasUserLikedComment($userId, $comment['ID']);
+        foreach ($comments as &$comment) {
+            $comment['like_count'] = $commentModel->getCommentLikeCount($comment['ID']);
+            $comment['user_liked'] = $commentModel->hasUserLikedComment($userId, $comment['ID']);
+        }
+
+        sendJson(['success' => true, 'comments' => $comments]);
+    } catch (Exception $e) {
+        sendJson(['success' => false, 'message' => 'Erreur de base de données : ' . $e->getMessage()]);
     }
-
-    sendJson(['success' => true, 'comments' => $comments]);
 }
 
 // ── FALLBACK ────────────────────────────────────────────────────
-sendJson(['success' => false, 'message' => 'No action specified']);
+sendJson(['success' => false, 'message' => 'Aucune action spécifiée']);

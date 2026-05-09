@@ -5,35 +5,76 @@
 require_once __DIR__ . '/../../../../config.php';
 require_once __DIR__ . '/../../../../model/blog/Post.php';
 require_once __DIR__ . '/../../../../model/blog/Comment.php';
+require_once __DIR__ . '/../../../../model/blog/Notification.php';
+require_once __DIR__ . '/../../../../model/blog/SavedPost.php';
+require_once __DIR__ . '/../../../../model/blog/Share.php';
 
-$postModel    = new Post();
-$commentModel = new Comment();
+$postModel        = new Post();
+$commentModel     = new Comment();
+$notificationModel = new Notification();
+$savedPostModel   = new SavedPost();
+$shareModel       = new Share();
 
 $currentUserId = 1;
-
-// ── DELETE POST ─────────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_post'])) {
-    $postId = (int)$_POST['delete_post'];
-    $post   = $postModel->getById($postId);
-    if ($post && !empty($post['media'])) {
-        $mediaPath = __DIR__ . '/../../uploads/posts/' . $post['media'];
-        if (file_exists($mediaPath)) unlink($mediaPath);
-    }
-    $result = $postModel->delete($postId);
-    header('Location: index.php?deleted=' . ($result ? 'success' : 'error'));
+function sendJson(array $data): void {
+    header('Content-Type: application/json');
+    echo json_encode($data);
     exit;
+}
+// ── DELETE POST (SOFT DELETE + Clean Media) ─────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_post') {
+    $postId = (int)($_POST['post_id'] ?? 0);
+    
+    if (!$postId) {
+        sendJson(['success' => false, 'message' => 'Invalid post ID']);
+    }
+
+    // Check ownership
+    $post = $postModel->getById($postId);
+    if (!$post || $post['idUtilisateur'] != $currentUserId) {
+        sendJson(['success' => false, 'message' => 'Unauthorized']);
+    }
+
+    // Delete media file if exists
+    if (!empty($post['media'])) {
+        $mediaPath = __DIR__ . '/../../uploads/posts/' . $post['media'];
+        if (file_exists($mediaPath)) {
+            unlink($mediaPath);
+        }
+    }
+
+    // Perform soft delete
+    $result = $postModel->softDelete($postId);
+
+    sendJson([
+        'success' => (bool)$result,
+        'message' => $result ? 'Post deleted successfully' : 'Failed to delete post'
+    ]);
 }
 
 // ── LIKE TOGGLE ─────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'like_post') {
     $postId = (int)$_POST['post_id'];
     $userId = (int)$_POST['user_id'];
+    $post = $postModel->getById($postId);
+    
     if ($postModel->hasUserLikedPost($userId, $postId)) {
         $postModel->unlikePost($userId, $postId);
         $liked = false;
     } else {
         $postModel->likePost($userId, $postId);
         $liked = true;
+        
+        // Create notification if not the post owner
+        if ($post && $post['idUtilisateur'] != $userId) {
+            $notificationModel->create(
+                $post['idUtilisateur'],
+                $userId,
+                'like',
+                $postId,
+                'liked your post'
+            );
+        }
     }
     header('Content-Type: application/json');
     echo json_encode(['success' => true, 'liked' => $liked, 'count' => $postModel->getPostLikeCount($postId)]);
@@ -48,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     $scheduled_date = null;
     $media   = null;
 
+    // Handle media upload
     if (!empty($_FILES['media']['name']) && $_FILES['media']['error'] === UPLOAD_ERR_OK) {
         $ext     = strtolower(pathinfo($_FILES['media']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'mov'];
@@ -61,18 +103,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         }
     }
 
+    // Handle scheduled date
     if ($status === 'planifié') {
         $scheduled_date = trim($_POST['scheduled_date'] ?? '');
         if (empty($scheduled_date)) {
-            $status = 'brouillon'; // fallback to draft if no date
+            $status = 'brouillon'; // fallback
         }
     }
 
-    if ($titre && $contenu) {
-        $postModel->create($titre, $contenu, null, null, $media, $status, $currentUserId, $scheduled_date);
-        header('Location: index.php');
+    if (empty($titre) || empty($contenu)) {
+        header('Location: index.php?msg=error');
         exit;
     }
+
+    $result = $postModel->create(
+        $titre, 
+        $contenu, 
+        null, 
+        null, 
+        $media, 
+        $status, 
+        $currentUserId, 
+        $scheduled_date
+    );
+
+    if ($result) {
+        header('Location: index.php?msg=created');
+    } else {
+        header('Location: index.php?msg=error');
+    }
+    exit;
 }
 
 // ── EDIT POST ───────────────────────────────────────────────────
@@ -106,6 +166,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit_
     }
 }
 
+// ── SAVE POST ────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_post') {
+    $postId = (int)$_POST['post_id'];
+    $userId = (int)$_POST['user_id'];
+    
+    if ($savedPostModel->isSaved($userId, $postId)) {
+        $savedPostModel->unsave($userId, $postId);
+        $saved = false;
+    } else {
+        $savedPostModel->save($userId, $postId);
+        $saved = true;
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'saved' => $saved]);
+    exit;
+}
+
+// ── SHARE POST ───────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'share_post') {
+    $postId = (int)$_POST['post_id'];
+    $userId = (int)$_POST['user_id'];
+    
+    $token = $shareModel->createShare($postId, $userId);
+    $fullUrl = $shareModel->getFullShareUrl($token);
+    
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'url' => $fullUrl, 'token' => $token]);
+    exit;
+}
+
 // ── LOAD POSTS ──────────────────────────────────────────────────
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
@@ -120,6 +211,7 @@ if ($filter === 'drafts') {
 foreach ($posts as &$post) {
     $post['like_count'] = $postModel->getPostLikeCount($post['ID']);
     $post['user_liked'] = $postModel->hasUserLikedPost($currentUserId, $post['ID']);
+    $post['user_saved'] = $savedPostModel->isSaved($currentUserId, $post['ID']);
 }
 unset($post);
 ?>
@@ -128,7 +220,7 @@ unset($post);
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= $filter === 'drafts' ? 'My Drafts' : 'Feed' ?> - Skiller</title>
+    <title><?= $filter === 'drafts' ? 'Mes brouillons' : 'Fil' ?> - Skiller</title>
 
     <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
     <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
@@ -178,10 +270,10 @@ unset($post);
                 </a>
             </div>
             <ul class="menu-inner py-1">
-                <li class="menu-item <?= $filter !== 'drafts' ? 'active' : '' ?>"><a href="index.php" class="menu-link"><i class="bx bx-home"></i><div>Feed</div></a></li>
-                <li class="menu-item <?= $filter === 'drafts' ? 'active' : '' ?>"><a href="index.php?filter=drafts" class="menu-link"><i class="bx bx-edit"></i><div>My Drafts</div></a></li>
-                <li class="menu-item"><a href="#" class="menu-link"><i class="bx bx-user"></i><div>My Profile</div></a></li>
-                <li class="menu-item"><a href="#" class="menu-link"><i class="bx bx-bell"></i><div>Notifications</div></a></li>
+                <li class="menu-item <?= $filter !== 'drafts' ? 'active' : '' ?>"><a href="index.php" class="menu-link"><i class="bx bx-home"></i><div>Fil</div></a></li>
+                <li class="menu-item <?= $filter === 'drafts' ? 'active' : '' ?>"><a href="index.php?filter=drafts" class="menu-link"><i class="bx bx-edit"></i><div>Mes brouillons</div></a></li>
+                <li class="menu-item"><a href="../profile.php" class="menu-link"><i class="bx bx-user"></i><div>Mon profil</div></a></li>
+                <li class="menu-item"><a href="../notifications.php" class="menu-link"><i class="bx bx-bell"></i><div>Notifications</div></a></li>
             </ul>
         </aside>
 
@@ -192,15 +284,15 @@ unset($post);
                 <div class="navbar-nav-right d-flex align-items-center w-100">
                     <div class="input-group" style="max-width:420px">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Search posts..." value="<?= htmlspecialchars($search) ?>">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher des publications..." value="<?= htmlspecialchars($search) ?>">
                     </div>
                     <div class="ms-auto d-flex align-items-center gap-3">
                         <span class="fw-semibold text-muted">
                             <i class='bx <?= $filter === 'drafts' ? 'bx-edit' : 'bx-home' ?> me-1'></i>
-                            <?= $filter === 'drafts' ? 'My Drafts' : 'Feed' ?>
+                            <?= $filter === 'drafts' ? 'Mes brouillons' : 'Fil' ?>
                         </span>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
-                            <i class="bx bx-plus me-1"></i> Create Post
+                            <i class="bx bx-plus me-1"></i> Créer une publication
                         </button>
                         <div class="avatar avatar-online">
                             <span class="avatar-initial rounded-circle bg-label-primary">U</span>
@@ -217,7 +309,7 @@ unset($post);
                         <div class="card-body">
                             <div class="d-flex gap-3 align-items-center">
                                 <div class="avatar"><span class="avatar-initial rounded-circle bg-label-primary">U</span></div>
-                                <input type="text" class="form-control" placeholder="What skill did you learn today?"
+                                <input type="text" class="form-control" placeholder="Quelle compétence avez-vous apprise aujourd'hui ?"
                                        style="border-radius:50px;cursor:pointer"
                                        data-bs-toggle="modal" data-bs-target="#createPostModal" readonly>
                             </div>
@@ -229,7 +321,7 @@ unset($post);
                     <?php if (empty($posts)): ?>
                         <div class="text-center py-5">
                             <i class="bx bx-news bx-lg text-muted mb-3"></i>
-                            <p class="text-muted">No posts yet. Be the first to share!</p>
+                            <p class="text-muted">Aucune publication pour le moment. Soyez le premier à partager !</p>
                         </div>
                     <?php else: ?>
                         <?php foreach ($posts as $post): ?>
@@ -252,17 +344,22 @@ unset($post);
                                             <small class="text-muted d-block"><?= date('M d, Y \a\t H:i', strtotime($post['DatePublication'] ?? 'now')) ?></small>
                                         </div>
                                     </div>
-                                    <?php if ($isOwner): ?>
                                     <div class="dropdown">
                                         <button class="btn p-0" data-bs-toggle="dropdown">
                                             <i class="bx bx-dots-horizontal-rounded bx-sm"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#" onclick="editPost(<?= $postId ?>); return false;"><i class="bx bx-edit me-2"></i>Edit</a></li>
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="deletePost(<?= $postId ?>); return false;"><i class="bx bx-trash me-2"></i>Delete</a></li>
+                                            <?php if ($isOwner): ?>
+                                            <li><a class="dropdown-item" href="#" onclick="editPost(<?= $postId ?>); return false;"><i class="bx bx-edit me-2"></i>Modifier</a></li>
+<li><a class="dropdown-item text-danger" href="#" onclick="deletePost(<?= $postId ?>); return false;">
+    <i class="bx bx-trash me-2"></i>Supprimer
+</a></li>                                            <?php endif; ?>
+                                            <li><a class="dropdown-item" href="#" onclick="toggleSave(<?= $postId ?>); return false;">
+                                                <i class="bx <?= $post['user_saved'] ? 'bxs-bookmark' : 'bx-bookmark' ?> me-2"></i>
+                                                <?= $post['user_saved'] ? 'Retirer' : 'Enregistrer' ?>
+                                            </a></li>
                                         </ul>
                                     </div>
-                                    <?php endif; ?>
                                 </div>
 
                                 <!-- Post content -->
@@ -288,31 +385,36 @@ unset($post);
                                     <div onclick="toggleLike(<?= $postId ?>)" class="like-btn" data-post-id="<?= $postId ?>">
                                         <i class="bx <?= $post['user_liked'] ? 'bxs-heart' : 'bx-heart' ?>"
                                            style="color:<?= $post['user_liked'] ? '#dc3545' : '' ?>"></i>
-                                        <span class="like-count"><?= $post['like_count'] ?></span> Likes
+                                        <span class="like-count"><?= $post['like_count'] ?></span> J'aime
                                     </div>
                                     <div onclick="toggleComments(<?= $postId ?>)" style="cursor:pointer">
-                                        <i class="bx bx-message-rounded-dots me-1"></i> Comment
+                                        <i class="bx bx-message-rounded-dots me-1"></i> Commentaires
                                     </div>
-                                    <div style="cursor:pointer"><i class="bx bx-share-alt me-1"></i> Share</div>
+                                    <div onclick="sharePost(<?= $postId ?>)" class="share-btn" style="cursor:pointer">
+                                        <i class="bx bx-share-alt me-1"></i> Partager
+                                    </div>
+                                    <div onclick="toggleSave(<?= $postId ?>)" class="save-btn" data-post-id="<?= $postId ?>" style="cursor:pointer">
+                                        <i class="bx <?= $post['user_saved'] ? 'bxs-bookmark' : 'bx-bookmark' ?>"></i>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Comments section -->
                             <div id="comments-<?= $postId ?>" class="comment-section" style="display:none">
                                 <div id="comments-list-<?= $postId ?>">
-                                    <p class="text-muted small text-center">Loading comments...</p>
+                                    <p class="text-muted small text-center">Chargement des commentaires...</p>
                                 </div>
                                 <form onsubmit="submitComment(event, <?= $postId ?>)" class="mt-3">
                                     <div class="mb-2">
                                         <select name="status" class="form-select form-select-sm" style="width: auto; display: inline-block;">
-                                            <option value="publié">📢 Publish Now</option>
-                                            <option value="planifié">⏰ Schedule Comment</option>
+                                            <option value="publié">📢 Publier maintenant</option>
+                                            <option value="planifié">⏰ Planifier le commentaire</option>
                                         </select>
                                         <input type="datetime-local" name="scheduled_date" class="form-control form-control-sm d-none" style="width: auto; display: inline-block; margin-left: 8px;">
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <input type="text" name="content" class="form-control" placeholder="Write a comment...">
-                                        <button type="submit" class="btn btn-primary">Send</button>
+                                        <input type="text" name="content" class="form-control" placeholder="Écrire un commentaire...">
+                                        <button type="submit" class="btn btn-primary">Envoyer</button>
                                     </div>
                                 </form>
                             </div>
@@ -332,25 +434,25 @@ unset($post);
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Create New Post</h5>
+                <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Créer une nouvelle publication</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="createPostForm" action="index.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="create_post">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Title</label>
-                        <input type="text" id="createPostTitre" name="titre" class="form-control" placeholder="Post title" maxlength="50">
+                        <label class="form-label fw-semibold">Titre</label>
+                        <input type="text" id="createPostTitre" name="titre" class="form-control" placeholder="Titre de la publication" maxlength="50">
                         <div class="d-flex justify-content-end mt-1">
                             <span id="createTitreCounter" class="char-counter text-muted">0/50</span>
                         </div>
                     </div>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-semibold">Content</label>
+                            <label class="form-label fw-semibold">Contenu</label>
                             <button type="button" id="speakBtn" class="btn btn-outline-primary btn-sm">
                                 <i class="bx bx-mic"></i> 
-                                <span id="speakBtnText">Start Speaking</span>
+                                <span id="speakBtnText">Commencer à parler</span>
                             </button>
                         </div>
                         <div id="createPostEditor" style="background:white; min-height: 220px;"></div>
@@ -358,21 +460,21 @@ unset($post);
                         <small id="speechStatus" class="text-muted d-block mt-1"></small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Status</label>
+                        <label class="form-label fw-semibold">Statut</label>
                         <select id="postStatus" name="status" class="form-select">
-                            <option value="publié">📢 Publish Now</option>
-                            <option value="brouillon">📝 Save as Draft</option>
-                            <option value="planifié">⏰ Schedule Post</option>
+                            <option value="publié">📢 Publier maintenant</option>
+                            <option value="brouillon">📝 Enregistrer en brouillon</option>
+                            <option value="planifié">⏰ Planifier la publication</option>
                         </select>
                     </div>
                     <div class="mb-3" id="scheduledDateContainer" style="display: none;">
-                        <label class="form-label fw-semibold">Schedule Date & Time</label>
+                        <label class="form-label fw-semibold">Date et heure de publication</label>
                         <input type="datetime-local" id="scheduledDate" name="scheduled_date" class="form-control">
-                        <small class="text-muted">When should this post be published?</small>
+                        <small class="text-muted">Quand cette publication doit-elle être publiée ?</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            <i class="bx bx-image-add me-1"></i> Image or Video
+                            <i class="bx bx-image-add me-1"></i> Image ou vidéo
                         </label>
                         <input type="file" id="createMediaInput" name="media" class="form-control" accept="image/*,video/*">
                         <small class="text-muted">JPG, PNG, GIF, WebP, MP4, WebM, MOV</small>
@@ -380,8 +482,8 @@ unset($post);
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bx bx-send me-1"></i>Post Now</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary"><i class="bx bx-send me-1"></i>Publier maintenant</button>
                 </div>
             </form>
         </div>
@@ -393,7 +495,7 @@ unset($post);
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bx bx-edit me-2"></i>Edit Post</h5>
+                <h5 class="modal-title"><i class="bx bx-edit me-2"></i>Modifier la publication</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="editPostForm" action="index.php" method="POST" enctype="multipart/form-data">
@@ -401,21 +503,21 @@ unset($post);
                 <input type="hidden" name="id" id="editPostId">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Title</label>
-                        <input type="text" id="editPostTitre" name="titre" class="form-control" placeholder="Post title" maxlength="50">
+                        <label class="form-label fw-semibold">Titre</label>
+                        <input type="text" id="editPostTitre" name="titre" class="form-control" placeholder="Titre de la publication" maxlength="50">
                         <div class="d-flex justify-content-end mt-1">
                             <span id="editTitreCounter" class="char-counter text-muted">0/50</span>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Content</label>
+                        <label class="form-label fw-semibold">Contenu</label>
                         <div id="editPostEditor" style="background:white;"></div>
                         <input type="hidden" id="editPostContenu" name="contenu">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            <i class="bx bx-image-add me-1"></i> Replace Image/Video
-                            <small class="text-muted fw-normal">(leave empty to keep current)</small>
+                            <i class="bx bx-image-add me-1"></i> Remplacer l'image/la vidéo
+                            <small class="text-muted fw-normal">(laisser vide pour conserver l'actuelle)</small>
                         </label>
                         <!-- Current media preview -->
                         <div id="editCurrentMedia" class="mb-2"></div>
@@ -425,8 +527,8 @@ unset($post);
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bx bx-save me-1"></i>Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary"><i class="bx bx-save me-1"></i>Enregistrer les modifications</button>
                 </div>
             </form>
         </div>
@@ -481,13 +583,13 @@ unset($post);
         
         if (status === 'planifié') {
             scheduledContainer.style.display = 'block';
-            submitBtn.innerHTML = '<i class="bx bx-calendar me-1"></i>Schedule Post';
+            submitBtn.innerHTML = '<i class="bx bx-calendar me-1"></i>Planifier la publication';
         } else {
             scheduledContainer.style.display = 'none';
             if (status === 'brouillon') {
-                submitBtn.innerHTML = '<i class="bx bx-save me-1"></i>Save Draft';
+                submitBtn.innerHTML = '<i class="bx bx-save me-1"></i>Enregistrer le brouillon';
             } else {
-                submitBtn.innerHTML = '<i class="bx bx-send me-1"></i>Publish Now';
+                submitBtn.innerHTML = '<i class="bx bx-send me-1"></i>Publier maintenant';
             }
         }
     });
@@ -516,7 +618,8 @@ unset($post);
     const UPLOADS_URL        = '../../uploads/posts/';
 </script>
 <script src="js/feed.js"></script>
-<script src="../comments/js/comments.js"></script>
+<script src="../comments/js/emotion.js?v=2"></script>
+<script src="../comments/js/comments.js?v=2"></script>
 
 <!-- AJAX Search -->
 <script>
@@ -549,7 +652,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script src="js/speech-to-text.js"></script>
-<script src="js/speech-to-text.js"></script>
-<script src="../comments/js/emotion.js"></script>  <!-- ← add this -->
 </body>
 </html>

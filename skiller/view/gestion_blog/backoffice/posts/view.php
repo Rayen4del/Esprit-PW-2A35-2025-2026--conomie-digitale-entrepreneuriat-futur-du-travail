@@ -12,7 +12,7 @@ $post = $postModel->getById($postId);
 $comments = $commentModel->getByPost($postId);
 
 if (!$post) {
-    echo '<div class="alert alert-danger"><i class="bx bx-error me-2"></i>Post not found.</div>';
+    echo '<div class="alert alert-danger"><i class="bx bx-error me-2"></i>Publication introuvable.</div>';
     exit;
 }
 ?>
@@ -54,7 +54,7 @@ if (!$post) {
             <?php if ($isVideo): ?>
                 <video controls class="w-100 rounded" style="max-height: 400px;">
                     <source src="<?= $mediaPath ?>" type="video/<?= $ext === 'mov' ? 'mp4' : $ext ?>">
-                    Your browser does not support video.
+                    Votre navigateur ne prend pas en charge la vidéo.
                 </video>
             <?php else: ?>
                 <img src="<?= $mediaPath ?>" class="w-100 rounded" style="max-height: 400px; object-fit: cover;" alt="Post media">
@@ -66,13 +66,13 @@ if (!$post) {
     <div class="comments-section">
         <h6 class="mb-3">
             <i class="bx bx-comment-dots me-2"></i>
-            Comments (<?= count($comments) ?>)
+            Commentaires (<?= count($comments) ?>)
         </h6>
 
         <?php if (empty($comments)): ?>
             <div class="text-center py-4 text-muted">
                 <i class="bx bx-message-square-x bx-lg mb-2"></i>
-                <p>No comments yet.</p>
+                <p>Aucun commentaire pour le moment.</p>
             </div>
         <?php else: ?>
             <div class="comments-list">
@@ -83,7 +83,7 @@ if (!$post) {
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <strong class="small"><?= htmlspecialchars($comment['auteur'] ?? 'Anonymous') ?></strong>
+                                <strong class="small"><?= htmlspecialchars($comment['auteur'] ?? 'Anonyme') ?></strong>
                                 <small class="text-muted">
                                     <i class="bx bx-time-five me-1"></i>
                                     <?= date('M d, H:i', strtotime($comment['DateCom'] ?? 'now')) ?>

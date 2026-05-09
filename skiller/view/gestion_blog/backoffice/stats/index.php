@@ -19,7 +19,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <title>Engagement Stats — Admin | Skiller</title>
+    <title>Statistiques d'engagement — Admin | Skiller</title>
 
     <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
     <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
@@ -57,19 +57,19 @@ $topPost = !empty($stats) ? $stats[0] : null;
                 <li class="menu-item">
                     <a href="../../index.php" class="menu-link">
                         <i class="menu-icon bx bx-news"></i>
-                        <div>Posts</div>
+                        <div>Publications</div>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="../comments/index.php" class="menu-link">
                         <i class="menu-icon bx bx-comment-dots"></i>
-                        <div>Comments</div>
+                        <div>Commentaires</div>
                     </a>
                 </li>
                 <li class="menu-item active">
                     <a href="index.php" class="menu-link">
                         <i class="menu-icon bx bx-bar-chart-alt-2"></i>
-                        <div>Engagement Stats</div>
+                        <div>Statistiques d'engagement</div>
                     </a>
                 </li>
                 <li class="menu-header small text-uppercase mt-2"><span class="menu-header-text">Navigation</span></li>
@@ -91,7 +91,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                     </a>
                 </div>
                 <div class="navbar-nav-right d-flex align-items-center">
-                    <span class="fw-semibold text-muted">Admin Panel</span>
+                    <span class="fw-semibold text-muted">Panneau d'administration</span>
                 </div>
             </nav>
 
@@ -99,12 +99,12 @@ $topPost = !empty($stats) ? $stats[0] : null;
                 <div class="container-xxl flex-grow-1 container-p-y">
 
                     <h4 class="fw-bold py-3 mb-4">
-                        <i class="bx bx-bar-chart-alt-2 me-2" style="color:#696cff"></i>Post Engagement Stats
+                        <i class="bx bx-bar-chart-alt-2 me-2" style="color:#696cff"></i>Statistiques d'engagement des publications
                         <small class="text-muted fw-normal ms-2" style="font-size:12px;">
-                            <i class="bx bx-time-five"></i> Last updated: <span id="lastUpdated">-</span>
+                            <i class="bx bx-time-five"></i> Dernière mise à jour : <span id="lastUpdated">-</span>
                         </small>
                         <button class="btn btn-sm btn-outline-primary ms-2" onclick="fetchStats()" id="refreshBtn">
-                            <i class="bx bx-refresh"></i> Refresh
+                            <i class="bx bx-refresh"></i> Actualiser
                         </button>
                     </h4>
 
@@ -117,7 +117,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                         <div class="avatar bg-label-primary p-3"><i class="bx bx-news bx-lg"></i></div>
                                         <div class="ms-3">
                                             <h4 class="mb-0" id="totalPosts"><?= $totalPosts ?></h4>
-                                            <span class="text-muted">Total Posts</span>
+                                            <span class="text-muted">Publications totales</span>
                                         </div>
                                     </div>
                                 </div>
@@ -130,7 +130,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                         <div class="avatar bg-label-info p-3"><i class="bx bx-comment-dots bx-lg"></i></div>
                                         <div class="ms-3">
                                             <h4 class="mb-0" id="totalComments"><?= $totalComments ?></h4>
-                                            <span class="text-muted">Total Comments</span>
+                                            <span class="text-muted">Commentaires totaux</span>
                                         </div>
                                     </div>
                                 </div>
@@ -143,7 +143,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                         <div class="avatar bg-label-danger p-3"><i class="bx bxs-heart bx-lg"></i></div>
                                         <div class="ms-3">
                                             <h4 class="mb-0" id="totalLikes"><?= $totalLikes ?></h4>
-                                            <span class="text-muted">Total Likes</span>
+                                            <span class="text-muted">Likes totaux</span>
                                         </div>
                                     </div>
                                 </div>
@@ -156,7 +156,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                         <div class="avatar bg-label-success p-3"><i class="bx bx-trending-up bx-lg"></i></div>
                                         <div class="ms-3">
                                             <h4 class="mb-0" id="avgRatio"><?= $avgRatio ?>x</h4>
-                                            <span class="text-muted">Avg Like/Comment Ratio</span>
+                                            <span class="text-muted">Ratio moyen Like/Commentaire</span>
                                         </div>
                                     </div>
                                 </div>
@@ -170,7 +170,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                         <div class="col-xl-7">
                             <div class="card chart-card h-100">
                                 <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="mb-0">Likes vs Comments — top 8 posts</h5>
+                                    <h5 class="mb-0">Likes vs Commentaires — top 8 publications</h5>
                                     <div class="d-flex gap-3" style="font-size:12px;">
                                         <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#696cff;margin-right:4px;"></span>Likes</span>
                                         <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#03c3ec;margin-right:4px;"></span>Comments</span>
@@ -188,7 +188,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                         <div class="col-xl-5">
                             <div class="card chart-card h-100">
                                 <div class="card-header">
-                                    <h5 class="mb-0">Like / comment ratio — top 8</h5>
+                                    <h5 class="mb-0">Ratio Like / Commentaire — top 8</h5>
                                 </div>
                                 <div class="card-body">
                                     <div style="position:relative;height:280px;">
@@ -204,17 +204,17 @@ $topPost = !empty($stats) ? $stats[0] : null;
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h5 class="mb-0">All posts — engagement breakdown</h5>
                             <input type="text" id="tableSearch" class="form-control form-control-sm w-auto"
-                                   placeholder="Search posts..." style="min-width:200px;">
+                                   placeholder="Rechercher des publications..." style="min-width:200px;">
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover" id="statsTable">
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Post title</th>
-                                        <th class="text-center"><i class="bx bx-comment-dots"></i> Comments</th>
+                                        <th>Titre du post</th>
+                                        <th class="text-center"><i class="bx bx-comment-dots"></i> Commentaires</th>
                                         <th class="text-center"><i class="bx bxs-heart text-danger"></i> Likes</th>
-                                        <th>Ratio bar</th>
+                                        <th>Barre de ratio</th>
                                         <th class="text-center">Engagement</th>
                                     </tr>
                                 </thead>
@@ -255,7 +255,7 @@ $topPost = !empty($stats) ? $stats[0] : null;
                                     </tr>
                                     <?php endforeach; ?>
                                     <?php if (empty($stats)): ?>
-                                        <tr><td colspan="6" class="text-center py-5 text-muted">No post data found.</td></tr>
+                                        <tr><td colspan="6" class="text-center py-5 text-muted">Aucune donnée de publication trouvée.</td></tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
@@ -361,7 +361,7 @@ function renderCharts(stats) {
             labels: top8bar.map(s => shorten(s.Titre)),
             datasets: [
                 { label:'Likes', data: top8bar.map(s => s.total_likes), backgroundColor:'#696cff', borderRadius:4 },
-                { label:'Comments', data: top8bar.map(s => s.comment_count), backgroundColor:'#03c3ec', borderRadius:4 }
+                { label:'Commentaires', data: top8bar.map(s => s.comment_count), backgroundColor:'#03c3ec', borderRadius:4 }
             ]
         },
         options: {
@@ -380,7 +380,7 @@ function renderCharts(stats) {
         data:{
             labels: top8ratio.map(s => shorten(s.Titre)),
             datasets:[{
-                label:'Likes per comment',
+                label:'Likes par commentaire',
                 data: top8ratio.map(s => s.ratio),
                 backgroundColor: top8ratio.map(s => s.ratio >= 3 ? '#71dd37' : s.ratio >= 1 ? '#ffab00' : '#a1acb8'),
                 borderRadius:4
