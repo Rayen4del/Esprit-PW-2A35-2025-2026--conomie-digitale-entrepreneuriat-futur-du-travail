@@ -1,34 +1,30 @@
-<?php
+﻿<?php
 /**
- * navbar.php — place in View/
- * Include from BackOffice/FrontOffice: include __DIR__ . '/../navbar.php';
- * Include from dashboard (View/):      include __DIR__ . '/navbar.php';
- *
- * Caller must define $assetPath before including.
+ * navbar.php - place in View/
  */
 $role = currentUserRole();
-$name = $_SESSION['user']['name'] ?? 'User';
+$name = $_SESSION['user']['name'] ?? 'Utilisateur';
 
 $navLinks = [];
 if ($role === 'admin') {
     $navLinks = [
-        ['label' => 'Dashboard',     'href' => appUrl('View/dashboard.php'),                          'icon' => 'bx-grid-alt'],
-        ['label' => 'Opportunities', 'href' => appUrl('View/BackOffice/opportunities_backoffice.php'), 'icon' => 'bx-briefcase'],
-        ['label' => 'Applications',  'href' => appUrl('View/BackOffice/applications_backoffice.php'),  'icon' => 'bx-file'],
+        ['label' => 'Tableau de bord',     'href' => appUrl('View/dashboard.php'),                          'icon' => 'bx-grid-alt'],
+        ['label' => 'Opportunites', 'href' => appUrl('View/BackOffice/opportunities_backoffice.php'), 'icon' => 'bx-briefcase'],
+        ['label' => 'Candidatures',  'href' => appUrl('View/BackOffice/applications_backoffice.php'),  'icon' => 'bx-file'],
     ];
 } elseif ($role === 'super_user') {
     $navLinks = [
-        ['label' => 'Dashboard',        'href' => appUrl('View/dashboard.php'),                           'icon' => 'bx-grid-alt'],
-        ['label' => 'My Opportunities', 'href' => appUrl('View/FrontOffice/super_user_opportunities.php'), 'icon' => 'bx-briefcase'],
-        ['label' => 'Browse All',       'href' => appUrl('View/FrontOffice/opportunities.php'),            'icon' => 'bx-search-alt'],
-        ['label' => 'All Applications', 'href' => appUrl('View/FrontOffice/super_user_applications.php'),  'icon' => 'bx-file'],
+        ['label' => 'Tableau de bord',        'href' => appUrl('View/dashboard.php'),                           'icon' => 'bx-grid-alt'],
+        ['label' => 'Mes opportunites', 'href' => appUrl('View/FrontOffice/super_user_opportunities.php'), 'icon' => 'bx-briefcase'],
+        ['label' => 'Tout parcourir',       'href' => appUrl('View/FrontOffice/opportunities.php'),            'icon' => 'bx-search-alt'],
+        ['label' => 'Toutes les candidatures', 'href' => appUrl('View/FrontOffice/super_user_applications.php'),  'icon' => 'bx-file'],
     ];
 } else {
     $navLinks = [
-        ['label' => 'Dashboard',     'href' => appUrl('View/dashboard.php'),                'icon' => 'bx-grid-alt'],
-        ['label' => 'Opportunities', 'href' => appUrl('View/FrontOffice/opportunities.php'), 'icon' => 'bx-briefcase'],
-        ['label' => 'My Favorites',  'href' => appUrl('View/FrontOffice/favorites.php'),    'icon' => 'bx-heart'],
-        ['label' => 'My Applications', 'href' => appUrl('View/FrontOffice/applications.php'), 'icon' => 'bx-file'],
+        ['label' => 'Tableau de bord',     'href' => appUrl('View/dashboard.php'),                'icon' => 'bx-grid-alt'],
+        ['label' => 'Opportunites', 'href' => appUrl('View/FrontOffice/opportunities.php'), 'icon' => 'bx-briefcase'],
+        ['label' => 'Mes favoris',  'href' => appUrl('View/FrontOffice/favorites.php'),    'icon' => 'bx-heart'],
+        ['label' => 'Mes candidatures', 'href' => appUrl('View/FrontOffice/applications.php'), 'icon' => 'bx-file'],
     ];
 }
 ?>
@@ -54,7 +50,7 @@ if ($role === 'admin') {
       <span class="sk-role-badge"><?= htmlspecialchars(str_replace('_', ' ', $role)) ?></span>
       <span class="sk-user-name"><?= htmlspecialchars($name) ?></span>
       <a class="sk-logout" href="<?= appUrl('View/Auth/logout.php') ?>">
-        <i class="bx bx-log-out"></i> Logout
+        <i class="bx bx-log-out"></i> Deconnexion
       </a>
     </div>
   </div>
@@ -160,3 +156,5 @@ body { background: var(--sk-bg); color: var(--sk-text); font-family: 'Segoe UI',
   .sk-page-header { flex-direction: column; }
 }
 </style>
+
+

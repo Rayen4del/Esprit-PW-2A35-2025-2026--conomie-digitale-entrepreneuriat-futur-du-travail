@@ -16,17 +16,17 @@ class AiCompatibilityController {
         if ($cvText === '') {
             return [
                 'success' => false,
-                'message' => 'Could not read the CV link. Use a public HTML or text CV link for AI rating.',
+                'message' => 'Impossible de lire le lien du CV. Utilisez un lien public HTML ou texte pour l evaluation IA.',
                 'ai_used' => false,
                 'score' => 0,
                 'strengths' => [],
                 'gaps' => [],
-                'recommendation' => 'Check that the CV link is public and readable.'
+                'recommendation' => 'Verifiez que le lien du CV est public et lisible.'
             ];
         }
 
         if ($this->apiKey === '') {
-            return $this->fallbackScore($application, $cvText, $requirements, 'AI key is missing. Showing local estimate.');
+            return $this->fallbackScore($application, $cvText, $requirements, 'La cle IA est manquante. Estimation locale affichee.');
         }
 
         try {
@@ -50,20 +50,20 @@ class AiCompatibilityController {
             $decoded = $this->decodeJsonText($text);
 
             if (!is_array($decoded)) {
-                throw new Exception('Invalid AI response');
+                throw new Exception('Reponse IA invalide');
             }
 
             return [
                 'success' => true,
                 'ai_used' => true,
                 'score' => max(0, min(100, (int)($decoded['score'] ?? 0))),
-                'summary' => $decoded['summary'] ?? 'Compatibility scored.',
+                'summary' => $decoded['summary'] ?? 'Compatibilite evaluee.',
                 'strengths' => array_slice($decoded['strengths'] ?? [], 0, 4),
                 'gaps' => array_slice($decoded['gaps'] ?? [], 0, 4),
-                'recommendation' => $decoded['recommendation'] ?? 'Review manually before deciding.'
+                'recommendation' => $decoded['recommendation'] ?? 'Verifier manuellement avant de decider.'
             ];
         } catch (Exception $e) {
-            return $this->fallbackScore($application, $cvText, $requirements, 'AI unavailable. Showing local estimate.', $e->getMessage());
+            return $this->fallbackScore($application, $cvText, $requirements, 'IA indisponible. Estimation locale affichee.', $e->getMessage());
         }
     }
 
@@ -76,12 +76,12 @@ class AiCompatibilityController {
             'cv_link' => $application['CV'] ?? $application['resource'] ?? ''
         ];
 
-        return "You are an HR screening assistant for Skiller. Rate how compatible this candidate CV is with the requirements.\n"
-            . "Return only JSON in this exact shape: {\"score\":85,\"summary\":\"one short sentence\",\"strengths\":[\"...\"],\"gaps\":[\"...\"],\"recommendation\":\"short next step\"}.\n"
-            . "The score must be an integer from 0 to 100. Be fair and use the requirements as the main rubric.\n\n"
-            . "Requirements:\n" . json_encode(array_values($requirements), JSON_UNESCAPED_UNICODE) . "\n\n"
-            . "Candidate CV content fetched from the submitted CV link:\n" . $cvText . "\n\n"
-            . "Application context:\n" . json_encode($applicationData, JSON_UNESCAPED_UNICODE);
+        return "Tu es un assistant RH pour Skiller. Evalue la compatibilite du CV du candidat avec les exigences.\n"
+            . "Retourne uniquement du JSON sous cette forme exacte : {\"score\":85,\"summary\":\"phrase courte en francais\",\"strengths\":[\"...\"],\"gaps\":[\"...\"],\"recommendation\":\"prochaine etape courte en francais\"}.\n"
+            . "Le score doit etre un entier de 0 a 100. Sois juste et utilise les exigences comme grille principale.\n\n"
+            . "Exigences :\n" . json_encode(array_values($requirements), JSON_UNESCAPED_UNICODE) . "\n\n"
+            . "Contenu du CV recupere depuis le lien soumis :\n" . $cvText . "\n\n"
+            . "Contexte de la candidature :\n" . json_encode($applicationData, JSON_UNESCAPED_UNICODE);
     }
 
     private function extractCvTextFromLink(string $cvLink): string {
@@ -136,7 +136,7 @@ class AiCompatibilityController {
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_TIMEOUT => 15,
-                CURLOPT_USERAGENT => 'Skiller CV Compatibility Checker',
+            CURLOPT_USERAGENT => 'Skiller CV Compatibility Checker',
                 CURLOPT_MAXREDIRS => 3
             ]);
             $content = curl_exec($ch);
@@ -179,16 +179,16 @@ class AiCompatibilityController {
         curl_close($ch);
 
         if ($responseBody === false || $statusCode < 200 || $statusCode >= 300) {
-            throw new Exception($error ?: 'Gemini request failed');
+            throw new Exception($error ?: 'Echec de la requete Gemini');
         }
 
         $decoded = json_decode($responseBody, true);
         if (!is_array($decoded)) {
-            throw new Exception('Invalid Gemini JSON');
+            throw new Exception('JSON Gemini invalide');
         }
 
         if (isset($decoded['error'])) {
-            throw new Exception($decoded['error']['message'] ?? 'Gemini API error');
+            throw new Exception($decoded['error']['message'] ?? 'Erreur API Gemini');
         }
 
         return $decoded;
@@ -234,7 +234,7 @@ class AiCompatibilityController {
             'summary' => $message,
             'strengths' => array_slice($matched, 0, 4),
             'gaps' => array_slice($missing, 0, 4),
-            'recommendation' => 'Use this as a rough estimate only.',
+            'recommendation' => 'Utilisez ce score uniquement comme estimation approximative.',
             'error_detail' => $errorDetail
         ];
     }

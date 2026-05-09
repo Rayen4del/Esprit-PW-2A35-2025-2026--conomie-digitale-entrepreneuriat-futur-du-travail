@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/FrontOffice/applications.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/ApplicationController.php';
@@ -12,12 +12,12 @@ $applicationCtrl = new ApplicationController();
 $oportunityCtrl = new OportunityController();
 
 $userId = $_SESSION['user']['id'] ?? 1;
-$selectedOpportunityId = (int)($_GET['opportunity_id'] ?? 0);
+$selectedOpportuniteId = (int)($_GET['opportunity_id'] ?? 0);
 
 $successMsg = '';
 $errorMsg = '';
 
-// Handle form submissions
+// Traitement des formulaires
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -38,12 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cvLink
                 );
                 $applicationCtrl->addApplication($application);
-                $successMsg = 'Application submitted successfully!';
+                $successMsg = 'Candidature soumise avec succes !';
             } catch (Exception $e) {
-                $errorMsg = 'Create failed: ' . $e->getMessage();
+                $errorMsg = 'Echec de la creation : ' . $e->getMessage();
             }
         } else {
-            $errorMsg = 'Opportunity, motivation and CV are required.';
+            $errorMsg = 'L opportunite, la motivation et le CV sont obligatoires.';
         }
     } elseif ($action === 'update') {
         $appId = (int)($_POST['app_id'] ?? 0);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $current = $check->fetch(PDO::FETCH_ASSOC);
 
                 if (!$current) {
-                    throw new Exception('Application not found (or not yours).');
+                    throw new Exception('Candidature introuvable ou non autorisee.');
                 }
 
                 $dateCondidatureRaw = $current['DateCondidature'] ?? $current['dateCondidature'] ?? null;
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $application = new Application(
                     (int)($current['ID'] ?? $appId),
                     (int)($current['IDUtilisateur'] ?? $userId),
-                    (int)($current['idOportunity'] ?? $current['idOportunité'] ?? 0),
+                    (int)($current['idOportunity'] ?? $current['idOportunitÃ©'] ?? 0),
                     $dateCondidature,
                     $current['Statut'] ?? $current['statut'] ?? 'pending',
                     $motivation,
@@ -75,12 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
 
                 $applicationCtrl->updateApplication($application, $appId);
-                $successMsg = 'Application updated successfully!';
+                $successMsg = 'Candidature mise a jour avec succes !';
             } catch (Exception $e) {
-                $errorMsg = 'Update failed: ' . $e->getMessage();
+                $errorMsg = 'Echec de la mise a jour : ' . $e->getMessage();
             }
         } else {
-            $errorMsg = 'Motivation and CV are required.';
+            $errorMsg = 'Motivation et CV sont obligatoires.';
         }
     } elseif ($action === 'delete') {
         $appId = (int)($_POST['app_id'] ?? 0);
@@ -90,18 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $check = $db->prepare("SELECT ID FROM application WHERE ID = :id AND IDUtilisateur = :uid");
                 $check->execute([':id' => $appId, ':uid' => $userId]);
                 if (!$check->fetch()) {
-                    throw new Exception('Application not found (or not yours).');
+                    throw new Exception('Candidature introuvable ou non autorisee.');
                 }
                 $applicationCtrl->deleteApplication($appId);
-                $successMsg = 'Application deleted successfully!';
+                $successMsg = 'Candidature supprimee avec succes !';
             } catch (Exception $e) {
-                $errorMsg = 'Delete failed: ' . $e->getMessage();
+                $errorMsg = 'Echec de la suppression : ' . $e->getMessage();
             }
         }
     }
 }
 
-// Fetch data
+// Recuperer les donnees
 $db = config::getConnexion();
 $query = $db->prepare("
     SELECT a.*, o.Titre as opportunity_title, o.Type_job 
@@ -111,25 +111,34 @@ $query = $db->prepare("
     ORDER BY a.DateCondidature DESC
 ");
 $query->execute([':userId' => $userId]);
-$userApplications = $query->fetchAll(PDO::FETCH_ASSOC);
+$userCandidatures = $query->fetchAll(PDO::FETCH_ASSOC);
 
 $opportunities = $oportunityCtrl->listOportunities()->fetchAll(PDO::FETCH_ASSOC);
 
 $editData = [];
-foreach ($userApplications as $app) {
+foreach ($userCandidatures as $app) {
     $editData[(int)($app['ID'] ?? 0)] = [
         'motivation' => $app['motivation'] ?? $app['Motivation'] ?? '',
         'resource' => $app['CV'] ?? $app['resource'] ?? $app['Resource'] ?? '',
     ];
 }
+
+function applicationStatusLabel($status) {
+    $key = strtolower((string)$status);
+    return [
+        'pending' => 'En attente',
+        'accepted' => 'Acceptee',
+        'rejected' => 'Rejetee'
+    ][$key] ?? ucfirst((string)$status);
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Applications — Skiller</title>
+  <title>Mes candidatures - Skiller</title>
 </head>
 <body>
 <?php include __DIR__ . '/../navbar.php'; ?>
@@ -137,8 +146,8 @@ foreach ($userApplications as $app) {
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      My Applications
-      <small>Create, View, Edit & Delete</small>
+      Mes candidatures
+      <small>Creer, consulter, modifier et supprimer</small>
     </div>
   </div>
 
@@ -149,23 +158,23 @@ foreach ($userApplications as $app) {
     <div class="sk-toast sk-toast-danger"><?= htmlspecialchars($errorMsg) ?></div>
   <?php endif; ?>
 
-  <!-- New Application Form -->
+  <!-- Nouvelle candidature -->
   <div class="sk-card" style="margin-bottom: 32px; padding: 24px;">
-    <h3>Submit New Application</h3>
+    <h3>Soumettre une nouvelle candidature</h3>
     <form method="POST">
       <input type="hidden" name="action" value="create">
       <div style="margin-bottom:16px">
-        <label class="sk-label">Opportunity *</label>
+        <label class="sk-label">Opportunite *</label>
         <select name="opportunity_id" class="sk-select" required>
-          <option value="">-- Choose an opportunity --</option>
+          <option value="">-- Choisir une opportunite --</option>
           <?php foreach ($opportunities as $opp): ?>
             <?php if (($opp['Statut'] ?? '') === 'actif'): ?>
-              <option value="<?= $opp['ID'] ?>" <?= (int)$opp['ID'] === $selectedOpportunityId ? 'selected' : '' ?>><?= htmlspecialchars($opp['Titre']) ?></option>
+              <option value="<?= $opp['ID'] ?>" <?= (int)$opp['ID'] === $selectedOpportuniteId ? 'selected' : '' ?>><?= htmlspecialchars($opp['Titre']) ?></option>
             <?php endif; ?>
           <?php endforeach; ?>
         </select>
-        <?php if ($selectedOpportunityId > 0): ?>
-          <div style="font-size:.8rem;color:var(--sk-accent);margin-top:6px;">Opportunity selected from AI search.</div>
+        <?php if ($selectedOpportuniteId > 0): ?>
+          <div style="font-size:.8rem;color:var(--sk-accent);margin-top:6px;">Opportunite selectionnee depuis la recherche IA.</div>
         <?php endif; ?>
       </div>
       <div style="margin-bottom:16px">
@@ -173,37 +182,37 @@ foreach ($userApplications as $app) {
         <textarea name="motivation" class="sk-textarea" required></textarea>
       </div>
       <div style="margin-bottom:20px">
-        <label class="sk-label">CV Link *</label>
+        <label class="sk-label">Lien du CV *</label>
         <input type="url" name="cv_link" class="sk-input" required>
       </div>
-      <button type="submit" class="sk-btn sk-btn-primary">Submit Application</button>
+      <button type="submit" class="sk-btn sk-btn-primary">Soumettre la candidature</button>
     </form>
   </div>
 
-  <!-- Table with View, Edit, Delete -->
+  <!-- Tableau des candidatures -->
   <div class="sk-card">
     <table class="sk-table">
       <thead>
         <tr>
-          <th>Opportunity</th>
-          <th>Status</th>
-          <th>Date Applied</th>
+          <th>Opportunite</th>
+          <th>Statut</th>
+          <th>Date de candidature</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($userApplications as $app): ?>
+        <?php foreach ($userCandidatures as $app): ?>
           <tr>
             <td style="font-weight:500"><?= htmlspecialchars($app['opportunity_title']) ?></td>
-            <td><span class="sk-badge sk-badge-<?= strtolower($app['Statut'] ?? 'pending') ?>"><?= ucfirst($app['Statut'] ?? 'Pending') ?></span></td>
+            <td><span class="sk-badge sk-badge-<?= strtolower($app['Statut'] ?? 'pending') ?>"><?= htmlspecialchars(applicationStatusLabel($app['Statut'] ?? 'pending')) ?></span></td>
             <td><?= htmlspecialchars($app['DateCondidature'] ?? '') ?></td>
             <td>
-              <button class="sk-btn sk-btn-sm sk-btn-ghost" onclick="viewApp(<?= $app['ID'] ?>, '<?= htmlspecialchars(addslashes($app['opportunity_title'])) ?>', '<?= htmlspecialchars(addslashes($app['motivation'])) ?>', '<?= htmlspecialchars(addslashes($app['CV'])) ?>')">View Application</button>
-              <button class="sk-btn sk-btn-sm sk-btn-warn" onclick="editApp(<?= $app['ID'] ?>)">Edit</button>
-              <form method="POST" style="display:inline" onsubmit="return confirm('Delete this application?')">
+              <button class="sk-btn sk-btn-sm sk-btn-ghost" onclick="viewApp(<?= $app['ID'] ?>, '<?= htmlspecialchars(addslashes($app['opportunity_title'])) ?>', '<?= htmlspecialchars(addslashes($app['motivation'])) ?>', '<?= htmlspecialchars(addslashes($app['CV'])) ?>')">Voir la candidature</button>
+              <button class="sk-btn sk-btn-sm sk-btn-warn" onclick="editApp(<?= $app['ID'] ?>)">Modifier</button>
+              <form method="POST" style="display:inline" onsubmit="return confirm('Supprimer cette candidature ?')">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="app_id" value="<?= $app['ID'] ?>">
-                <button type="submit" class="sk-btn sk-btn-sm sk-btn-danger">Delete</button>
+                <button type="submit" class="sk-btn sk-btn-sm sk-btn-danger">Supprimer</button>
               </form>
             </td>
           </tr>
@@ -214,7 +223,7 @@ foreach ($userApplications as $app) {
 </div>
 
 <script>
-const appEditData = <?php echo json_encode($editData, JSON_UNESCAPED_UNICODE); ?>;
+const appModifierData = <?php echo json_encode($editData, JSON_UNESCAPED_UNICODE); ?>;
 
 function viewApp(id, opportunity, motivation, cvLink) {
   document.getElementById('view_opportunity').textContent = opportunity;
@@ -229,10 +238,10 @@ function closeViewModal() {
   document.getElementById('viewModalOverlay').classList.remove('open');
 }
 
-function openEditModal(id) {
-  const payload = appEditData[id];
+function openModifierModal(id) {
+  const payload = appModifierData[id];
   if (!payload) {
-    alert('Could not load application data for ID: ' + id);
+    alert('Impossible de charger les donnees de la candidature ID : ' + id);
     return;
   }
 
@@ -243,16 +252,16 @@ function openEditModal(id) {
   document.getElementById('editModalOverlay').classList.add('open');
 }
 
-function closeEditModal() {
+function closeModifierModal() {
   document.getElementById('editModalOverlay').classList.remove('open');
 }
 
 function editApp(id) {
-  openEditModal(id);
+  openModifierModal(id);
 }
 
 document.getElementById('editModalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeEditModal();
+  if (e.target === this) closeModifierModal();
 });
 
 document.getElementById('viewModalOverlay').addEventListener('click', function(e) {
@@ -260,15 +269,15 @@ document.getElementById('viewModalOverlay').addEventListener('click', function(e
 });
 </script>
 
-<!-- ===== EDIT MODAL ===== -->
+<!-- ===== MODALE DE MODIFICATION ===== -->
 <div class="sk-modal-overlay" id="editModalOverlay" role="dialog" aria-modal="true">
   <div class="sk-modal">
     <div class="sk-modal-header">
       <div>
-        <div class="sk-modal-title">Edit Application</div>
-        <div class="text-muted" style="font-size:.85rem; margin-top:4px;">Update motivation and CV link</div>
+        <div class="sk-modal-title">Modifier la candidature</div>
+        <div class="text-muted" style="font-size:.85rem; margin-top:4px;">Mettre a jour la motivation et le lien du CV</div>
       </div>
-      <button type="button" class="sk-modal-close" onclick="closeEditModal()" aria-label="Close">&times;</button>
+      <button type="button" class="sk-modal-close" onclick="closeModifierModal()" aria-label="Fermer">&times;</button>
     </div>
 
     <form method="POST">
@@ -282,32 +291,32 @@ document.getElementById('viewModalOverlay').addEventListener('click', function(e
         </div>
 
         <div class="sk-form-group" style="margin-top:16px;">
-          <label class="sk-label" for="edit_cv_link">CV Link *</label>
+          <label class="sk-label" for="edit_cv_link">Lien du CV *</label>
           <input type="url" id="edit_cv_link" name="cv_link" class="sk-input" required>
         </div>
       </div>
 
       <div class="sk-modal-footer">
-        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeEditModal()">Cancel</button>
-        <button type="submit" class="sk-btn sk-btn-primary">Save changes</button>
+        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeModifierModal()">Annuler</button>
+        <button type="submit" class="sk-btn sk-btn-primary">Enregistrer les modifications</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- ===== VIEW MODAL ===== -->
+<!-- ===== MODALE DE CONSULTATION ===== -->
 <div class="sk-modal-overlay" id="viewModalOverlay" role="dialog" aria-modal="true">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
       <div>
-        <div class="sk-modal-title">Application Details</div>
+        <div class="sk-modal-title">Details de la candidature</div>
       </div>
-      <button type="button" class="sk-modal-close" onclick="closeViewModal()" aria-label="Close">&times;</button>
+      <button type="button" class="sk-modal-close" onclick="closeViewModal()" aria-label="Fermer">&times;</button>
     </div>
 
     <div class="sk-modal-body">
       <div class="sk-form-group">
-        <label class="sk-label">Opportunity</label>
+        <label class="sk-label">Opportunite</label>
         <p id="view_opportunity" style="margin: 0; color: var(--sk-text); font-weight: 500;"></p>
       </div>
 
@@ -317,15 +326,17 @@ document.getElementById('viewModalOverlay').addEventListener('click', function(e
       </div>
 
       <div class="sk-form-group" style="margin-top:16px;">
-        <label class="sk-label">CV Link</label>
+        <label class="sk-label">Lien du CV</label>
         <a id="view_cv_link" href="#" target="_blank" style="color: var(--sk-accent); text-decoration: none;"></a>
       </div>
     </div>
 
     <div class="sk-modal-footer">
-      <button type="button" class="sk-btn sk-btn-ghost" onclick="closeViewModal()">Close</button>
+      <button type="button" class="sk-btn sk-btn-ghost" onclick="closeViewModal()">Fermer</button>
     </div>
   </div>
 </div>
 </body>
 </html>
+
+

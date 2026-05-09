@@ -45,9 +45,9 @@ class config
             $servername="localhost";
             $username="root";
             $password ="";
-            $dbname="bd_skiller";
+            $dbname=defined('DB_NAME') ? DB_NAME : "skiller_comp";
             try {
-                self::$pdo = new PDO("mysql:host=$servername;dbname=$dbname",
+                self::$pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8mb4",
                         $username,
                         $password
                    
@@ -76,46 +76,31 @@ function isLoggedIn()
 
 function loginUser($username, $password)
 {
-    $users = [
-        'admin'     => ['password' => 'admin123', 'role' => 'admin',      'name' => 'Admin'],
-        'superuser' => ['password' => 'super123', 'role' => 'super_user', 'name' => 'Super User'],
-        'user'      => ['password' => 'user123',  'role' => 'simple_user', 'name' => 'Simple User'],
-    ];
+    $db = config::getConnexion();
+    $query = $db->prepare("SELECT * FROM utilisateur WHERE Email = :login OR Nom = :login LIMIT 1");
+    $query->execute(['login' => $username]);
+    $user = $query->fetch(PDO::FETCH_ASSOC);
 
-    // Try exact username match first
-    if (isset($users[$username])) {
-        if ($users[$username]['password'] === $password) {
-            $_SESSION['user'] = [
-                'id'       => ($username === 'admin' ? 1 : ($username === 'superuser' ? 2 : 3)),
-                'username' => $username,
-                'name'     => $users[$username]['name'],
-                'role'     => $users[$username]['role'],
-            ];
-            return true;
-        }
+    if (!$user || !password_verify($password, $user['MDP'])) {
+        return false;
     }
 
-    // Optional: allow email-style login (for demo)
-    $emailMap = [
-        'admin@skiller.com'     => 'admin',
-        'super@skiller.com'     => 'superuser',
-        'user@skiller.com'      => 'user',
+    $roleMap = [
+        'admin' => 'admin',
+        'professionnel' => 'super_user',
+        'etudiant' => 'simple_user'
     ];
 
-    if (isset($emailMap[$username])) {
-        $realUsername = $emailMap[$username];
-        if (isset($users[$realUsername]) && $users[$realUsername]['password'] === $password) {
-            $_SESSION['user'] = [
-                'id'       => ($realUsername === 'admin' ? 1 : ($realUsername === 'superuser' ? 2 : 3)),
-                'username' => $realUsername,
-                'name'     => $users[$realUsername]['name'],
-                'role'     => $users[$realUsername]['role'],
-            ];
-            return true;
-        }
-    }
+    $_SESSION['user'] = [
+        'id' => (int)$user['ID'],
+        'username' => $user['Nom'],
+        'email' => $user['Email'],
+        'name' => $user['Nom'],
+        'role' => $roleMap[$user['Type']] ?? 'simple_user',
+        'db_type' => $user['Type']
+    ];
 
-    return false;
+    return true;
 }
 
 function logoutUser()

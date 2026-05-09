@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/BackOffice/applications_backoffice.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/ApplicationController.php';
@@ -9,7 +9,7 @@ $applicationCtrl = new ApplicationController();
 $successMsg = '';
 $errorMsg = '';
 
-// ── AJAX must be caught FIRST, before any other output ──────────────────────
+// AJAX avant tout affichage.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === '1') {
     $search    = trim($_POST['search'] ?? '');
     $sortBy    = $_POST['sort_by']    ?? 'DateCondidature';
@@ -24,29 +24,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === '1') {
     exit;
 }
 
-// ── Delete action ────────────────────────────────────────────────────────────
+// â”€â”€ Supprimer action â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $appId = $_POST['app_id'] ?? null;
     if ($appId) {
         try {
             $applicationCtrl->deleteApplication((int)$appId);
-            $successMsg = 'Application deleted successfully!';
+            $successMsg = 'Candidature supprimee avec succes !';
         } catch (Exception $e) {
-            $errorMsg = 'Error: ' . $e->getMessage();
+            $errorMsg = 'Erreur : ' . $e->getMessage();
         }
     }
 }
 
-// ── Fetch all data for initial render ────────────────────────────────────────
+// â”€â”€ Fetch all data for initial render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $applicationsData = $applicationCtrl->listApplicationsWithDetails()->fetchAll(PDO::FETCH_ASSOC);
 $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETCH_COLUMN);
+
+function applicationStatusLabel($status) {
+    $key = strtolower((string)$status);
+    return [
+        'pending' => 'En attente',
+        'accepted' => 'Acceptee',
+        'rejected' => 'Rejetee'
+    ][$key] ?? ucfirst((string)$status);
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Applications — Back Office</title>
+  <title>Candidatures - Administration</title>
 </head>
 <body>
 <?php include __DIR__ . '/../navbar.php'; ?>
@@ -55,53 +64,53 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
 
   <div class="sk-page-header">
     <div class="sk-page-title">
-      Applications Manager
-      <small>Review and delete applications (Admin)</small>
+      Gestion des candidatures
+      <small>Consulter et supprimer les candidatures (administrateur)</small>
     </div>
-    <span class="sk-badge sk-badge-jobs" style="font-size:.7rem;align-self:flex-start">Admin View</span>
+    <span class="sk-badge sk-badge-jobs" style="font-size:.7rem;align-self:flex-start">Vue administrateur</span>
   </div>
 
-  <!-- ── Search / Sort bar ── -->
+  <!-- â”€â”€ Recherche / Sort bar â”€â”€ -->
   <div class="sk-card" style="margin-bottom:20px">
     <div class="sk-filter-bar">
       <div class="sk-filter-field sk-filter-search">
-        <label class="sk-label">Search</label>
+        <label class="sk-label">Recherche</label>
         <div style="position:relative">
           <i class="bx bx-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--sk-muted)"></i>
           <input type="text" id="searchInput" class="sk-input"
-                 placeholder="Opportunity, user ID, status, motivation…"
+                 placeholder="Opportunite, utilisateur, statut, motivation..."
                  style="padding-left:34px" autocomplete="off">
         </div>
       </div>
       <div class="sk-filter-field">
-        <label class="sk-label">Sort By</label>
+        <label class="sk-label">Trier par</label>
         <select id="sortBy" class="sk-select">
           <option value="ID">ID</option>
-          <option value="opportunity_title">Opportunity</option>
-          <option value="IDUtilisateur">User ID</option>
-          <option value="DateCondidature" selected>Date Applied</option>
-          <option value="Type_job">Job Type</option>
+          <option value="opportunity_title">Opportunite</option>
+          <option value="IDUtilisateur">ID utilisateur</option>
+          <option value="DateCondidature" selected>Date de candidature</option>
+          <option value="Type_job">Type de poste</option>
         </select>
       </div>
       <div class="sk-filter-field">
-        <label class="sk-label">Job Type</label>
+        <label class="sk-label">Type de poste</label>
         <select id="typeFilter" class="sk-select">
-          <option value="">All types</option>
+          <option value="">Tous les types</option>
           <?php foreach ($applicationTypes as $type): ?>
             <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars(ucfirst($type)) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <div class="sk-filter-field">
-        <label class="sk-label">Order</label>
+        <label class="sk-label">Ordre</label>
         <select id="sortOrder" class="sk-select">
-          <option value="DESC">Descending</option>
-          <option value="ASC">Ascending</option>
+          <option value="DESC">Decroissant</option>
+          <option value="ASC">Croissant</option>
         </select>
       </div>
       <div class="sk-filter-field" style="align-self:flex-end">
         <button class="sk-btn sk-btn-ghost" onclick="resetFilters()">
-          <i class="bx bx-refresh"></i> Reset
+          <i class="bx bx-refresh"></i> Reinitialiser
         </button>
       </div>
     </div>
@@ -117,7 +126,7 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
     </div>
   <?php endif; ?>
 
-  <!-- Results count -->
+  <!-- Resultats count -->
   <div style="font-size:.8rem;color:var(--sk-muted);margin-bottom:10px" id="resultCount">
     <?= count($applicationsData) ?> application<?= count($applicationsData) !== 1 ? 's' : '' ?>
   </div>
@@ -127,10 +136,10 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
       <thead>
         <tr>
           <th>ID</th>
-          <th>Opportunity</th>
-          <th>User ID</th>
-          <th>Date Applied</th>
-          <th>Status</th>
+          <th>Opportunite</th>
+          <th>Utilisateur</th>
+          <th>Date de candidature</th>
+          <th>Statut</th>
           <th>Motivation</th>
           <th>Actions</th>
         </tr>
@@ -141,22 +150,25 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
           <tr>
             <td style="color:var(--sk-muted);font-size:.8rem">#<?= htmlspecialchars($app['ID']) ?></td>
             <td style="font-weight:600"><?= htmlspecialchars($app['opportunity_title'] ?? 'N/A') ?></td>
-            <td><?= htmlspecialchars($app['IDUtilisateur']) ?></td>
-            <td style="color:var(--sk-muted)"><?= htmlspecialchars($app['DateCondidature'] ?? '—') ?></td>
+            <td>
+              <div style="font-weight:600"><?= htmlspecialchars($app['user_name'] ?? ('Utilisateur #' . $app['IDUtilisateur'])) ?></div>
+              <div style="font-size:.75rem;color:var(--sk-muted)"><?= htmlspecialchars($app['user_email'] ?? ('#' . $app['IDUtilisateur'])) ?></div>
+            </td>
+            <td style="color:var(--sk-muted)"><?= htmlspecialchars($app['DateCondidature'] ?? 'â€”') ?></td>
             <td>
               <span class="sk-badge sk-badge-<?= $statut ?>">
-                <?= htmlspecialchars(ucfirst($app['Statut'] ?? 'Pending')) ?>
+                <?= htmlspecialchars(applicationStatusLabel($app['Statut'] ?? 'pending')) ?>
               </span>
             </td>
             <td class="sk-motivation-cell" title="<?= htmlspecialchars($app['motivation'] ?? '') ?>">
-              <?= htmlspecialchars(mb_substr($app['motivation'] ?? '', 0, 60)) ?><?= strlen($app['motivation'] ?? '') > 60 ? '…' : '' ?>
+              <?= htmlspecialchars(mb_substr($app['motivation'] ?? '', 0, 60)) ?><?= strlen($app['motivation'] ?? '') > 60 ? 'â€¦' : '' ?>
             </td>
             <td style="white-space:nowrap">
               <button class="sk-btn sk-btn-ghost sk-btn-sm"
                       onclick="showDetails(<?= (int)$app['ID'] ?>, <?= htmlspecialchars(json_encode($app['opportunity_title'] ?? 'N/A'), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($app['motivation'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($app['CV'] ?? ''), ENT_QUOTES) ?>)">
-                <i class="bx bx-show"></i> View Application
+                <i class="bx bx-show"></i> Voir la candidature
               </button>
-              <form method="POST" style="display:inline" onsubmit="return confirm('Delete this application?')">
+              <form method="POST" style="display:inline" onsubmit="return confirm('Supprimer cette candidature ?')">
                 <input type="hidden" name="action"  value="delete">
                 <input type="hidden" name="app_id"  value="<?= (int)$app['ID'] ?>">
                 <button type="submit" class="sk-btn sk-btn-danger sk-btn-sm"><i class="bx bx-trash"></i></button>
@@ -165,11 +177,11 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
           </tr>
         <?php endforeach; ?>
         <?php if (empty($applicationsData)): ?>
-          <tr><td colspan="7" class="sk-empty">No applications found.</td></tr>
+          <tr><td colspan="7" class="sk-empty">Aucune candidature trouvee.</td></tr>
         <?php endif; ?>
       </tbody>
     </table>
-    <div id="emptyState" class="sk-empty" style="display:none">No applications match your search.</div>
+    <div id="emptyState" class="sk-empty" style="display:none">Aucune candidature ne correspond a votre recherche.</div>
   </div>
 </div>
 
@@ -177,25 +189,25 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
 <div class="sk-modal-overlay" id="detailsModal">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
-      <span class="sk-modal-title">Application Details</span>
-      <button class="sk-modal-close" onclick="closeModal()">×</button>
+      <span class="sk-modal-title">Details de la candidature</span>
+      <button class="sk-modal-close" onclick="closeModal()">Ã—</button>
     </div>
     <div class="sk-modal-body">
       <div class="sk-form-group">
-        <label class="sk-label">Opportunity</label>
-        <p id="modalOpportunity" style="font-weight:600;color:var(--sk-text)"></p>
+        <label class="sk-label">Opportunite</label>
+        <p id="modalOpportunite" style="font-weight:600;color:var(--sk-text)"></p>
       </div>
       <div class="sk-form-group">
         <label class="sk-label">Motivation</label>
         <p id="modalMotivation" style="line-height:1.6;color:var(--sk-text);white-space:pre-wrap"></p>
       </div>
       <div class="sk-form-group">
-        <label class="sk-label">CV / Resource</label>
+        <label class="sk-label">CV / Ressource</label>
         <div id="modalCV"></div>
       </div>
     </div>
     <div class="sk-modal-footer">
-      <button class="sk-btn sk-btn-ghost" onclick="closeModal()">Close</button>
+      <button class="sk-btn sk-btn-ghost" onclick="closeModal()">Fermer</button>
     </div>
   </div>
 </div>
@@ -221,18 +233,18 @@ $applicationTypes = $applicationCtrl->listApplicationTypes()->fetchAll(PDO::FETC
 </style>
 
 <script>
-// Seed data from PHP — source of truth for client-side filter
+// Seed data from PHP â€” source of truth for client-side filter
 const ALL_DATA = <?= json_encode($applicationsData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
 let debounceTimer = null;
 let currentTableData = ALL_DATA;
 
-function scheduleSearch() {
+function scheduleRecherche() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(performSearch, 220);
+  debounceTimer = setTimeout(performRecherche, 220);
 }
 
-function performSearch() {
+function performRecherche() {
   const sortBy    = document.getElementById('sortBy').value;
   const sortOrder = document.getElementById('sortOrder').value;
   const typeJob   = document.getElementById('typeFilter').value;
@@ -248,11 +260,11 @@ function performSearch() {
         + '&type_job='   + encodeURIComponent(typeJob)
   })
   .then(r => {
-    if (!r.ok) throw new Error('Server error ' + r.status);
+    if (!r.ok) throw new Error('Erreur serveur ' + r.status);
     return r.json();
   })
   .then(data => renderTable(data))
-  .catch(err => console.error('Search error:', err));
+  .catch(err => console.error('Erreur de recherche :', err));
 }
 
 function renderTable(data) {
@@ -273,24 +285,28 @@ function renderTable(data) {
 
   tbody.innerHTML = currentTableData.map((app, index) => {
     const statut   = (app.Statut || 'pending').toLowerCase();
-    const ucStatut = statut.charAt(0).toUpperCase() + statut.slice(1);
+    const statusLabels = { pending: 'En attente', accepted: 'Acceptee', rejected: 'Rejetee' };
+    const ucStatut = statusLabels[statut] || (statut.charAt(0).toUpperCase() + statut.slice(1));
     const motiv    = app.motivation || '';
-    const short    = motiv.length > 60 ? motiv.substring(0, 60) + '…' : motiv;
+    const short    = motiv.length > 60 ? motiv.substring(0, 60) + '...' : motiv;
 
     return `
       <tr>
         <td style="color:var(--sk-muted);font-size:.8rem">#${esc(app.ID)}</td>
         <td style="font-weight:600">${esc(app.opportunity_title || 'N/A')}</td>
-        <td>${esc(app.IDUtilisateur)}</td>
-        <td style="color:var(--sk-muted)">${esc(app.DateCondidature || '—')}</td>
+        <td>
+          <div style="font-weight:600">${esc(app.user_name || ('Utilisateur #' + app.IDUtilisateur))}</div>
+          <div style="font-size:.75rem;color:var(--sk-muted)">${esc(app.user_email || ('#' + app.IDUtilisateur))}</div>
+        </td>
+        <td style="color:var(--sk-muted)">${esc(app.DateCondidature || 'â€”')}</td>
         <td><span class="sk-badge sk-badge-${statut}">${ucStatut}</span></td>
         <td class="sk-motivation-cell" title="${esc(motiv)}">${esc(short)}</td>
         <td style="white-space:nowrap">
           <button class="sk-btn sk-btn-ghost sk-btn-sm"
                   onclick="showDetailsFromRendered(${index})">
-            <i class="bx bx-show"></i> View Application
+            <i class="bx bx-show"></i> Voir la candidature
           </button>
-          <form method="POST" style="display:inline" onsubmit="return confirm('Delete this application?')">
+          <form method="POST" style="display:inline" onsubmit="return confirm('Supprimer cette candidature ?')">
             <input type="hidden" name="action"  value="delete">
             <input type="hidden" name="app_id"  value="${parseInt(app.ID)}">
             <button type="submit" class="sk-btn sk-btn-danger sk-btn-sm"><i class="bx bx-trash"></i></button>
@@ -311,13 +327,13 @@ function showDetailsFromRendered(index) {
 }
 
 function showDetails(id, opportunity, motivation, cv) {
-  document.getElementById('modalOpportunity').textContent = opportunity;
-  document.getElementById('modalMotivation').textContent  = motivation || '(none)';
+  document.getElementById('modalOpportunite').textContent = opportunity;
+  document.getElementById('modalMotivation').textContent  = motivation || '(aucune)';
   const cvEl = document.getElementById('modalCV');
   if (cv) {
     cvEl.innerHTML = `<a href="${esc(cv)}" target="_blank" rel="noopener" style="color:var(--sk-accent)">${esc(cv)}</a>`;
   } else {
-    cvEl.innerHTML = '<span style="color:var(--sk-muted)">No CV provided</span>';
+    cvEl.innerHTML = '<span style="color:var(--sk-muted)">Aucun CV fourni</span>';
   }
   document.getElementById('detailsModal').classList.add('open');
 }
@@ -331,16 +347,16 @@ function resetFilters() {
   document.getElementById('sortBy').value      = 'DateCondidature';
   document.getElementById('sortOrder').value   = 'DESC';
   document.getElementById('typeFilter').value = '';
-  performSearch();
+  performRecherche();
 }
 
 // Event listeners
-document.getElementById('searchInput').addEventListener('input',  scheduleSearch);
-document.getElementById('sortBy').addEventListener('change',      performSearch);
-document.getElementById('sortOrder').addEventListener('change',   performSearch);
-document.getElementById('typeFilter').addEventListener('change', performSearch);
+document.getElementById('searchInput').addEventListener('input',  scheduleRecherche);
+document.getElementById('sortBy').addEventListener('change',      performRecherche);
+document.getElementById('sortOrder').addEventListener('change',   performRecherche);
+document.getElementById('typeFilter').addEventListener('change', performRecherche);
 
-// Close modal on backdrop click
+// Fermer modal on backdrop click
 document.getElementById('detailsModal').addEventListener('click', e => {
   if (e.target === document.getElementById('detailsModal')) closeModal();
 });
@@ -353,3 +369,5 @@ if (toast) {
 </script>
 </body>
 </html>
+
+

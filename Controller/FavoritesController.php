@@ -9,7 +9,7 @@ class FavoritesController {
     }
 
     /**
-     * Add an opportunity to favorites
+     * Ajouter une opportunite aux favoris
      */
     public function addFavorite($userId, $opportunityId) {
         try {
@@ -23,13 +23,13 @@ class FavoritesController {
             ]);
             return true;
         } catch (Exception $e) {
-            error_log('Add favorite error: ' . $e->getMessage());
+            error_log('Erreur ajout favori : ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Remove an opportunity from favorites
+     * Retirer une opportunite des favoris
      */
     public function removeFavorite($userId, $opportunityId) {
         try {
@@ -43,13 +43,13 @@ class FavoritesController {
             ]);
             return true;
         } catch (Exception $e) {
-            error_log('Remove favorite error: ' . $e->getMessage());
+            error_log('Erreur retrait favori : ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Check if an opportunity is favorited by user
+     * Verifier si une opportunite est favorite
      */
     public function isFavorited($userId, $opportunityId) {
         try {
@@ -64,13 +64,13 @@ class FavoritesController {
             ]);
             return $stmt->fetch() !== false;
         } catch (Exception $e) {
-            error_log('Check favorite error: ' . $e->getMessage());
+            error_log('Erreur verification favori : ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Get all favorited opportunities for a user with details
+     * Recuperer toutes les opportunites favorites d un utilisateur
      */
     public function getUserFavorites($userId) {
         try {
@@ -87,19 +87,19 @@ class FavoritesController {
             $stmt->execute([':userId' => $userId]);
             return $stmt;
         } catch (Exception $e) {
-            error_log('Get user favorites error: ' . $e->getMessage());
+            error_log('Erreur recuperation favoris utilisateur : ' . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * Handle AJAX favorite toggle
+     * Basculer un favori en AJAX
      */
     public function toggleFavorite($userId, $opportunityId) {
         header('Content-Type: application/json');
         
         if (!$userId || !$opportunityId) {
-            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+            echo json_encode(['success' => false, 'message' => 'Parametres manquants']);
             exit;
         }
 
@@ -110,14 +110,14 @@ class FavoritesController {
             echo json_encode([
                 'success' => $result,
                 'favorited' => false,
-                'message' => $result ? 'Removed from favorites' : 'Error removing favorite'
+                'message' => $result ? 'Retire des favoris' : 'Erreur lors du retrait du favori'
             ]);
         } else {
             $result = $this->addFavorite($userId, $opportunityId);
             echo json_encode([
                 'success' => $result,
                 'favorited' => true,
-                'message' => $result ? 'Added to favorites' : 'Error adding favorite'
+                'message' => $result ? 'Ajoute aux favoris' : 'Erreur lors de l ajout du favori'
             ]);
         }
         exit;

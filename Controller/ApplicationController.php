@@ -11,7 +11,7 @@ class ApplicationController {
             $list = $db->query($sql);
             return $list;
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
@@ -23,7 +23,7 @@ class ApplicationController {
         try {
             $req->execute();
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
@@ -36,7 +36,7 @@ class ApplicationController {
             $req->execute();
             return true;
         } catch (Exception $e) {
-            throw new Exception('Error deleting applications: ' . $e->getMessage());
+            throw new Exception('Erreur lors de la suppression des candidatures : ' . $e->getMessage());
         }
     }
 
@@ -57,7 +57,7 @@ class ApplicationController {
             ]);
             return $result;
         } catch (Exception $e) {
-            throw new Exception('Error adding application: ' . $e->getMessage());
+            throw new Exception('Erreur lors de l ajout de la candidature : ' . $e->getMessage());
         }
     }
 
@@ -84,7 +84,7 @@ class ApplicationController {
                 'cv' => $application->getResource()
             ]);
         } catch (PDOException $e) {
-            echo "Error: " . $e->getMessage();
+            echo "Erreur :  " . $e->getMessage();
         }
     }
 
@@ -98,7 +98,7 @@ class ApplicationController {
             $application = $query->fetch();
             return $application;
         } catch (Exception $e) {
-            die('Error: ' . $e->getMessage());
+            die('Erreur :  ' . $e->getMessage());
         }
     }
 
@@ -143,9 +143,14 @@ class ApplicationController {
             $params['typeJob'] = $typeJob;
         }
 
-        $sql = "SELECT a.*, o.Titre as opportunity_title, o.Type_job 
+        $sql = "SELECT a.*, 
+                    o.Titre as opportunity_title, 
+                    o.Type_job,
+                    u.Nom as user_name,
+                    u.Email as user_email
                 FROM application a
-                LEFT JOIN oportunity o ON a.idOportunity = o.ID";
+                LEFT JOIN oportunity o ON a.idOportunity = o.ID
+                LEFT JOIN utilisateur u ON a.IDUtilisateur = u.ID";
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -159,7 +164,7 @@ class ApplicationController {
             $query->execute($params);
             return $query;
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
@@ -169,7 +174,7 @@ class ApplicationController {
         try {
             return $db->query($sql);
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
@@ -181,7 +186,7 @@ class ApplicationController {
             $query->execute([':opportunityId' => $opportunityId]);
             return $query;
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 }

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config.php';
 
 if (isLoggedIn()) {
@@ -20,15 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . appUrl('View/dashboard.php'));
         exit();
     }
-    $error = 'Invalid credentials. Please try again.';
+    $error = 'Identifiants invalides. Veuillez reessayer.';
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Skiller</title>
+  <title>Connexion - Skiller</title>
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/core.css">
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/theme-default.css">
   <link rel="stylesheet" href="<?= $assetPath ?>css/demo.css">
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <div class="text-center mb-4">
       <h3 class="mb-1">Skiller</h3>
-      <p class="text-muted">Sign in to your account</p>
+      <p class="text-muted">Connectez-vous a votre compte</p>
     </div>
 
     <?php if ($error): ?>
@@ -99,48 +99,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="POST" id="loginForm">
       <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" id="username" class="form-control" placeholder="e.g. admin" required>
+        <label class="form-label">Nom utilisateur</label>
+        <input type="text" name="username" id="username" class="form-control" placeholder="ex. admin" required>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Email (Optional)</label>
-        <input type="email" name="email" id="email" class="form-control" placeholder="e.g. admin@skiller.com">
+        <label class="form-label">Email (facultatif)</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="ex. admin@admin.com">
       </div>
 
       <div class="mb-4">
-        <label class="form-label">Password</label>
+        <label class="form-label">Mot de passe</label>
         <input type="password" name="password" id="password" class="form-control" required>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100">Sign In</button>
+      <button type="submit" class="btn btn-primary w-100">Se connecter</button>
     </form>
 
-    <!-- Clear and prominent demo credentials -->
+    <!-- Comptes de demonstration -->
     <div class="demo-accounts">
-      <strong style="color:#334155;">Demo Login Details:</strong><br><br>
+      <strong style="color:#334155;">Comptes de la nouvelle base de donnees :</strong><br><br>
       
-      <strong>👤 Admin</strong><br>
-      Username: <code>admin</code> <br>
-      Email: <code>admin@skiller.com</code> <br>
-      Password: <code>admin123</code><br><br>
+      <strong>ðŸ‘¤ Administrateur</strong><br>
+      Nom utilisateur : <code>admin</code> <br>
+      Email : <code>admin@admin.com</code><br>
+      Mot de passe : <code>admin123</code><br><br>
       
-      <strong>👤 Super User</strong><br>
-      Username: <code>superuser</code> <br>
-      Email: <code>super@skiller.com</code> <br>
-      Password: <code>super123</code><br><br>
+      <strong>ðŸ‘¤ Super utilisateur</strong><br>
+      Nom utilisateur : <code>propro</code> <br>
+      Email : <code>propro@pro.com</code><br>
+      Mot de passe : <code>pro123</code><br><br>
       
-      <strong>👤 Simple User</strong><br>
-      Username: <code>user</code> <br>
-      Email: <code>user@skiller.com</code> <br>
-      Password: <code>user123</code>
+      <strong>ðŸ‘¤ Utilisateur simple</strong><br>
+      Nom utilisateur : <code>moomen</code> <br>
+      Email : <code>abdelmoomenkhemira@gmail.com</code><br>
+      Mot de passe : <code>user123</code>
     </div>
 
   </div>
 </div>
 
 <script>
-// Simple validation
+// Validation simple
 document.getElementById('loginForm').addEventListener('submit', function(e) {
   const username = document.getElementById('username').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -148,13 +148,15 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
 
   if (!username && !email) {
     e.preventDefault();
-    alert("Please enter your username or email address");
+    alert("Veuillez saisir votre nom utilisateur ou votre email");
   } else if (password.length < 3) {
     e.preventDefault();
-    alert("Password must be at least 3 characters");
+    alert("Le mot de passe doit contenir au moins 3 caracteres");
   }
 });
 </script>
 
 </body>
 </html>
+
+

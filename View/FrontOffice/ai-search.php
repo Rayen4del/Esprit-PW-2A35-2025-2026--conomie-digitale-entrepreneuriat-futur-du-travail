@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/FrontOffice/ai-search.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/OportunityController.php';
@@ -16,19 +16,19 @@ $opportunitiesList = ($r = $controller->listOportunities()) ? $r->fetchAll(PDO::
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['favorite_action'])) {
     if (!$userId) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Not logged in']);
+        echo json_encode(['success' => false, 'message' => 'Non connecte']);
         exit;
     }
     $favCtrl->toggleFavorite($userId, (int)($_POST['opportunity_id'] ?? 0));
 }
 
-// Handle AJAX AI search
+// Recherche IA AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_search'])) {
     header('Content-Type: application/json');
     $query = trim($_POST['query'] ?? '');
     
     if (empty($query)) {
-        echo json_encode(['success' => false, 'message' => 'Please enter a search query']);
+        echo json_encode(['success' => false, 'message' => 'Veuillez saisir une recherche']);
         exit;
     }
 
@@ -45,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_search'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Search — Skiller</title>
+  <title>Recherche IA - Skiller</title>
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/core.css">
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/theme-default.css">
   <link rel="stylesheet" href="<?= $assetPath ?>css/demo.css">
@@ -61,53 +61,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_search'])) {
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      AI Search Assistant
-      <small>Find opportunities using natural language</small>
+      Assistant de recherche IA
+      <small>Trouvez des opportunites en langage naturel</small>
     </div>
     <a href="opportunities.php" class="sk-btn sk-btn-secondary">
-      <i class="bx bx-arrow-back"></i> Back
+      <i class="bx bx-arrow-back"></i> Retour
     </a>
   </div>
 
   <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px; max-width: 1280px; margin: 0 auto;">
-    <!-- Chat Interface -->
+    <!-- Interface de chat -->
     <div class="sk-card" style="display: flex; flex-direction: column; height: 600px;">
       <div style="padding: 20px; border-bottom: 1px solid var(--sk-border); background: rgba(91,108,255,.08);">
-        <h3 style="margin: 0; font-size: 1rem;">🤖 AI Search</h3>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--sk-muted);">Describe the opportunity you're looking for</p>
+        <h3 style="margin: 0; font-size: 1rem;">Recherche IA</h3>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--sk-muted);">Decrivez l opportunite recherchee</p>
       </div>
       
       <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; justify-content: flex-start;">
           <div style="background: var(--sk-border); padding: 12px 16px; border-radius: 12px; max-width: 70%; color: var(--sk-muted); font-size: 0.875rem;">
-            👋 Hi! I can help you find opportunities. Try asking things like:
+            Bonjour ! Je peux vous aider a trouver des opportunites. Essayez par exemple :
             <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-              <li>"Find remote jobs"</li>
-              <li>"Look for internships in Paris"</li>
-              <li>"Show me freelance positions"</li>
+              <li>"Trouve des emplois a distance"</li>
+              <li>"Cherche des stages a Paris"</li>
+              <li>"Montre-moi des missions freelance"</li>
             </ul>
           </div>
         </div>
       </div>
       
       <div style="padding: 16px; border-top: 1px solid var(--sk-border); display: flex; gap: 8px;">
-        <input type="text" id="searchQuery" class="sk-input" placeholder="Ask me anything..." style="flex: 1;">
-        <button class="sk-btn sk-btn-primary" onclick="sendSearch()">
+        <input type="text" id="searchQuery" class="sk-input" placeholder="Posez votre question..." style="flex: 1;">
+        <button class="sk-btn sk-btn-primary" onclick="sendRecherche()">
           <i class="bx bx-send"></i>
         </button>
       </div>
     </div>
 
-    <!-- Results Sidebar -->
+    <!-- Resultats -->
     <div class="sk-card" style="height: 600px; overflow-y: auto; padding: 0;">
       <div style="padding: 16px; border-bottom: 1px solid var(--sk-border); position: sticky; top: 0; background: var(--sk-surface);">
-        <h4 style="margin: 0; font-size: 0.9rem;">Results</h4>
-        <p id="resultCount" style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--sk-muted);">0 found</p>
+        <h4 style="margin: 0; font-size: 0.9rem;">Resultats</h4>
+        <p id="resultCount" style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--sk-muted);">0 resultat</p>
       </div>
       <div id="resultsList" style="padding: 12px;">
         <p style="color: var(--sk-muted); font-size: 0.85rem; text-align: center; padding: 20px 12px;">
           <i class="bx bx-search" style="font-size: 1.5rem; display: block; margin-bottom: 8px;"></i>
-          Try a search to see results
+          Lancez une recherche pour voir les resultats
         </p>
       </div>
     </div>
@@ -115,11 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_search'])) {
 </div>
 
 <script>
-function sendSearch() {
+function sendRecherche() {
   const query = document.getElementById('searchQuery').value.trim();
   if (!query) return;
   
-  // Add user message to chat
+  // Ajouter le message utilisateur au chat
   const chatMessages = document.getElementById('chatMessages');
   const userMsg = document.createElement('div');
   userMsg.style.display = 'flex';
@@ -132,20 +132,20 @@ function sendSearch() {
   chatMessages.appendChild(userMsg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
-  // Show loading message
+  // Afficher le chargement
   const loadingMsg = document.createElement('div');
   loadingMsg.style.display = 'flex';
   loadingMsg.style.justifyContent = 'flex-start';
   loadingMsg.innerHTML = `
     <div style="background: var(--sk-border); padding: 12px 16px; border-radius: 12px; color: var(--sk-muted); font-size: 0.875rem;">
-      <i class="bx bx-loader bx-spin"></i> Searching...
+      <i class="bx bx-loader bx-spin"></i> Recherche en cours...
     </div>
   `;
   loadingMsg.id = 'loading-msg';
   chatMessages.appendChild(loadingMsg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
-  // Perform search
+  // Lancer la recherche
   fetch('<?= $_SERVER['PHP_SELF'] ?>', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -153,45 +153,45 @@ function sendSearch() {
   })
   .then(r => r.json())
   .then(data => {
-    // Remove loading message
+    // Retirer le chargement
     const loading = document.getElementById('loading-msg');
     if (loading) loading.remove();
     
-    // Add AI response
+    // Ajouter la reponse IA
     const aiMsg = document.createElement('div');
     aiMsg.style.display = 'flex';
     aiMsg.style.justifyContent = 'flex-start';
-    const sourceLabel = data.ai_used ? 'Gemini AI' : 'Local fallback';
+    const sourceLabel = data.ai_used ? 'IA Gemini' : 'Recherche locale';
     aiMsg.innerHTML = `
       <div style="background: var(--sk-border); padding: 12px 16px; border-radius: 12px; max-width: 70%; color: var(--sk-muted); font-size: 0.875rem;">
         <div style="font-size:0.7rem;font-weight:700;color:var(--sk-accent);margin-bottom:4px;">${sourceLabel}</div>
-        ${escapeHtml(data.message || 'Search complete.')}
+        ${escapeHtml(data.message || 'Recherche terminee.')}
       </div>
     `;
     chatMessages.appendChild(aiMsg);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Display results
-    displayResults(data.results || []);
-    document.getElementById('resultCount').textContent = (data.count || 0) + ' found';
+    // Afficher les resultats
+    displayResultats(data.results || []);
+    document.getElementById('resultCount').textContent = (data.count || 0) + ' resultat' + ((data.count || 0) !== 1 ? 's' : '');
     
     document.getElementById('searchQuery').value = '';
   })
   .catch(e => {
-    console.error('Error:', e);
-    alert('Error performing search');
+    console.error('Erreur :', e);
+    alert('Erreur lors de la recherche');
   });
 }
 
-function displayResults(results) {
+function displayResultats(results) {
   const resultsList = document.getElementById('resultsList');
   if (results.length === 0) {
-    resultsList.innerHTML = '<p style="color: var(--sk-muted); font-size: 0.85rem; text-align: center; padding: 20px 12px;">No opportunities found</p>';
+    resultsList.innerHTML = '<p style="color: var(--sk-muted); font-size: 0.85rem; text-align: center; padding: 20px 12px;">Aucune opportunite trouvee</p>';
     return;
   }
   
   resultsList.innerHTML = results.map(opp => {
-    const sc = opp.Statut === 'actif' ? 'actif' : (opp.Statut === 'archivé' ? 'archive' : 'expire');
+    const sc = opp.Statut === 'actif' ? 'actif' : (opp.Statut === 'archivÃ©' ? 'archive' : 'expire');
     const isFav = !!opp.is_favorited;
     const applyUrl = 'applications.php?opportunity_id=' + encodeURIComponent(opp.ID);
     return `
@@ -207,11 +207,11 @@ function displayResults(results) {
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
           <a class="sk-btn sk-btn-primary sk-btn-sm" href="${applyUrl}">
-            <i class="bx bx-send"></i> Apply
+            <i class="bx bx-send"></i> Postuler
           </a>
           <button class="sk-btn sk-btn-sm fav-btn ${isFav ? 'favorited' : ''}"
                   onclick="toggleFavorite(${parseInt(opp.ID)}, this)"
-                  title="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+                  title="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}"
                   style="background: none; border: none; padding: 4px 8px; cursor: pointer; font-size: 1.2em;">
             <i class="bx ${isFav ? 'bxs-heart' : 'bx-heart'}" style="color: ${isFav ? '#ff4d6d' : '#ccc'}; display: inline-block;"></i>
           </button>
@@ -239,7 +239,7 @@ function toggleFavorite(opportunityId, btn) {
   .then(r => r.json())
   .then(data => {
     if (!data.success) {
-      alert(data.message || 'Error updating favorite');
+      alert(data.message || 'Erreur lors de la mise a jour du favori');
       return;
     }
 
@@ -249,26 +249,26 @@ function toggleFavorite(opportunityId, btn) {
       icon.style.color = '#ff4d6d';
       icon.classList.remove('bx-heart');
       icon.classList.add('bxs-heart');
-      btn.title = 'Remove from favorites';
+      btn.title = 'Retirer des favoris';
     } else {
       btn.classList.remove('favorited');
       icon.style.color = '#ccc';
       icon.classList.remove('bxs-heart');
       icon.classList.add('bx-heart');
-      btn.title = 'Add to favorites';
+      btn.title = 'Ajouter aux favoris';
     }
   })
-  .catch(e => console.error('Error:', e));
+  .catch(e => console.error('Erreur :', e));
 }
 
-// Allow Enter key to send
+// Envoyer avec la touche Entree
 document.getElementById('searchQuery').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') {
-    sendSearch();
+    sendRecherche();
   }
 });
 
-// Auto-focus input
+// Focus automatique
 document.getElementById('searchQuery').focus();
 </script>
 
@@ -284,3 +284,5 @@ document.getElementById('searchQuery').focus();
 </style>
 </body>
 </html>
+
+

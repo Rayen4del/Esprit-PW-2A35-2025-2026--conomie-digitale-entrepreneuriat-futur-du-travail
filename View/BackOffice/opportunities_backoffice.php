@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/OportunityController.php';
 requireRole(['admin']);
@@ -12,10 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $datePublication = !empty($_POST['datePublication']) ? new DateTime($_POST['datePublication']) : null;
         $oportunity = new Oportunity($id, $_POST['Titre']??null, $_POST['Type_job']??null, $_POST['Description']??null, $_POST['Localisation']??null, $datePublication, $_POST['Statut']??null);
         $controller->updateOportunity($oportunity, $id);
-        $message = 'Opportunity updated!'; $messageType = 'success';
+        $message = 'Opportunite mise a jour !'; $messageType = 'success';
     } elseif ($_POST['action'] === 'delete') {
         $controller->deleteOportunity((int)$_POST['id']);
-        $message = 'Opportunity deleted.'; $messageType = 'danger';
+        $message = 'Opportunite supprimee.'; $messageType = 'danger';
     }
 }
 if (isset($_GET['fetch_id'])) {
@@ -25,7 +25,7 @@ if (isset($_GET['fetch_id'])) {
 }
 $opportunitiesList = ($list = $controller->listOportunities()) ? $list->fetchAll(PDO::FETCH_ASSOC) : [];
 
-function opportunityStatusKey($status) {
+function opportunityStatutKey($status) {
     $status = strtolower((string)$status);
     if (strpos($status, 'actif') !== false) return 'active';
     if (strpos($status, 'archiv') !== false) return 'archived';
@@ -33,25 +33,25 @@ function opportunityStatusKey($status) {
     return 'other';
 }
 
-$totalOpportunities = count($opportunitiesList);
+$totalOpportunites = count($opportunitiesList);
 $statusStats = ['active' => 0, 'archived' => 0, 'expired' => 0];
 $typeStats = [];
-$recentOpportunities = 0;
+$recentOpportunites = 0;
 $latestTimestamp = null;
 
 foreach ($opportunitiesList as $opportunity) {
-    $statusKey = opportunityStatusKey($opportunity['Statut'] ?? '');
+    $statusKey = opportunityStatutKey($opportunity['Statut'] ?? '');
     if (isset($statusStats[$statusKey])) {
         $statusStats[$statusKey]++;
     }
 
-    $type = $opportunity['Type_job'] ?? 'Other';
+    $type = $opportunity['Type_job'] ?? 'Autre';
     $typeStats[$type] = ($typeStats[$type] ?? 0) + 1;
 
     $publishedAt = strtotime($opportunity['datePublication'] ?? '');
     if ($publishedAt) {
         if ($publishedAt >= strtotime('-30 days')) {
-            $recentOpportunities++;
+            $recentOpportunites++;
         }
         if ($latestTimestamp === null || $publishedAt > $latestTimestamp) {
             $latestTimestamp = $publishedAt;
@@ -62,10 +62,10 @@ foreach ($opportunitiesList as $opportunity) {
 arsort($typeStats);
 $topType = $typeStats ? array_key_first($typeStats) : 'N/A';
 $topTypeCount = $typeStats[$topType] ?? 0;
-$activePercent = $totalOpportunities > 0 ? round(($statusStats['active'] / $totalOpportunities) * 100) : 0;
-$latestPublished = $latestTimestamp ? date('M d, Y', $latestTimestamp) : 'N/A';
+$activePercent = $totalOpportunites > 0 ? round(($statusStats['active'] / $totalOpportunites) * 100) : 0;
+$latestPublished = $latestTimestamp ? date('d/m/Y', $latestTimestamp) : 'N/A';
 
-// Handle AJAX search and sort
+// Recherche et tri AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['ajax'] === '1') {
     header('Content-Type: application/json');
     $search = trim($_POST['search'] ?? '');
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
     
     $filtered = $opportunitiesList;
     
-    // Search filter
+    // Filtre de recherche
     if ($search !== '') {
         $filtered = array_filter($filtered, function($item) use ($search) {
             return stripos($item['Titre'] ?? '', $search) !== false 
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
         });
     }
     
-    // Sort
+    // Tri
     usort($filtered, function($a, $b) use ($sortBy, $sortOrder) {
         $aVal = $a[$sortBy] ?? '';
         $bVal = $b[$sortBy] ?? '';
@@ -96,11 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Opportunities — Back Office</title>
+  <title>Opportunites - Administration</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/vendor/fonts/boxicons.css">
 </head>
@@ -110,114 +110,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
 <div class="sk-page">
   <?php if ($message): ?>
     <div class="sk-toast sk-toast-<?= $messageType ?>" id="sk-toast">
-      <?= $messageType === 'success' ? '✓' : '✕' ?> <?= htmlspecialchars($message) ?>
+      <?= $messageType === 'success' ? 'âœ“' : 'âœ•' ?> <?= htmlspecialchars($message) ?>
     </div>
     <script>setTimeout(()=>{const t=document.getElementById('sk-toast');if(t){t.style.opacity='0';t.style.transition='opacity 0.4s';setTimeout(()=>t.remove(),400);}},3000);</script>
   <?php endif; ?>
 
   <div class="sk-page-header">
     <div class="sk-page-title">
-      Opportunities
-      <small>Admin access — edit &amp; delete only</small>
+      Opportunites
+      <small>Acces administrateur - modification et suppression uniquement</small>
     </div>
-    <span class="sk-badge sk-badge-jobs" style="font-size:0.7rem">Admin View</span>
+    <span class="sk-badge sk-badge-jobs" style="font-size:0.7rem">Vue administrateur</span>
   </div>
 
-  <!-- Search and Sort Controls -->
+  <!-- Recherche et tri -->
   <div class="sk-card" style="margin-bottom: 24px;">
     <div style="padding: 16px; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: flex-end;">
       <div>
-        <label class="sk-label" style="font-size: 0.8rem;">Search</label>
-        <input type="text" id="searchInput" class="sk-input" placeholder="Search title, type, location..." style="padding: 8px 12px; font-size: 0.875rem;">
+        <label class="sk-label" style="font-size: 0.8rem;">Recherche</label>
+        <input type="text" id="searchInput" class="sk-input" placeholder="Rechercher par titre, type, lieu..." style="padding: 8px 12px; font-size: 0.875rem;">
       </div>
       <div>
-        <label class="sk-label" style="font-size: 0.8rem;">Sort By</label>
+        <label class="sk-label" style="font-size: 0.8rem;">Trier par</label>
         <select id="sortBy" class="sk-select" style="padding: 8px 12px; font-size: 0.875rem;">
           <option value="ID">ID</option>
-          <option value="Titre">Title</option>
+          <option value="Titre">Titre</option>
           <option value="Type_job">Type</option>
-          <option value="datePublication">Published Date</option>
+          <option value="datePublication">Date de publication</option>
         </select>
       </div>
       <div>
-        <label class="sk-label" style="font-size: 0.8rem;">Order</label>
+        <label class="sk-label" style="font-size: 0.8rem;">Ordre</label>
         <select id="sortOrder" class="sk-select" style="padding: 8px 12px; font-size: 0.875rem;">
-          <option value="ASC">Ascending</option>
-          <option value="DESC">Descending</option>
+          <option value="ASC">Croissant</option>
+          <option value="DESC">Decroissant</option>
         </select>
       </div>
-      <button type="button" class="sk-btn sk-btn-ghost" onclick="resetSearch()" style="padding: 8px 12px; font-size: 0.875rem;"><i class="bx bx-refresh"></i> Reset</button>
+      <button type="button" class="sk-btn sk-btn-ghost" onclick="resetRecherche()" style="padding: 8px 12px; font-size: 0.875rem;"><i class="bx bx-refresh"></i> Reinitialiser</button>
     </div>
   </div>
 
   <div class="sk-card">
     <table class="sk-table">
       <thead>
-        <tr><th>ID</th><th>Title</th><th>Type</th><th>Location</th><th>Published</th><th>Status</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Titre</th><th>Type</th><th>Lieu</th><th>Publie le</th><th>Statut</th><th>Actions</th></tr>
       </thead>
       <tbody id="tableBody">
         <?php foreach ($opportunitiesList as $row): ?>
-          <?php $sc = $row['Statut'] === 'actif' ? 'actif' : ($row['Statut'] === 'archivé' ? 'archive' : 'expire'); ?>
+          <?php $sc = $row['Statut'] === 'actif' ? 'actif' : ($row['Statut'] === 'archivÃ©' ? 'archive' : 'expire'); ?>
           <tr>
             <td style="color:var(--sk-muted);font-size:0.8rem">#<?= $row['ID'] ?></td>
             <td style="font-weight:600"><?= htmlspecialchars($row['Titre']) ?></td>
             <td><span class="sk-badge sk-badge-<?= htmlspecialchars($row['Type_job']) ?>"><?= htmlspecialchars($row['Type_job']) ?></span></td>
-            <td><?= htmlspecialchars($row['Localisation'] ?? '—') ?></td>
-            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['datePublication'] ?? '—') ?></td>
+            <td><?= htmlspecialchars($row['Localisation'] ?? 'â€”') ?></td>
+            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['datePublication'] ?? 'â€”') ?></td>
             <td><span class="sk-badge sk-badge-<?= $sc ?>"><?= htmlspecialchars($row['Statut']) ?></span></td>
             <td>
-              <button class="sk-btn sk-btn-warn sk-btn-sm" onclick="openEditModal(<?= $row['ID'] ?>)">Edit</button>
-              <button class="sk-btn sk-btn-danger sk-btn-sm" onclick="openDeleteModal(<?= $row['ID'] ?>, '<?= htmlspecialchars($row['Titre'], ENT_QUOTES) ?>')">Delete</button>
+              <button class="sk-btn sk-btn-warn sk-btn-sm" onclick="openModifierModal(<?= $row['ID'] ?>)">Modifier</button>
+              <button class="sk-btn sk-btn-danger sk-btn-sm" onclick="openDeleteModal(<?= $row['ID'] ?>, '<?= htmlspecialchars($row['Titre'], ENT_QUOTES) ?>')">Supprimer</button>
             </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
-    <div id="emptyState" class="sk-empty" style="display: none; padding: 32px; text-align: center;">No opportunities found.</div>
+    <div id="emptyState" class="sk-empty" style="display: none; padding: 32px; text-align: center;">Aucune opportunite trouvee.</div>
   </div>
 
-  <div class="sk-stats-panel" aria-label="Opportunities statistics">
+  <div class="sk-stats-panel" aria-label="Statistiques des opportunites">
     <div class="sk-stat-card sk-stat-wide">
       <div class="sk-stat-top">
         <span class="sk-stat-icon"><i class="bx bx-briefcase"></i></span>
-        <span class="sk-stat-label">Total Opportunities</span>
+        <span class="sk-stat-label">Total des opportunites</span>
       </div>
-      <div class="sk-stat-value" id="statTotal"><?= $totalOpportunities ?></div>
-      <div class="sk-stat-note"><span id="statRecent"><?= $recentOpportunities ?></span> published in the last 30 days</div>
+      <div class="sk-stat-value" id="statTotal"><?= $totalOpportunites ?></div>
+      <div class="sk-stat-note"><span id="statRecent"><?= $recentOpportunites ?></span> publiees durant les 30 derniers jours</div>
     </div>
 
     <div class="sk-stat-card">
       <div class="sk-stat-top">
         <span class="sk-stat-icon sk-stat-icon-good"><i class="bx bx-trending-up"></i></span>
-        <span class="sk-stat-label">Active Rate</span>
+        <span class="sk-stat-label">Taux actif</span>
       </div>
-      <div class="sk-stat-value"><span id="statActivePercent"><?= $activePercent ?></span>%</div>
-      <div class="sk-stat-bar"><span id="statActiveBar" style="width:<?= $activePercent ?>%"></span></div>
+      <div class="sk-stat-value"><span id="statActivesPercent"><?= $activePercent ?></span>%</div>
+      <div class="sk-stat-bar"><span id="statActivesBar" style="width:<?= $activePercent ?>%"></span></div>
     </div>
 
     <div class="sk-stat-card">
       <div class="sk-stat-top">
         <span class="sk-stat-icon sk-stat-icon-type"><i class="bx bx-category"></i></span>
-        <span class="sk-stat-label">Top Type</span>
+        <span class="sk-stat-label">Type principal</span>
       </div>
       <div class="sk-stat-value sk-stat-value-text" id="statTopType"><?= htmlspecialchars(ucfirst($topType)) ?></div>
-      <div class="sk-stat-note"><span id="statTopTypeCount"><?= $topTypeCount ?></span> <span id="statTopTypeLabel"><?= $topTypeCount === 1 ? 'opportunity' : 'opportunities' ?></span></div>
+      <div class="sk-stat-note"><span id="statTopTypeCount"><?= $topTypeCount ?></span> <span id="statTopTypeLabel"><?= $topTypeCount === 1 ? 'opportunite' : 'opportunites' ?></span></div>
     </div>
 
     <div class="sk-stat-card">
       <div class="sk-stat-top">
         <span class="sk-stat-icon sk-stat-icon-date"><i class="bx bx-calendar-star"></i></span>
-        <span class="sk-stat-label">Latest Publish</span>
+        <span class="sk-stat-label">Derniere publication</span>
       </div>
       <div class="sk-stat-value sk-stat-value-text" id="statLatest"><?= htmlspecialchars($latestPublished) ?></div>
-      <div class="sk-stat-note">Newest opportunity date</div>
+      <div class="sk-stat-note">Date la plus recente</div>
     </div>
 
     <div class="sk-stat-card sk-stat-breakdown">
-      <div class="sk-stat-label">Status Breakdown</div>
-      <div class="sk-mini-row"><span>Active</span><strong id="statActive"><?= $statusStats['active'] ?></strong></div>
-      <div class="sk-mini-row"><span>Archived</span><strong id="statArchived"><?= $statusStats['archived'] ?></strong></div>
-      <div class="sk-mini-row"><span>Expired</span><strong id="statExpired"><?= $statusStats['expired'] ?></strong></div>
+      <div class="sk-stat-label">Repartition des statuts</div>
+      <div class="sk-mini-row"><span>Actives</span><strong id="statActives"><?= $statusStats['active'] ?></strong></div>
+      <div class="sk-mini-row"><span>Archivees</span><strong id="statArchivees"><?= $statusStats['archived'] ?></strong></div>
+      <div class="sk-mini-row"><span>Expirees</span><strong id="statExpirees"><?= $statusStats['expired'] ?></strong></div>
     </div>
   </div>
 </div>
@@ -323,82 +323,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
 }
 </style>
 
-<!-- EDIT MODAL -->
+<!-- MODALE DE MODIFICATION -->
 <div class="sk-modal-overlay" id="editModal">
   <div class="sk-modal">
     <div class="sk-modal-header">
-      <span class="sk-modal-title">Edit Opportunity</span>
-      <button class="sk-modal-close" onclick="closeModal('editModal')">×</button>
+      <span class="sk-modal-title">Modifier Opportunite</span>
+      <button class="sk-modal-close" onclick="closeModal('editModal')">Ã—</button>
     </div>
     <form method="POST">
       <input type="hidden" name="action" value="update">
       <input type="hidden" name="id" id="editId">
-      <div class="sk-modal-body" id="editBody"><div style="text-align:center;padding:32px;color:var(--sk-muted)">Loading…</div></div>
+      <div class="sk-modal-body" id="editBody"><div style="text-align:center;padding:32px;color:var(--sk-muted)">Chargement...</div></div>
       <div class="sk-modal-footer">
-        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeModal('editModal')">Cancel</button>
-        <button type="submit" class="sk-btn sk-btn-primary">Update</button>
+        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeModal('editModal')">Annuler</button>
+        <button type="submit" class="sk-btn sk-btn-primary">Mettre a jour</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- DELETE MODAL -->
+<!-- MODALE DE SUPPRESSION -->
 <div class="sk-modal-overlay" id="deleteModal">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
-      <span class="sk-modal-title" style="color:var(--sk-danger)">Delete Opportunity</span>
-      <button class="sk-modal-close" onclick="closeModal('deleteModal')">×</button>
+      <span class="sk-modal-title" style="color:var(--sk-danger)">Supprimer Opportunite</span>
+      <button class="sk-modal-close" onclick="closeModal('deleteModal')">Ã—</button>
     </div>
     <form method="POST">
       <input type="hidden" name="action" value="delete">
       <input type="hidden" name="id" id="deleteId">
       <div class="sk-modal-body">
-        <p style="color:var(--sk-muted);font-size:0.875rem">Delete <strong id="deleteTitle" style="color:var(--sk-text)"></strong>? This cannot be undone.</p>
+        <p style="color:var(--sk-muted);font-size:0.875rem">Supprimer <strong id="deleteTitre" style="color:var(--sk-text)"></strong>? Cette action est irreversible.</p>
       </div>
       <div class="sk-modal-footer">
-        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
-        <button type="submit" class="sk-btn sk-btn-danger">Delete</button>
+        <button type="button" class="sk-btn sk-btn-ghost" onclick="closeModal('deleteModal')">Annuler</button>
+        <button type="submit" class="sk-btn sk-btn-danger">Supprimer</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-const allOpportunities = <?php echo json_encode($opportunitiesList, JSON_UNESCAPED_UNICODE); ?>;
-let filteredData = [...allOpportunities];
+const allOpportunites = <?php echo json_encode($opportunitiesList, JSON_UNESCAPED_UNICODE); ?>;
+let filteredData = [...allOpportunites];
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function openDeleteModal(id, title) {
   document.getElementById('deleteId').value = id;
-  document.getElementById('deleteTitle').textContent = title;
+  document.getElementById('deleteTitre').textContent = title;
   openModal('deleteModal');
 }
-function openEditModal(id) {
+function openModifierModal(id) {
   document.getElementById('editId').value = id;
-  document.getElementById('editBody').innerHTML = '<div style="text-align:center;padding:32px;color:var(--sk-muted)">Loading…</div>';
+  document.getElementById('editBody').innerHTML = '<div style="text-align:center;padding:32px;color:var(--sk-muted)">Chargement...</div>';
   openModal('editModal');
   fetch('?fetch_id=' + id).then(r => r.json()).then(d => {
     document.getElementById('editBody').innerHTML = `
       <div class="sk-form-row">
-        <div><label class="sk-label">Title *</label><input type="text" name="Titre" class="sk-input" value="${esc(d.Titre||'')}" required></div>
+        <div><label class="sk-label">Titre *</label><input type="text" name="Titre" class="sk-input" value="${esc(d.Titre||'')}" required></div>
         <div><label class="sk-label">Type *</label><select name="Type_job" class="sk-select" required>
-          <option value="">Choose…</option>
-          <option value="jobs" ${d.Type_job==='jobs'?'selected':''}>Jobs</option>
+          <option value="">Choisir...</option>
+          <option value="jobs" ${d.Type_job==='jobs'?'selected':''}>Emploi</option>
           <option value="freelance" ${d.Type_job==='freelance'?'selected':''}>Freelance</option>
           <option value="stage" ${d.Type_job==='stage'?'selected':''}>Stage</option>
         </select></div>
       </div>
       <div class="sk-form-group"><label class="sk-label">Description</label><textarea name="Description" class="sk-textarea">${esc(d.Description||'')}</textarea></div>
       <div class="sk-form-row">
-        <div><label class="sk-label">Location</label><input type="text" name="Localisation" class="sk-input" value="${esc(d.Localisation||'')}"></div>
-        <div><label class="sk-label">Publish Date *</label><input type="date" name="datePublication" class="sk-input" value="${esc(d.datePublication||'')}" required></div>
+        <div><label class="sk-label">Lieu</label><input type="text" name="Localisation" class="sk-input" value="${esc(d.Localisation||'')}"></div>
+        <div><label class="sk-label">Date de publication *</label><input type="date" name="datePublication" class="sk-input" value="${esc(d.datePublication||'')}" required></div>
       </div>
-      <div class="sk-form-group"><label class="sk-label">Status *</label><select name="Statut" class="sk-select" required>
-        <option value="">Choose…</option>
+      <div class="sk-form-group"><label class="sk-label">Statut *</label><select name="Statut" class="sk-select" required>
+        <option value="">Choisir...</option>
         <option value="actif" ${d.Statut==='actif'?'selected':''}>Actif</option>
-        <option value="archivé" ${d.Statut==='archivé'?'selected':''}>Archivé</option>
-        <option value="expiré" ${d.Statut==='expiré'?'selected':''}>Expiré</option>
+        <option value="archivÃ©" ${d.Statut==='archivÃ©'?'selected':''}>ArchivÃ©</option>
+        <option value="expirÃ©" ${d.Statut==='expirÃ©'?'selected':''}>ExpirÃ©</option>
       </select></div>
     `;
   });
@@ -417,7 +417,7 @@ function formatDisplayDate(value) {
   if (!value) return 'N/A';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'N/A';
-  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function updateStats(data) {
@@ -434,7 +434,7 @@ function updateStats(data) {
     const key = statusKey(row.Statut);
     if (Object.prototype.hasOwnProperty.call(statuses, key)) statuses[key]++;
 
-    const type = row.Type_job || 'Other';
+    const type = row.Type_job || 'Autre';
     types[type] = (types[type] || 0) + 1;
 
     if (row.datePublication) {
@@ -451,18 +451,18 @@ function updateStats(data) {
 
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statRecent').textContent = recent;
-  document.getElementById('statActivePercent').textContent = activePercent;
-  document.getElementById('statActiveBar').style.width = activePercent + '%';
+  document.getElementById('statActivesPercent').textContent = activePercent;
+  document.getElementById('statActivesBar').style.width = activePercent + '%';
   document.getElementById('statTopType').textContent = topTypeEntry[0].charAt(0).toUpperCase() + topTypeEntry[0].slice(1);
   document.getElementById('statTopTypeCount').textContent = topTypeEntry[1];
-  document.getElementById('statTopTypeLabel').textContent = topTypeEntry[1] === 1 ? 'opportunity' : 'opportunities';
+  document.getElementById('statTopTypeLabel').textContent = topTypeEntry[1] === 1 ? 'opportunite' : 'opportunites';
   document.getElementById('statLatest').textContent = latest ? formatDisplayDate(latest) : 'N/A';
-  document.getElementById('statActive').textContent = statuses.active;
-  document.getElementById('statArchived').textContent = statuses.archived;
-  document.getElementById('statExpired').textContent = statuses.expired;
+  document.getElementById('statActives').textContent = statuses.active;
+  document.getElementById('statArchivees').textContent = statuses.archived;
+  document.getElementById('statExpirees').textContent = statuses.expired;
 }
 
-function performSearch() {
+function performRecherche() {
   const search = document.getElementById('searchInput').value.trim();
   const sortBy = document.getElementById('sortBy').value;
   const sortOrder = document.getElementById('sortOrder').value;
@@ -477,7 +477,7 @@ function performSearch() {
     filteredData = data;
     updateTable();
   })
-  .catch(e => console.error('Error:', e));
+  .catch(e => console.error('Erreur :', e));
 }
 
 function updateTable() {
@@ -491,18 +491,18 @@ function updateTable() {
   } else {
     emptyState.style.display = 'none';
     tbody.innerHTML = filteredData.map(row => {
-      const sc = row.Statut === 'actif' ? 'actif' : (row.Statut === 'archivé' ? 'archive' : 'expire');
+      const sc = row.Statut === 'actif' ? 'actif' : (row.Statut === 'archivÃ©' ? 'archive' : 'expire');
       return `
         <tr>
           <td style="color:var(--sk-muted);font-size:0.8rem">#${row.ID}</td>
           <td style="font-weight:600">${esc(row.Titre)}</td>
           <td><span class="sk-badge sk-badge-${esc(row.Type_job)}">${esc(row.Type_job)}</span></td>
-          <td>${esc(row.Localisation ?? '—')}</td>
-          <td style="color:var(--sk-muted)">${esc(row.datePublication ?? '—')}</td>
+          <td>${esc(row.Localisation ?? 'â€”')}</td>
+          <td style="color:var(--sk-muted)">${esc(row.datePublication ?? 'â€”')}</td>
           <td><span class="sk-badge sk-badge-${sc}">${esc(row.Statut)}</span></td>
           <td>
-            <button class="sk-btn sk-btn-warn sk-btn-sm" onclick="openEditModal(${row.ID})">Edit</button>
-            <button class="sk-btn sk-btn-danger sk-btn-sm" onclick="openDeleteModal(${row.ID}, '${esc(row.Titre)}')">Delete</button>
+            <button class="sk-btn sk-btn-warn sk-btn-sm" onclick="openModifierModal(${row.ID})">Modifier</button>
+            <button class="sk-btn sk-btn-danger sk-btn-sm" onclick="openDeleteModal(${row.ID}, '${esc(row.Titre)}')">Supprimer</button>
           </td>
         </tr>
       `;
@@ -510,18 +510,20 @@ function updateTable() {
   }
 }
 
-function resetSearch() {
+function resetRecherche() {
   document.getElementById('searchInput').value = '';
   document.getElementById('sortBy').value = 'ID';
   document.getElementById('sortOrder').value = 'ASC';
-  performSearch();
+  performRecherche();
 }
 
-document.getElementById('searchInput').addEventListener('input', performSearch);
-document.getElementById('sortBy').addEventListener('change', performSearch);
-document.getElementById('sortOrder').addEventListener('change', performSearch);
+document.getElementById('searchInput').addEventListener('input', performRecherche);
+document.getElementById('sortBy').addEventListener('change', performRecherche);
+document.getElementById('sortOrder').addEventListener('change', performRecherche);
 
 document.querySelectorAll('.sk-modal-overlay').forEach(el => el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); }));
 </script>
 </body>
 </html>
+
+

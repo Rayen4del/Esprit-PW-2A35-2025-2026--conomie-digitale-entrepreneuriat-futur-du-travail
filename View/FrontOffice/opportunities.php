@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/FrontOffice/opportunities.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/OportunityController.php';
@@ -11,18 +11,18 @@ $favCtrl = new FavoritesController();
 $userId = $_SESSION['user']['id'] ?? null;
 $opportunitiesList = ($r = $controller->listOportunities()) ? $r->fetchAll(PDO::FETCH_ASSOC) : [];
 
-// Handle AJAX favorite toggle
+// Gestion AJAX des favoris
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['favorite_action'])) {
     if (!$userId) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Not logged in']);
+        echo json_encode(['success' => false, 'message' => 'Non connecte']);
         exit;
     }
     $opportunityId = (int)($_POST['opportunity_id'] ?? 0);
     $favCtrl->toggleFavorite($userId, $opportunityId);
 }
 
-// Handle AJAX search
+// Recherche AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['ajax'] === '1') {
     header('Content-Type: application/json');
     $search = trim($_POST['search'] ?? '');
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
     foreach ($opportunitiesList as $opp) {
         $matches = true;
         
-        // Search in title, description, location, and published date
+        // Recherche dans le titre, la description, le lieu et la date de publication
         if ($search !== '') {
             $searchLower = strtolower($search);
             $titleMatch = stripos($opp['Titre'] ?? '', $search) !== false;
@@ -45,14 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
             }
         }
         
-        // Filter by type
+        // Filtrer par type
         if ($typeFilter !== '') {
             if ($opp['Type_job'] !== $typeFilter) {
                 $matches = false;
             }
         }
         
-        // Filter by status
+        // Filtrer par statut
         if ($statusFilter !== '') {
             if ($opp['Statut'] !== $statusFilter) {
                 $matches = false;
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
     exit;
 }
 
-// Get unique types and statuses
+// Recuperer les types et statuts uniques
 $types = [];
 $statuses = [];
 foreach ($opportunitiesList as $opp) {
@@ -83,11 +83,11 @@ sort($types);
 sort($statuses);
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Opportunities — Skiller</title>
+  <title>Opportunites - Skiller</title>
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/core.css">
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/theme-default.css">
   <link rel="stylesheet" href="<?= $assetPath ?>css/demo.css">
@@ -100,92 +100,92 @@ sort($statuses);
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      Browse Opportunities
-      <small><span id="oppCount"><?= count($opportunitiesList) ?></span> listing<?= count($opportunitiesList) !== 1 ? 's' : '' ?> available</small>
+      Parcourir les opportunites
+      <small><span id="oppCount"><?= count($opportunitiesList) ?></span> offre<?= count($opportunitiesList) !== 1 ? 's' : '' ?> disponible<?= count($opportunitiesList) !== 1 ? 's' : '' ?></small>
     </div>
     <div style="display: flex; gap: 12px;">
       <a href="ai-search.php" class="sk-btn sk-btn-secondary">
-        <i class="bx bx-brain"></i> AI Search
+        <i class="bx bx-brain"></i> Recherche IA
       </a>
       <a href="favorites.php" class="sk-btn sk-btn-secondary">
-        <i class="bx bxs-heart"></i> My Favorites
+        <i class="bx bxs-heart"></i> Mes favoris
       </a>
       <button class="sk-btn sk-btn-primary" onclick="exportPDF()">
-        <i class="bx bx-download"></i> Export PDF
+        <i class="bx bx-download"></i> Exporter en PDF
       </button>
     </div>
   </div>
 
-  <!-- Filters Section -->
+  <!-- Filtres -->
   <div class="sk-card" style="margin-bottom: 24px;">
     <div style="padding: 20px;">
       <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px;">
-        <!-- Search Bar -->
+        <!-- Barre de recherche -->
         <div>
-          <label class="sk-label">Search</label>
-          <input type="text" id="searchInput" class="sk-input" placeholder="Search by title or description...">
+          <label class="sk-label">Recherche</label>
+          <input type="text" id="searchInput" class="sk-input" placeholder="Rechercher par titre ou description...">
         </div>
         
-        <!-- Type Filter -->
+        <!-- Filtre type -->
         <div>
           <label class="sk-label">Type</label>
           <select id="typeFilter" class="sk-select">
-            <option value="">All Types</option>
+            <option value="">Tous les types</option>
             <?php foreach ($types as $type): ?>
               <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
         
-        <!-- Status Filter -->
+        <!-- Filtre statut -->
         <div>
-          <label class="sk-label">Status</label>
+          <label class="sk-label">Statut</label>
           <select id="statusFilter" class="sk-select">
-            <option value="">All Status</option>
+            <option value="">Tous les statuts</option>
             <?php foreach ($statuses as $status): ?>
               <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars(ucfirst($status)) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
 
-        <!-- Reset Button -->
+        <!-- Bouton de reinitialisation -->
         <div style="display: flex; align-items: flex-end;">
           <button type="button" class="sk-btn sk-btn-ghost" onclick="resetFilters()" style="width: 100%;">
-            <i class="bx bx-refresh"></i> Reset
+            <i class="bx bx-refresh"></i> Reinitialiser
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Opportunities Table -->
+  <!-- Tableau des opportunites -->
   <div class="sk-card">
     <table class="sk-table" id="opportunitiesTable">
       <thead>
         <tr>
-          <th>Title</th><th>Type</th><th>Location</th><th>Published</th><th>Status</th><th style="text-align: center; width: 180px;">Actions</th>
+          <th>Titre</th><th>Type</th><th>Lieu</th><th>Publie le</th><th>Statut</th><th style="text-align: center; width: 180px;">Actions</th>
         </tr>
       </thead>
       <tbody id="tableBody">
         <?php foreach ($opportunitiesList as $row):
-          $sc = $row['Statut'] === 'actif' ? 'actif' : ($row['Statut'] === 'archivé' ? 'archive' : 'expire');
+          $sc = $row['Statut'] === 'actif' ? 'actif' : ($row['Statut'] === 'archivÃ©' ? 'archive' : 'expire');
           $isFav = $userId ? $favCtrl->isFavorited($userId, $row['ID']) : false;
         ?>
           <tr>
             <td style="font-weight:600"><?= htmlspecialchars($row['Titre']) ?></td>
             <td><span class="sk-badge sk-badge-<?= htmlspecialchars($row['Type_job']) ?>"><?= htmlspecialchars($row['Type_job']) ?></span></td>
-            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['Localisation'] ?? '—') ?></td>
-            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['datePublication'] ?? '—') ?></td>
+            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['Localisation'] ?? 'â€”') ?></td>
+            <td style="color:var(--sk-muted)"><?= htmlspecialchars($row['datePublication'] ?? 'â€”') ?></td>
             <td><span class="sk-badge sk-badge-<?= $sc ?>"><?= htmlspecialchars($row['Statut']) ?></span></td>
             <td style="text-align: center;">
               <button class="sk-btn sk-btn-sm sk-btn-ghost"
-                      onclick="viewOpportunityDescription(<?= htmlspecialchars(json_encode($row['Titre'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($row['Description'] ?? ''), ENT_QUOTES) ?>)"
-                      title="View description">
+                      onclick="viewOpportuniteDescription(<?= htmlspecialchars(json_encode($row['Titre'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($row['Description'] ?? ''), ENT_QUOTES) ?>)"
+                      title="Voir la description">
                 <i class="bx bx-show"></i> Description
               </button>
               <button class="sk-btn sk-btn-sm fav-btn <?= $isFav ? 'favorited' : '' ?>" 
                       onclick="toggleFavorite(<?= $row['ID'] ?>, this)"
-                      title="<?= $isFav ? 'Remove from favorites' : 'Add to favorites' ?>"
+                      title="<?= $isFav ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>"
                       style="background: none; border: none; padding: 4px 8px; cursor: pointer; font-size: 1.2em;">
                 <i class="bx <?= $isFav ? 'bxs-heart' : 'bx-heart' ?>" style="color: <?= $isFav ? '#ff4d6d' : '#ccc' ?>; display: inline-block;"></i>
               </button>
@@ -195,7 +195,7 @@ sort($statuses);
       </tbody>
     </table>
     <div id="emptyState" class="sk-empty" style="display: none;">
-      <p>No opportunities match your filters.</p>
+      <p>Aucune opportunite ne correspond a vos filtres.</p>
     </div>
   </div>
 </div>
@@ -203,21 +203,21 @@ sort($statuses);
 <div class="sk-modal-overlay" id="descriptionModalOverlay" role="dialog" aria-modal="true">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
-      <div class="sk-modal-title" id="descriptionTitle">Opportunity Description</div>
-      <button type="button" class="sk-modal-close" onclick="closeDescriptionModal()" aria-label="Close">&times;</button>
+      <div class="sk-modal-title" id="descriptionTitre">Description de l opportunite</div>
+      <button type="button" class="sk-modal-close" onclick="closeDescriptionModal()" aria-label="Fermer">&times;</button>
     </div>
     <div class="sk-modal-body">
       <p id="descriptionText" style="margin:0;color:var(--sk-text);line-height:1.6;white-space:pre-wrap"></p>
     </div>
     <div class="sk-modal-footer">
-      <button type="button" class="sk-btn sk-btn-ghost" onclick="closeDescriptionModal()">Close</button>
+      <button type="button" class="sk-btn sk-btn-ghost" onclick="closeDescriptionModal()">Fermer</button>
     </div>
   </div>
 </div>
 
 <script>
-const allOpportunities = <?php echo json_encode($opportunitiesList, JSON_UNESCAPED_UNICODE); ?>;
-let filteredOpportunities = [...allOpportunities];
+const allOpportunites = <?php echo json_encode($opportunitiesList, JSON_UNESCAPED_UNICODE); ?>;
+let filteredOpportunites = [...allOpportunites];
 
 const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
@@ -226,7 +226,7 @@ const tableBody = document.getElementById('tableBody');
 const emptyState = document.getElementById('emptyState');
 const oppCount = document.getElementById('oppCount');
 
-function performSearch() {
+function performRecherche() {
   const search = searchInput.value.trim();
   const type = typeFilter.value;
   const status = statusFilter.value;
@@ -240,38 +240,38 @@ function performSearch() {
   })
   .then(response => response.json())
   .then(data => {
-    filteredOpportunities = data;
+    filteredOpportunites = data;
     updateTable();
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => console.error('Erreur :', error));
 }
 
 function updateTable() {
-  if (filteredOpportunities.length === 0) {
+  if (filteredOpportunites.length === 0) {
     tableBody.innerHTML = '';
     emptyState.style.display = 'block';
   } else {
     emptyState.style.display = 'none';
     tableBody.innerHTML = '';
     
-    filteredOpportunities.forEach((opp, index) => {
-      const sc = opp.Statut === 'actif' ? 'actif' : (opp.Statut === 'archivé' ? 'archive' : 'expire');
+    filteredOpportunites.forEach((opp, index) => {
+      const sc = opp.Statut === 'actif' ? 'actif' : (opp.Statut === 'archivÃ©' ? 'archive' : 'expire');
       const row = document.createElement('tr');
       row.innerHTML = `
         <td style="font-weight:600">${escapeHtml(opp.Titre)}</td>
         <td><span class="sk-badge sk-badge-${escapeHtml(opp.Type_job)}">${escapeHtml(opp.Type_job)}</span></td>
-        <td style="color:var(--sk-muted)">${escapeHtml(opp.Localisation ?? '—')}</td>
-        <td style="color:var(--sk-muted)">${escapeHtml(opp.datePublication ?? '—')}</td>
+        <td style="color:var(--sk-muted)">${escapeHtml(opp.Localisation ?? 'â€”')}</td>
+        <td style="color:var(--sk-muted)">${escapeHtml(opp.datePublication ?? 'â€”')}</td>
         <td><span class="sk-badge sk-badge-${sc}">${escapeHtml(opp.Statut)}</span></td>
         <td style="text-align: center;">
           <button class="sk-btn sk-btn-sm sk-btn-ghost"
-                  onclick="viewOpportunityDescriptionFromList(${index})"
-                  title="View description">
+                  onclick="viewOpportuniteDescriptionFromList(${index})"
+                  title="Voir la description">
             <i class="bx bx-show"></i> Description
           </button>
           <button class="sk-btn sk-btn-sm fav-btn" 
                   onclick="toggleFavorite(${opp.ID}, this)"
-                  title="Add to favorites"
+                  title="Ajouter aux favoris"
                   style="background: none; border: none; padding: 4px 8px; cursor: pointer; font-size: 1.2em;">
             <i class="bx bx-heart" style="color: #ccc; display: inline-block;"></i>
           </button>
@@ -281,19 +281,19 @@ function updateTable() {
     });
   }
   
-  oppCount.textContent = filteredOpportunities.length;
+  oppCount.textContent = filteredOpportunites.length;
 }
 
-function viewOpportunityDescription(title, description) {
-  document.getElementById('descriptionTitle').textContent = title || 'Opportunity Description';
-  document.getElementById('descriptionText').textContent = description || 'No description provided.';
+function viewOpportuniteDescription(title, description) {
+  document.getElementById('descriptionTitre').textContent = title || 'Description de l opportunite';
+  document.getElementById('descriptionText').textContent = description || 'Aucune description fournie.';
   document.getElementById('descriptionModalOverlay').classList.add('open');
 }
 
-function viewOpportunityDescriptionFromList(index) {
-  const opp = filteredOpportunities[index];
+function viewOpportuniteDescriptionFromList(index) {
+  const opp = filteredOpportunites[index];
   if (!opp) return;
-  viewOpportunityDescription(opp.Titre || '', opp.Description || '');
+  viewOpportuniteDescription(opp.Titre || '', opp.Description || '');
 }
 
 function closeDescriptionModal() {
@@ -304,7 +304,7 @@ function resetFilters() {
   searchInput.value = '';
   typeFilter.value = '';
   statusFilter.value = '';
-  performSearch();
+  performRecherche();
 }
 
 function escapeHtml(unsafe) {
@@ -331,26 +331,26 @@ function toggleFavorite(opportunityId, btn) {
         icon.style.color = '#ff4d6d';
         icon.classList.remove('bx-heart');
         icon.classList.add('bxs-heart');
-        btn.title = 'Remove from favorites';
+        btn.title = 'Retirer des favoris';
       } else {
         btn.classList.remove('favorited');
         icon.style.color = '#ccc';
         icon.classList.remove('bxs-heart');
         icon.classList.add('bx-heart');
-        btn.title = 'Add to favorites';
+        btn.title = 'Ajouter aux favoris';
       }
     } else {
-      alert(data.message || 'Error updating favorite');
+      alert(data.message || 'Erreur lors de la mise a jour du favori');
     }
   })
-  .catch(e => console.error('Error:', e));
+  .catch(e => console.error('Erreur :', e));
 }
 
 function exportPDF() {
   const element = document.getElementById('opportunitiesTable');
   const opt = {
     margin: 10,
-    filename: 'opportunities_export.pdf',
+    filename: 'opportunites_export.pdf',
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
@@ -358,10 +358,10 @@ function exportPDF() {
   html2pdf().set(opt).from(element).save();
 }
 
-// Add event listeners for real-time search
-searchInput.addEventListener('input', performSearch);
-typeFilter.addEventListener('change', performSearch);
-statusFilter.addEventListener('change', performSearch);
+// Recherche en temps reel
+searchInput.addEventListener('input', performRecherche);
+typeFilter.addEventListener('change', performRecherche);
+statusFilter.addEventListener('change', performRecherche);
 
 document.getElementById('descriptionModalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeDescriptionModal();
@@ -409,3 +409,5 @@ document.getElementById('descriptionModalOverlay').addEventListener('click', fun
 </style>
 </body>
 </html>
+
+

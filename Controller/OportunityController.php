@@ -11,7 +11,7 @@ class OportunityController {
             $list = $db->query($sql);
             return $list;
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
@@ -21,21 +21,21 @@ class OportunityController {
         $req = $db->prepare($sql);
         $req->bindValue(':id', $id);
         try {
-            // First delete all related applications
+            // Supprimer d abord les candidatures liees
             require_once __DIR__ . '/ApplicationController.php';
             $appCtrl = new ApplicationController();
             $appCtrl->deleteApplicationsByOpportunity($id);
             
-            // Then delete the opportunity
+            // Supprimer ensuite l opportunite
             $req->execute();
         } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
+            die('Erreur : ' . $e->getMessage());
         }
     }
 
     public function addOportunity(Oportunity $oportunity) {
-        $sql = "INSERT INTO oportunity 
-                VALUES (NULL, :titre, :type_job, :description, :localisation, :datePublication, :statut)";
+        $sql = "INSERT INTO oportunity (Titre, Type_job, Description, Localisation, datePublication, Statut)
+                VALUES (:titre, :type_job, :description, :localisation, :datePublication, :statut)";
         $db = config::getConnexion();
         try {
             $query = $db->prepare($sql);
@@ -50,7 +50,7 @@ class OportunityController {
                 'statut' => $oportunity->getStatut()
             ]);
         } catch (Exception $e) {
-            echo 'Error: ' . $e->getMessage();
+            echo 'Erreur :  ' . $e->getMessage();
         }
     }
 
@@ -79,7 +79,7 @@ class OportunityController {
                 'statut' => $oportunity->getStatut()
             ]);
         } catch (PDOException $e) {
-            echo "Error: " . $e->getMessage();
+            echo "Erreur :  " . $e->getMessage();
         }
     }
 
@@ -93,7 +93,7 @@ class OportunityController {
             $oportunity = $query->fetch();
             return $oportunity;
         } catch (Exception $e) {
-            die('Error: ' . $e->getMessage());
+            die('Erreur :  ' . $e->getMessage());
         }
     }
 }

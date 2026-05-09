@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/FrontOffice/favorites.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/FavoritesController.php';
@@ -13,7 +13,7 @@ if (!$userId) {
     exit;
 }
 
-// Handle remove from favorites (AJAX)
+// Retrait des favoris (AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_favorite'])) {
     $opportunityId = (int)($_POST['opportunity_id'] ?? 0);
     $result = $favCtrl->removeFavorite($userId, $opportunityId);
@@ -23,11 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_favorite'])) {
     exit;
 }
 
-// Get user's favorite opportunities
+// Recuperer les opportunites favorites de l utilisateur
 $favoritesResult = $favCtrl->getUserFavorites($userId);
 $favorites = $favoritesResult ? $favoritesResult->fetchAll(PDO::FETCH_ASSOC) : [];
 
-// Handle AJAX search
+// Recherche AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['ajax'] === '1') {
     header('Content-Type: application/json');
     $search = trim($_POST['search'] ?? '');
@@ -47,11 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Favorites — Skiller</title>
+  <title>Mes favoris - Skiller</title>
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/core.css">
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/css/theme-default.css">
   <link rel="stylesheet" href="<?= $assetPath ?>css/demo.css">
@@ -63,56 +63,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      My Favorite Opportunities
-      <small><span id="favCount"><?= count($favorites) ?></span> saved</small>
+      Mes opportunites favorites
+      <small><span id="favCount"><?= count($favorites) ?></span> enregistree<?= count($favorites) !== 1 ? 's' : '' ?></small>
     </div>
     <a href="opportunities.php" class="sk-btn sk-btn-secondary">
-      <i class="bx bx-arrow-back"></i> Back to All
+      <i class="bx bx-arrow-back"></i> Retour a toutes les offres
     </a>
   </div>
 
-  <!-- Search Section -->
+  <!-- Recherche Section -->
   <div class="sk-card" style="margin-bottom: 24px;">
     <div style="padding: 16px;">
-      <label class="sk-label" style="font-size: 0.8rem;">Search in Favorites</label>
-      <input type="text" id="searchInput" class="sk-input" placeholder="Search by title, type, or location...">
+      <label class="sk-label" style="font-size: 0.8rem;">Recherche dans les favoris</label>
+      <input type="text" id="searchInput" class="sk-input" placeholder="Rechercher par titre, type ou lieu...">
     </div>
   </div>
 
-  <!-- Favorites Table/List -->
+  <!-- Liste des favoris -->
   <div class="sk-card">
     <?php if (empty($favorites)): ?>
       <div class="sk-empty">
         <i class="bx bx-heart" style="font-size: 3rem; color: var(--sk-muted); margin-bottom: 16px;"></i>
-        <p>No favorite opportunities yet.</p>
-        <p style="font-size: 0.875rem; color: var(--sk-muted);">Click the heart icon on opportunities to add them here.</p>
-        <a href="opportunities.php" class="sk-btn sk-btn-primary" style="margin-top: 16px;">Browse Opportunities</a>
+        <p>Aucune opportunite favorite pour le moment.</p>
+        <p style="font-size: 0.875rem; color: var(--sk-muted);">Cliquez sur l icone coeur d une opportunite pour l ajouter ici.</p>
+        <a href="opportunities.php" class="sk-btn sk-btn-primary" style="margin-top: 16px;">Parcourir les opportunites</a>
       </div>
     <?php else: ?>
       <table class="sk-table" id="favoritesTable">
         <thead>
           <tr>
-            <th>Title</th>
+            <th>Titre</th>
             <th>Type</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Saved</th>
+            <th>Lieu</th>
+            <th>Statut</th>
+            <th>Enregistre le</th>
             <th style="text-align: center; width: 100px;">Action</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           <?php foreach ($favorites as $fav):
-            $sc = $fav['Statut'] === 'actif' ? 'actif' : ($fav['Statut'] === 'archivé' ? 'archive' : 'expire');
+            $sc = $fav['Statut'] === 'actif' ? 'actif' : ($fav['Statut'] === 'archivÃ©' ? 'archive' : 'expire');
           ?>
             <tr>
               <td style="font-weight:600"><?= htmlspecialchars($fav['Titre']) ?></td>
               <td><span class="sk-badge sk-badge-<?= htmlspecialchars($fav['Type_job']) ?>"><?= htmlspecialchars($fav['Type_job']) ?></span></td>
-              <td style="color:var(--sk-muted)"><?= htmlspecialchars($fav['Localisation'] ?? '—') ?></td>
+              <td style="color:var(--sk-muted)"><?= htmlspecialchars($fav['Localisation'] ?? 'â€”') ?></td>
               <td><span class="sk-badge sk-badge-<?= $sc ?>"><?= htmlspecialchars($fav['Statut']) ?></span></td>
               <td style="color:var(--sk-muted); font-size: 0.875rem;"><?= htmlspecialchars(date('M d, Y', strtotime($fav['dateFav'] ?? ''))) ?></td>
               <td style="text-align: center;">
                 <button class="sk-btn sk-btn-sm sk-btn-danger" onclick="removeFavorite(<?= $fav['ID'] ?>, this)">
-                  <i class="bx bx-trash"></i> Remove
+                  <i class="bx bx-trash"></i> Retirer
                 </button>
               </td>
             </tr>
@@ -120,14 +120,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
         </tbody>
       </table>
       <div id="emptyState" class="sk-empty" style="display: none;">
-        <p>No favorites match your search.</p>
+        <p>Aucun favori ne correspond a votre recherche.</p>
       </div>
     <?php endif; ?>
   </div>
 </div>
 
 <script>
-const allFavorites = <?php echo json_encode($favorites, JSON_UNESCAPED_UNICODE); ?>;
+let allFavorites = <?php echo json_encode($favorites, JSON_UNESCAPED_UNICODE); ?>;
 let filteredFavorites = [...allFavorites];
 
 const searchInput = document.getElementById('searchInput');
@@ -135,7 +135,7 @@ const tableBody = document.getElementById('tableBody');
 const emptyState = document.getElementById('emptyState');
 const favCount = document.getElementById('favCount');
 
-function performSearch() {
+function performRecherche() {
   const search = searchInput.value.trim();
   
   fetch('<?= $_SERVER['PHP_SELF'] ?>', {
@@ -148,7 +148,7 @@ function performSearch() {
     filteredFavorites = data;
     updateTable();
   })
-  .catch(e => console.error('Error:', e));
+  .catch(e => console.error('Erreur :', e));
 }
 
 function updateTable() {
@@ -160,20 +160,20 @@ function updateTable() {
     tableBody.innerHTML = '';
     
     filteredFavorites.forEach(fav => {
-      const sc = fav.Statut === 'actif' ? 'actif' : (fav.Statut === 'archivé' ? 'archive' : 'expire');
+      const sc = fav.Statut === 'actif' ? 'actif' : (fav.Statut === 'archivÃ©' ? 'archive' : 'expire');
       const date = new Date(fav.dateFav);
-      const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const dateStr = date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
       
       const row = document.createElement('tr');
       row.innerHTML = `
         <td style="font-weight:600">${escapeHtml(fav.Titre)}</td>
         <td><span class="sk-badge sk-badge-${escapeHtml(fav.Type_job)}">${escapeHtml(fav.Type_job)}</span></td>
-        <td style="color:var(--sk-muted)">${escapeHtml(fav.Localisation ?? '—')}</td>
+        <td style="color:var(--sk-muted)">${escapeHtml(fav.Localisation ?? 'â€”')}</td>
         <td><span class="sk-badge sk-badge-${sc}">${escapeHtml(fav.Statut)}</span></td>
         <td style="color:var(--sk-muted); font-size: 0.875rem;">${dateStr}</td>
         <td style="text-align: center;">
           <button class="sk-btn sk-btn-sm sk-btn-danger" onclick="removeFavorite(${fav.ID}, this)">
-            <i class="bx bx-trash"></i> Remove
+            <i class="bx bx-trash"></i> Retirer
           </button>
         </td>
       `;
@@ -185,7 +185,7 @@ function updateTable() {
 }
 
 function removeFavorite(favId, btn) {
-  if (!confirm('Remove from favorites?')) return;
+  if (!confirm('Retirer des favoris ?')) return;
   
   fetch('<?= $_SERVER['PHP_SELF'] ?>', {
     method: 'POST',
@@ -195,15 +195,15 @@ function removeFavorite(favId, btn) {
   .then(r => r.json())
   .then(data => {
     if (data.success) {
-      // Remove from local array
+      // Retirer du tableau local
       filteredFavorites = filteredFavorites.filter(f => f.ID !== favId);
       allFavorites = allFavorites.filter(f => f.ID !== favId);
       updateTable();
     } else {
-      alert('Error removing favorite');
+      alert('Erreur lors du retrait du favori');
     }
   })
-  .catch(e => console.error('Error:', e));
+  .catch(e => console.error('Erreur :', e));
 }
 
 function escapeHtml(unsafe) {
@@ -216,7 +216,7 @@ function escapeHtml(unsafe) {
 }
 
 if (searchInput) {
-  searchInput.addEventListener('input', performSearch);
+  searchInput.addEventListener('input', performRecherche);
 }
 </script>
 
@@ -230,3 +230,5 @@ if (searchInput) {
 </style>
 </body>
 </html>
+
+

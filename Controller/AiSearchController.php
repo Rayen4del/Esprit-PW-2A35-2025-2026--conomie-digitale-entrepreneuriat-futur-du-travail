@@ -14,7 +14,7 @@ class AiSearchController {
         if ($query === '') {
             return [
                 'success' => false,
-                'message' => 'Please enter a search query',
+                'message' => 'Veuillez saisir une recherche',
                 'results' => [],
                 'count' => 0,
                 'ai_used' => false
@@ -22,7 +22,7 @@ class AiSearchController {
         }
 
         if ($this->apiKey === '') {
-            return $this->fallbackSearch($query, $opportunities, 'AI key is missing. Showing local search results.');
+            return $this->fallbackSearch($query, $opportunities, 'La cle IA est manquante. Resultats locaux affiches.');
         }
 
         try {
@@ -32,7 +32,7 @@ class AiSearchController {
             if (empty($results)) {
                 return [
                     'success' => true,
-                    'message' => $aiResponse['message'] ?? 'AI did not find matching opportunities.',
+                    'message' => $aiResponse['message'] ?? 'L IA n a trouve aucune opportunite correspondante.',
                     'results' => [],
                     'count' => 0,
                     'ai_used' => true
@@ -41,13 +41,13 @@ class AiSearchController {
 
             return [
                 'success' => true,
-                'message' => $aiResponse['message'] ?? ('AI found ' . count($results) . ' relevant opportunity(ies).'),
+                'message' => $aiResponse['message'] ?? ('L IA a trouve ' . count($results) . ' opportunite(s) pertinente(s).'),
                 'results' => $results,
                 'count' => count($results),
                 'ai_used' => true
             ];
         } catch (Exception $e) {
-            return $this->fallbackSearch($query, $opportunities, 'AI is unavailable right now. Showing local search results.', $e->getMessage());
+            return $this->fallbackSearch($query, $opportunities, 'L IA est indisponible pour le moment. Resultats locaux affiches.', $e->getMessage());
         }
     }
 
@@ -71,7 +71,7 @@ class AiSearchController {
         $decoded = $this->decodeJsonText($text);
 
         if (!is_array($decoded)) {
-            throw new Exception('Invalid AI response');
+            throw new Exception('Reponse IA invalide');
         }
 
         return $decoded;
@@ -90,11 +90,11 @@ class AiSearchController {
             ];
         }, array_slice($opportunities, 0, 80));
 
-        return "You are the Skiller job search assistant. Match the user's natural language request to the most relevant opportunities.\n"
-            . "Return only JSON in this shape: {\"message\":\"short helpful sentence\",\"matches\":[{\"id\":123,\"reason\":\"brief reason\"}]}.\n"
-            . "Use only IDs from the provided opportunities. Return at most 10 matches, sorted from best to worst.\n\n"
-            . "User request: " . $query . "\n\n"
-            . "Opportunities JSON:\n" . json_encode($compactOpportunities, JSON_UNESCAPED_UNICODE);
+        return "Tu es l assistant de recherche d emploi de Skiller. Associe la demande en langage naturel de l utilisateur aux opportunites les plus pertinentes.\n"
+            . "Retourne uniquement du JSON sous cette forme : {\"message\":\"phrase courte et utile en francais\",\"matches\":[{\"id\":123,\"reason\":\"raison breve en francais\"}]}.\n"
+            . "Utilise uniquement les IDs des opportunites fournies. Retourne au maximum 10 resultats, tries du meilleur au moins bon.\n\n"
+            . "Demande utilisateur : " . $query . "\n\n"
+            . "Opportunites JSON :\n" . json_encode($compactOpportunities, JSON_UNESCAPED_UNICODE);
     }
 
     private function postJson(string $url, array $payload): array {
@@ -119,7 +119,7 @@ class AiSearchController {
             curl_close($ch);
 
             if ($responseBody === false || $statusCode < 200 || $statusCode >= 300) {
-                throw new Exception($error ?: 'Gemini request failed');
+                throw new Exception($error ?: 'Echec de la requete Gemini');
             }
         } else {
             $context = stream_context_create([
@@ -134,17 +134,17 @@ class AiSearchController {
             $responseBody = file_get_contents($url, false, $context);
 
             if ($responseBody === false) {
-                throw new Exception('Gemini request failed');
+                throw new Exception('Echec de la requete Gemini');
             }
         }
 
         $decoded = json_decode($responseBody, true);
         if (!is_array($decoded)) {
-            throw new Exception('Invalid Gemini JSON');
+            throw new Exception('JSON Gemini invalide');
         }
 
         if (isset($decoded['error'])) {
-            throw new Exception($decoded['error']['message'] ?? 'Gemini API error');
+            throw new Exception($decoded['error']['message'] ?? 'Erreur API Gemini');
         }
 
         return $decoded;

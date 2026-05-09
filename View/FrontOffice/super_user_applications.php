@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // View/FrontOffice/super_user_applications.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/ApplicationController.php';
@@ -16,14 +16,23 @@ $settingsMsg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_requirements') {
     $requirementCtrl->saveRequirements($_POST['requirements'] ?? '');
-    $settingsMsg = 'Requirements saved successfully.';
+    $settingsMsg = 'Exigences enregistrees avec succes.';
 }
 
 $requirements = $requirementCtrl->getRequirements();
 $requirementsText = $requirementCtrl->requirementsText($requirements);
 
-// Get all applications with details
+// Recuperer toutes les candidatures avec details
 $applicationsData = $applicationCtrl->listApplicationsWithDetails()->fetchAll(PDO::FETCH_ASSOC);
+
+function applicationStatusLabel($status) {
+    $key = strtolower((string)$status);
+    return [
+        'pending' => 'En attente',
+        'accepted' => 'Acceptee',
+        'rejected' => 'Rejetee'
+    ][$key] ?? ucfirst((string)$status);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') === '1') {
     header('Content-Type: application/json');
@@ -38,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
     }
 
     if (!$selectedApplication) {
-        echo json_encode(['success' => false, 'message' => 'Application not found']);
+        echo json_encode(['success' => false, 'message' => 'Candidature introuvable']);
         exit;
     }
 
@@ -47,11 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>All Applications — Skiller</title>
+  <title>Toutes les candidatures - Skiller</title>
   <link rel="stylesheet" href="<?= $assetPath ?>vendor/fonts/boxicons.css">
 </head>
 <body>
@@ -60,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      All Applications
-      <small>View-only access (Super User)</small>
+      Toutes les candidatures
+      <small>Acces en lecture seule (super utilisateur)</small>
     </div>
   </div>
 
@@ -74,12 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
       <input type="hidden" name="action" value="save_requirements">
       <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;">
         <div>
-          <label class="sk-label" for="requirementsBox">Requirement List Used By AI</label>
+          <label class="sk-label" for="requirementsBox">Liste des exigences utilisee par IA</label>
           <textarea id="requirementsBox" name="requirements" class="sk-textarea" style="min-height:150px;" required><?= htmlspecialchars($requirementsText) ?></textarea>
-          <div style="font-size:.8rem;color:var(--sk-muted);margin-top:6px;">Write one requirement per line. AI compares these requirements with each application's submitted CV link.</div>
+          <div style="font-size:.8rem;color:var(--sk-muted);margin-top:6px;">Ecrivez une exigence par ligne. IA compare ces exigences avec le lien CV soumis dans chaque candidature.</div>
         </div>
         <button type="submit" class="sk-btn sk-btn-primary">
-          <i class="bx bx-save"></i> Save Requirements
+          <i class="bx bx-save"></i> Enregistrer les exigences
         </button>
       </div>
     </form>
@@ -88,18 +97,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
   <div class="sk-card">
     <?php if (empty($applicationsData)): ?>
       <div class="sk-empty">
-        <p>No applications found.</p>
+        <p>Aucune candidature trouvee.</p>
       </div>
     <?php else: ?>
       <table class="sk-table">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Opportunity</th>
-            <th>User ID</th>
-            <th>Status</th>
-            <th>Date Applied</th>
-            <th>AI CV Match</th>
+            <th>Opportunite</th>
+            <th>Utilisateur</th>
+            <th>Statut</th>
+            <th>Date de candidature</th>
+            <th>Compatibilite IA du CV</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -110,19 +119,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
             <tr>
               <td><?= htmlspecialchars($app['ID']) ?></td>
               <td><?= htmlspecialchars($app['opportunity_title'] ?? 'N/A') ?></td>
-              <td><?= htmlspecialchars($app['IDUtilisateur'] ?? $app['idUtilisateur'] ?? '—') ?></td>
+              <td>
+                <div style="font-weight:600"><?= htmlspecialchars($app['user_name'] ?? ('Utilisateur #' . ($app['IDUtilisateur'] ?? ''))) ?></div>
+                <div style="font-size:.75rem;color:var(--sk-muted)"><?= htmlspecialchars($app['user_email'] ?? ('#' . ($app['IDUtilisateur'] ?? ''))) ?></div>
+              </td>
               <td>
                 <span class="sk-badge sk-badge-<?= $statut ?>">
-                  <?= htmlspecialchars(ucfirst($app['Statut'] ?? $app['statut'] ?? 'Pending')) ?>
+                  <?= htmlspecialchars(applicationStatusLabel($app['Statut'] ?? $app['statut'] ?? 'pending')) ?>
                 </span>
               </td>
-              <td><?= htmlspecialchars($app['DateCondidature'] ?? $app['dateCondidature'] ?? '—') ?></td>
+              <td><?= htmlspecialchars($app['DateCondidature'] ?? $app['dateCondidature'] ?? 'â€”') ?></td>
               <td>
-                <div id="ai-score-<?= (int)$app['ID'] ?>" class="ai-score-chip ai-score-empty">Not rated</div>
+                <div id="ai-score-<?= (int)$app['ID'] ?>" class="ai-score-chip ai-score-empty">Non evalue</div>
               </td>
               <td>
                 <button type="button" class="sk-btn sk-btn-sm sk-btn-primary" onclick="rateApplication(<?= (int)$app['ID'] ?>, this)">
-                  <i class="bx bx-brain"></i> AI Rate
+                  <i class="bx bx-brain"></i> Evaluer par IA
                 </button>
                 <button type="button" class="sk-btn sk-btn-sm sk-btn-ghost" onclick="showApplicationDetails(
                   <?= htmlspecialchars($app['ID']) ?>, 
@@ -130,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
                   '<?= addslashes(htmlspecialchars($app['motivation'] ?? '')) ?>', 
                   '<?= addslashes(htmlspecialchars($app['CV'] ?? $app['resource'] ?? '')) ?>'
                 )">
-                  <i class="bx bx-show"></i> View Application
+                  <i class="bx bx-show"></i> Voir la candidature
                 </button>
               </td>
             </tr>
@@ -141,52 +153,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ai_compatibility'] ?? '') 
   </div>
 </div>
 
-<!-- AI Score Modal -->
+<!-- Modale du score IA -->
 <div class="sk-modal-overlay" id="aiScoreModal">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
-      <span class="sk-modal-title">AI CV Compatibility</span>
-      <button class="sk-modal-close" onclick="closeAiScoreModal()">Ã—</button>
+      <span class="sk-modal-title">Compatibilite IA du CV</span>
+      <button class="sk-modal-close" onclick="closeAiScoreModal()">Ãƒâ€”</button>
     </div>
     <div class="sk-modal-body">
       <div id="aiScoreBig" style="font-size:2.4rem;font-weight:800;color:var(--sk-accent);line-height:1;">--/100</div>
       <p id="aiScoreSource" style="margin:6px 0 14px;color:var(--sk-muted);font-size:.8rem;"></p>
       <p id="aiScoreSummary" style="margin:0 0 16px;color:var(--sk-text);line-height:1.55;"></p>
       <div style="margin-bottom:14px;">
-        <label class="sk-label">Strengths</label>
-        <ul id="aiStrengths" style="margin:6px 0 0;padding-left:18px;color:var(--sk-muted);line-height:1.6;"></ul>
+        <label class="sk-label">Points forts</label>
+        <ul id="aiPoints forts" style="margin:6px 0 0;padding-left:18px;color:var(--sk-muted);line-height:1.6;"></ul>
       </div>
       <div style="margin-bottom:14px;">
-        <label class="sk-label">Gaps</label>
-        <ul id="aiGaps" style="margin:6px 0 0;padding-left:18px;color:var(--sk-muted);line-height:1.6;"></ul>
+        <label class="sk-label">Ecarts</label>
+        <ul id="aiEcarts" style="margin:6px 0 0;padding-left:18px;color:var(--sk-muted);line-height:1.6;"></ul>
       </div>
       <div>
-        <label class="sk-label">Recommendation</label>
-        <p id="aiRecommendation" style="margin:6px 0 0;color:var(--sk-text);line-height:1.55;"></p>
+        <label class="sk-label">Recommandation</label>
+        <p id="aiRecommandation" style="margin:6px 0 0;color:var(--sk-text);line-height:1.55;"></p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Modale -->
 <div class="sk-modal-overlay" id="detailsModal">
   <div class="sk-modal sk-modal-sm">
     <div class="sk-modal-header">
-      <span class="sk-modal-title">Application Details</span>
-      <button class="sk-modal-close" onclick="closeModal()">×</button>
+      <span class="sk-modal-title">Details de la candidature</span>
+      <button class="sk-modal-close" onclick="closeModal()">Ã—</button>
     </div>
     <div class="sk-modal-body">
       <div style="margin-bottom: 16px;">
-        <label class="sk-label">Opportunity</label>
-        <p id="modalOpportunity" style="font-weight:500; margin:0;"></p>
+        <label class="sk-label">Opportunite</label>
+        <p id="modalOpportunite" style="font-weight:500; margin:0;"></p>
       </div>
       <div style="margin-bottom: 16px;">
         <label class="sk-label">Motivation</label>
         <p id="modalMotivation" style="line-height:1.5; white-space:pre-wrap; margin:0;"></p>
       </div>
       <div style="margin-bottom: 16px;">
-        <label class="sk-label">CV Link</label>
-        <a id="modalCVLink" href="#" target="_blank" style="color:var(--sk-accent);">View CV</a>
+        <label class="sk-label">Lien du CV</label>
+        <a id="modalCVLink" href="#" target="_blank" style="color:var(--sk-accent);">Voir le CV</a>
       </div>
     </div>
   </div>
@@ -197,9 +209,9 @@ function rateApplication(applicationId, button) {
   const scoreChip = document.getElementById('ai-score-' + applicationId);
   const originalHtml = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = '<i class="bx bx-loader bx-spin"></i> Rating...';
+  button.innerHTML = '<i class="bx bx-loader bx-spin"></i> Evaluation...';
   scoreChip.className = 'ai-score-chip ai-score-loading';
-  scoreChip.textContent = 'Rating...';
+  scoreChip.textContent = 'Evaluation...';
 
   fetch('<?= $_SERVER['PHP_SELF'] ?>', {
     method: 'POST',
@@ -209,7 +221,7 @@ function rateApplication(applicationId, button) {
   .then(r => r.json())
   .then(data => {
     if (!data.success) {
-      throw new Error(data.message || 'Could not rate application');
+      throw new Error(data.message || 'Impossible d evaluer la candidature');
     }
 
     updateAiScoreChip(applicationId, data.score);
@@ -217,8 +229,8 @@ function rateApplication(applicationId, button) {
   })
   .catch(error => {
     scoreChip.className = 'ai-score-chip ai-score-empty';
-    scoreChip.textContent = 'Failed';
-    alert(error.message || 'AI rating failed');
+    scoreChip.textContent = 'Echec';
+    alert(error.message || 'Evaluation IA echouee');
   })
   .finally(() => {
     button.disabled = false;
@@ -234,11 +246,11 @@ function updateAiScoreChip(applicationId, score) {
 
 function showAiScoreResult(data) {
   document.getElementById('aiScoreBig').textContent = data.score + '/100';
-  document.getElementById('aiScoreSource').textContent = data.ai_used ? 'Scored by Gemini AI' : 'Local fallback estimate';
+  document.getElementById('aiScoreSource').textContent = data.ai_used ? 'Evalue par Gemini IA' : 'Estimation locale';
   document.getElementById('aiScoreSummary').textContent = data.summary || '';
-  fillList('aiStrengths', data.strengths || []);
-  fillList('aiGaps', data.gaps || []);
-  document.getElementById('aiRecommendation').textContent = data.recommendation || '';
+  fillList('aiPoints forts', data.strengths || []);
+  fillList('aiEcarts', data.gaps || []);
+  document.getElementById('aiRecommandation').textContent = data.recommendation || '';
   document.getElementById('aiScoreModal').classList.add('open');
 }
 
@@ -247,7 +259,7 @@ function fillList(id, items) {
   list.innerHTML = '';
   if (items.length === 0) {
     const li = document.createElement('li');
-    li.textContent = 'No specific items returned.';
+    li.textContent = 'Aucun element specifique retourne.';
     list.appendChild(li);
     return;
   }
@@ -264,11 +276,11 @@ function closeAiScoreModal() {
 }
 
 function showApplicationDetails(id, opportunity, motivation, cvLink) {
-  document.getElementById('modalOpportunity').textContent = opportunity;
+  document.getElementById('modalOpportunite').textContent = opportunity;
   document.getElementById('modalMotivation').textContent = motivation;
   const linkEl = document.getElementById('modalCVLink');
   linkEl.href = cvLink || '#';
-  linkEl.textContent = cvLink ? cvLink : 'No CV provided';
+  linkEl.textContent = cvLink ? cvLink : 'Aucun CV fourni';
   document.getElementById('detailsModal').classList.add('open');
 }
 
@@ -324,3 +336,7 @@ document.getElementById('aiScoreModal').addEventListener('click', function(e) {
 </style>
 </body>
 </html>
+
+
+
+

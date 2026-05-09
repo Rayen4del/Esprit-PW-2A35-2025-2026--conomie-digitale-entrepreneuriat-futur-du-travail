@@ -1,18 +1,18 @@
-<?php
+﻿<?php
 // View/dashboard.php
 require_once __DIR__ . '/../config.php';
 requireLogin();
 
-$assetPath = './assets/';   // View/ → assets/ is one level up
+$assetPath = './assets/';
 $role = currentUserRole();
-$name = $_SESSION['user']['name'] ?? 'User';
+$name = $_SESSION['user']['name'] ?? 'Utilisateur';
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="fr" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Skiller</title>
+  <title>Tableau de bord - Skiller</title>
 </head>
 <body>
 <?php include __DIR__ . '/navbar.php'; ?>
@@ -20,8 +20,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
 <div class="sk-page">
   <div class="sk-page-header">
     <div class="sk-page-title">
-      Welcome back, <?= htmlspecialchars($name) ?>
-      <small>Here's what you have access to</small>
+      Bon retour, <?= htmlspecialchars($name) ?>
+      <small>Voici les espaces auxquels vous avez acces</small>
     </div>
   </div>
 
@@ -33,8 +33,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-briefcase" style="color:#7c8fff"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>Opportunities</h3>
-          <p>Edit &amp; delete listings. No create access for admin.</p>
+          <h3>Opportunites</h3>
+          <p>Modifier et supprimer les offres. La creation est reservee aux super utilisateurs.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -44,8 +44,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-file" style="color:#22d3a5"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>Applications</h3>
-          <p>Full CRUD — review, update statuses, manage all records.</p>
+          <h3>Candidatures</h3>
+          <p>Consulter, mettre a jour les statuts et gerer toutes les candidatures.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -57,8 +57,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-briefcase" style="color:#7c8fff"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>My Opportunities</h3>
-          <p>Full CRUD — create, edit, and delete your listings.</p>
+          <h3>Mes opportunites</h3>
+          <p>Creer, modifier et supprimer vos propres offres.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -68,8 +68,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-search-alt" style="color:#38e2c0"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>Browse All Offers</h3>
-          <p>See the public opportunity board as simple users see it.</p>
+          <h3>Voir toutes les offres</h3>
+          <p>Voir le tableau public des offres comme les utilisateurs simples.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -79,8 +79,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-file" style="color:#22d3a5"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>All Applications</h3>
-          <p>View all applications (read-only access).</p>
+          <h3>Toutes les candidatures</h3>
+          <p>Consulter toutes les candidatures en lecture seule.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -92,8 +92,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-briefcase" style="color:#7c8fff"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>Browse Opportunities</h3>
-          <p>Explore available jobs, freelance gigs, and internships.</p>
+          <h3>Parcourir les opportunites</h3>
+          <p>Explorer les emplois, missions freelance et stages disponibles.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -103,8 +103,8 @@ $name = $_SESSION['user']['name'] ?? 'User';
           <i class="bx bx-file" style="color:#22d3a5"></i>
         </div>
         <div class="sk-dash-info">
-          <h3>My Applications</h3>
-          <p>Apply to opportunities and manage your submissions.</p>
+          <h3>Mes candidatures</h3>
+          <p>Postuler aux opportunites et gerer vos demandes.</p>
         </div>
         <i class="bx bx-chevron-right sk-dash-arrow"></i>
       </a>
@@ -131,3 +131,4 @@ $name = $_SESSION['user']['name'] ?? 'User';
 </style>
 </body>
 </html>
+
